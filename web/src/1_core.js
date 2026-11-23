@@ -76,9 +76,12 @@ const P_SIDE=["....hhhh....","...hhhhhhh..","..hhhhhhhhh.","..hhhssssss.","..hhs
 const LEGS_F=[["..ppp..ppp..","..ppp..ppp..","..ooo..ooo.."],["..ppp..ppp..","..ooo..ppp..","........ooo."],["..ppp..ppp..","..ppp..ooo..","..ooo......."]];
 const LEGS_S=[["...ppp.pp...","...ppp.pp...","...ooo.oo..."],["..pp...pp...","..pp...pp...",".ooo...ooo.."]];
 const PROF=["..hhhhhhhh..",".hhhhhhhhhh.","hhhhhhhhhhhh",".hhsssssshh.",".hgggssgggh.","..gkgssgkg..","..ssssssss..","...shhhhs...","..cccttccc..",".ccccttcccc.",".scccttcccs.",".sccccccccs.","..cccccccc..","..pppppppp..","..ppp..ppp..","..ooo..ooo.."];
+const PROF_F=["...hhhhhh...","..hhhhhhhh..",".hhhhhhhhhh.",".hhsssssshh.",".hgggssgggh.",".hgkgssgkgh.",".hhssmmsshh.",".hh.ssss.hh.",".hcccttccch.",".ccccttcccc.",".scccttcccs.",".sccccccccs.","..cccccccc..","..cccccccc..","..ppp..ppp..","..ooo..ooo.."];
+const PROF_B=["............","...ssssss...","..ssssssss..",".hssssssssh.",".hgggssgggh.","..gkgssgkg..","..sshhhhss..","...ssmmss...","..cccttccc..",".ccccttcccc.",".scccttcccs.",".sccccccccs.","..cccccccc..","..pppppppp..","..ppp..ppp..","..ooo..ooo.."];
+const PROF_SPR={m:PROF,f:PROF_F,b:PROF_B};
 const HEART=[".rr.rr.","rrrrrrr","rrrrrrr",".rrrrr.","..rrr..","...r..."];
 const mkPal=(h,b,p='#2b2b38',s='#f2c7a5')=>({h,s,k:'#1a1a1a',m:'#c96a6a',b,w:'#e8e8e8',p,o:'#111'});
-const profPal=(h,c,t,s='#f2c7a5')=>({h,s,g:'#1a1a1a',k:'#1a1a1a',c,t,p:'#2b2b38',o:'#111'});
+const profPal=(h,c,t,s='#f2c7a5')=>({h,s,g:'#8a939b',k:'#1a1a1a',m:'#b5574f',c,t,p:'#2b2b38',o:'#111'});
 const PAL={player:mkPal('#3b2a1e','#1f407a')};
 function drawChar(pal,dir,frame,x,y,s=2){const side=dir==='left'||dir==='right';const body=dir==='up'?P_BACK:dir==='down'?P_FRONT:P_SIDE;const legs=side?LEGS_S[frame%2]:LEGS_F[frame%3];
   const ox=x-6*s,oy=y-16*s,fl=dir==='left';rect(x-5*s,y-s,10*s,s+1,'rgba(0,0,0,.25)');spr(body,pal,ox,oy,s,fl);spr(legs,pal,ox,oy+13*s,s,fl);}

@@ -7,15 +7,29 @@ Use it as a **design reference** and playtest it: what's fun here should be fun 
 Click the game first so it gets your keyboard.
 
 ## What's in it
-- Campus with **HG, CAB, Polymensa, Polyterrasse**, NPCs with jokes, notice board, signs
-- **CAB beer vending machine**, Mensa food, a coffee machine that eats coins, a Hilfsassistent job
-- 14-week semester, 3 AP (energy) per week, sanity, money, sleeping on Polyterrasse benches, burnout
-- **Übungsstunden** = level-up minigames: find-the-bug (Java), math & logic quiz, "Any questions?" dodge
-- **Cuphead-style boss fights** with phases, parry (pink), dash, super:
-  Prof. Diskret (Discrete Math), Prof. Null (Intro to Programming), Prof. Eigen (Linear Algebra),
-  Prof. Epsilon (Analysis), Prof. Gate (Digital Design) and **THE BASISPRÜFUNG** (5-part boss rush)
-- Swiss grades (1–6), ECTS, levels (more HP), beer buff (+1 HP, wobbly screen), save/continue, two endings
-- Chiptune music and sound effects generated in code (no asset files)
+- **Real ETH places:** the Polyterrasse in front of Semper's HG facade with Gull's dark dome, the Polybahn and a view of the old town (Grossmünster, Fraumünster, St. Peter), the lake, the Alps and the Uetliberg.
+- **Universitätstrasse & CAB:** the old 1886 chemistry building, tram stop "ETH/Universitätsspital" with a blue-and-white tram, bikes, a poster column.
+- **Inside CAB:** the yellow Cray X-MP/28 you can sit on, the VIS office with the Prüfungssammlung (old exams: +1 HP in a Basisprüfung block), food&lab, the CABinett and the beer vending machine.
+- **HG Haupthalle:** columns, lecture hall HG F 1, ETH-Bibliothek (study for XP), the exam room.
+- **Mensa Polyterrasse:** "natürlich vegi" and "LOCAL" lines, panorama windows, the Hilfsassistent job board.
+- **The real Basisjahr:** weeks 1–7 Herbstsemester, weeks 8–14 Frühjahrssemester, 8 courses × 7 KP = 56 KP,
+  then **Basisprüfung Block 1** (HS courses) and **Block 2** (FS courses).
+- **Übungsstunden** = level-up minigames: find-the-bug (Java), quiz covering all 8 courses, "Any questions?" dodge.
+- **Professors** (all fictional, Swiss pun names), Cuphead-style with three phases each:
+
+| Semester | Course | Professor |
+|---|---|---|
+| HS | Diskrete Mathematik | Prof. Dr. Reto Beweisli |
+| HS | Einführung in die Programmierung | Prof. Dr. Beat Nullpointer |
+| HS | Lineare Algebra | Prof. Dr. Heidi Eigenwert |
+| HS | Algorithmen und Datenstrukturen | Prof. Dr. Vreni Rekursion |
+| FS | Analysis I | Prof. Dr. Urs Grenzwert |
+| FS | Digital Design and Computer Architecture | Prof. Dr. Gion Gatter |
+| FS | Algorithmen und Wahrscheinlichkeit | Prof. Dr. Erwin Erwartungswert |
+| FS | Parallele Programmierung | Prof. Dr. Sämi Semaphor |
+
+- Swiss grades (1–6), levels (more HP), beer buff, Polybahn night out in the Niederdorf, save/continue, two endings.
+- Chiptune music and sound effects generated in code (no asset files).
 
 ## Controls
 - **Explore:** arrows/WASD move · Z talk/confirm · X menu · hold C to run

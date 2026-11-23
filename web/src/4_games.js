@@ -1,5 +1,5 @@
 /* ---------------- shared minigame bits ---------------- */
-const COURSE={diskret:'Discrete Mathematics',linalg:'Linear Algebra',analysis:'Analysis',eprog:'Intro to Programming',ddca:'Digital Design',life:'Student Life'};
+const COURSE={diskret:'Diskrete Mathematik',linalg:'Lineare Algebra',eprog:'Einführung in die Programmierung',ad:'Algorithmen und Datenstrukturen',analysis:'Analysis I',ddca:'Digital Design and Computer Architecture',aw:'Algorithmen und Wahrscheinlichkeit',pprog:'Parallele Programmierung',life:'Studileben'};
 function introCard(t,sub){rect(0,0,W,H,'rgba(0,0,0,.84)');txt(t,W/2,140,{font:PX,size:16,align:'center',color:'#ffd166'});txt(sub,W/2,176,{size:22,align:'center',color:'#fff'});txt('GET READY...',W/2,214,{size:20,align:'center',color:'#8f89b0'});}
 function bgGrid(c){rect(0,0,W,H,c);for(let x=0;x<W;x+=32)rect(x,0,1,H,'#17152c');for(let y=0;y<H;y+=32)rect(0,y,W,1,'#17152c');}
 function endMini(S,done,score){if(S.ended)return;S.ended=true;fadeTo(()=>{setScene(OW);done(score);});}
@@ -27,6 +27,16 @@ const QUIZ=[
   {k:'ddca',q:'How many different values can 8 bits represent?',o:['256','255','8','512']},
   {k:'ddca',q:'Binary 1011 in decimal is...',o:['11','13','9','1011']},
   {k:'ddca',q:'Which gate outputs 1 exactly when its two inputs differ?',o:['XOR','AND','NOR','NAND']},
+  {k:'ad',q:'Mergesort sorts n elements in (worst case)...',o:['O(n log n)','O(n²)','O(n)','O(log n)']},
+  {k:'ad',q:'Which data structure is first-in, first-out (FIFO)?',o:['Queue','Stack','Heap','Binary tree']},
+  {k:'ad',q:'Dijkstra\'s algorithm requires edge weights that are...',o:['non-negative','integers','negative','all equal']},
+  {k:'ad',q:'The height of a balanced binary search tree with n nodes is...',o:['O(log n)','O(n)','O(1)','O(n log n)']},
+  {k:'aw',q:'Expected value of one roll of a fair six-sided die?',o:['3.5','3','6','1/6']},
+  {k:'aw',q:'Probability of two heads in two fair coin flips?',o:['1/4','1/2','1/3','1']},
+  {k:'aw',q:'Events A and B are independent exactly when...',o:['Pr[A ∩ B] = Pr[A] · Pr[B]','Pr[A ∪ B] = Pr[A] + Pr[B]','Pr[A] = Pr[B]','A ∩ B = ∅']},
+  {k:'pprog',q:'Two threads write the same variable without synchronization. That is a...',o:['race condition','deadlock','livelock','stack overflow']},
+  {k:'pprog',q:'In Java, which keyword makes a method mutually exclusive on its object?',o:['synchronized','volatile','static','final']},
+  {k:'pprog',q:'Mutual exclusion, hold and wait, no preemption and circular wait are the conditions for...',o:['deadlock','starvation','parallel speedup','garbage collection']},
   {k:'life',q:'The most reliable machine in CAB is the...',o:['beer vending machine','coffee machine','printer','submission server']},
   {k:'life',q:'A TA says "this exercise is easy". This means...',o:['it is not easy','it is easy','there is no exercise','free points for everyone']},
   {k:'life',q:'Best strategy for the week before the Basisprüfung?',o:['Sleep, eat, review old exams','Learn everything from scratch at 3am','Become one with the Mensa queue','Panic, but efficiently']}
@@ -98,7 +108,7 @@ function makeDodge(done){const bx=220,by=170,bw=200,bh=130;
     if(S.t>=S.dur)endMini(S,done,clamp(1-S.hits*0.12,0,1));};
   S.draw=()=>{rect(0,0,W,H,'#000');
     txt('ÜBUNG · Q&A SESSION',24,14,{font:PX,size:16,color:'#ffd166'});txt(`Awkward moments: ${S.hits}`,W-24,12,{size:20,align:'right',color:'#cfc9e8'});
-    spr(PROF,profPal('#c0392b','#f39c12','#2c3e50'),W/2-24,42,4);
+    spr(PROF_F,profPal('#c0392b','#f39c12','#2c3e50'),W/2-24,42,4);
     const q=QS[S.q],qw=tw(q,20)+24;ubox(W/2-qw/2,114,qw,32);txt(q,W/2,120,{size:20,align:'center'});
     ubox(bx-3,by-3,bw+6,bh+6);ctx.save();ctx.beginPath();ctx.rect(bx,by,bw,bh);ctx.clip();
     for(const b of S.bul)txt('?',b.x,b.y,{size:22,align:'center',base:'middle',color:'#ffd166'});ctx.restore();
@@ -108,81 +118,115 @@ function makeDodge(done){const bx=220,by=170,bw=200,bh=130;
     if(S.intro>0)introCard('"ANY QUESTIONS?"','Dodge the question marks. Never make eye contact.');};
   return S;}
 
-/* ---------------- professors ---------------- */
-const CY='#ffd166',CR='#ff6b6b',CG='#9be564',CB='#7fdbff',CO='#ffa94d',CV='#c3a6ff';
+/* ---------------- professors (fictional, Swiss-flavoured) ---------------- */
+const CY='#ffd166',CR='#ff6b6b',CG='#9be564',CB='#7fdbff',CO='#ffa94d',CV='#c3a6ff',CT='#5fe3c0',CM='#ff9ff3';
 const BOSSES={
-  diskret:{id:'diskret',name:'Prof. Diskret',course:'Discrete Mathematics',lvl:1,ects:7,where:'HG',hp:220,pal:profPal('#dddddd','#6b4b8a','#e0c068'),
-    chalk:['∀x ∃y: P(x, y)','¬(A ∧ B) ≡ ¬A ∨ ¬B','|P(S)| = 2^|S|','Proof: trivial. ∎'],
-    intro:['Ah. A new student. Let us begin with a simple lemma:','For all students x, there exists an exam y such that x fails y.','Prove me wrong.'],
-    win:['...impossible. Your proof is... correct.','I shall write "trivial" next to it, out of respect.'],
-    lose:['As expected. The proof is left as an exercise to the reader.','The reader is you. Try again.'],
+  diskret:{id:'diskret',name:'Prof. Dr. Reto Beweisli',short:'Prof. Beweisli',course:'Diskrete Mathematik',courseShort:'Diskrete Mathe',sem:'HS',lvl:1,kp:7,hall:'HG F 1',hp:220,sprite:'m',pal:profPal('#ececec','#5a3f7a','#e0c068'),
+    chalk:['∀x ∃y: P(x, y)','¬(A ∧ B) ≡ ¬A ∨ ¬B','|P(S)| = 2^|S|','Beweis: trivial. □'],
+    intro:['Grüezi mitenand. Welcome to Diskrete Mathematik.','Today\'s lemma: for every student x there exists a Serie y that x does not finish.','The proof is trivial. I will now spend ninety minutes on it.'],
+    win:['...your argument is correct. And complete.','I am writing "trivial" next to it. That is the highest praise I give.'],
+    lose:['As expected. The remaining cases are left as an exercise.','Come back when your proof has fewer holes than an Emmentaler.'],
     phases:A=>[
-      {name:'Lemma 1: Quantifiers',rate:1.35,atk:[()=>A.aimed({n:3,g:'∀',c:CY}),()=>A.aimed({n:3,g:'∃',c:CY,spread:0.35}),()=>A.aimed({g:'∎',pink:true,speed:220})]},
-      {name:'Proof by Induction',rate:1.5,atk:[()=>A.bounce({n:3,g:['n','n+1'],c:CG}),()=>A.aimed({n:5,spread:0.3,g:'∀',c:CY,speed:280}),()=>A.bounce({n:3,g:'∎',c:CG,pink:true})]},
-      {name:'Proof by Contradiction',rate:1.35,atk:[()=>A.ring({n:12,g:'¬',c:CR,pinkEvery:4}),()=>A.aimed({n:3,g:'⊥',c:CR,speed:340,spread:0.18}),()=>A.rain({n:9,g:['∃','∀','¬'],c:CY,pinkEvery:5})]}]},
-  eprog:{id:'eprog',name:'Prof. Null',course:'Intro to Programming',lvl:2,ects:7,where:'CAB',hp:250,pal:profPal('#2b2b2b','#3b6e3b','#e8e8e8'),
-    chalk:['public static void main(...)','int x = null; // ?!','while (true) { cry(); }','O(n log n)'],
-    intro:['public static void main(String[] args) {','    student.pass(); // TODO','}','...let me compile you. Expect errors.'],
-    win:['BUILD SUCCESSFUL.','Fine. You may pass. I am still deducting points for code style.'],
-    lose:['Exception in thread "main": StudentNotPreparedException','    at Life.firstYear(ETH.java:1)'],
+      {name:'Lemma 1: Quantoren',rate:1.35,atk:[()=>A.aimed({n:3,g:'∀',c:CY}),()=>A.aimed({n:3,g:'∃',c:CY,spread:0.35}),()=>A.aimed({g:'□',pink:true,speed:220})]},
+      {name:'Beweis durch Induktion',rate:1.5,atk:[()=>A.bounce({n:3,g:['n','n+1'],c:CG}),()=>A.aimed({n:5,spread:0.3,g:'∀',c:CY,speed:280}),()=>A.bounce({n:3,g:'□',c:CG,pink:true})]},
+      {name:'Widerspruchsbeweis',rate:1.35,atk:[()=>A.ring({n:12,g:'¬',c:CR,pinkEvery:4}),()=>A.aimed({n:3,g:'⊥',c:CR,speed:340,spread:0.18}),()=>A.rain({n:9,g:['∃','∀','¬'],c:CY,pinkEvery:5})]}]},
+  eprog:{id:'eprog',name:'Prof. Dr. Beat Nullpointer',short:'Prof. Nullpointer',course:'Einführung in die Programmierung',courseShort:'EProg',sem:'HS',lvl:2,kp:7,hall:'HG F 1',hp:250,sprite:'b',pal:profPal('#6b4a2b','#2e7d4f','#e8e8e8'),
+    chalk:['public static void main(...)','int x = null; // ?!','while (true) { cry(); }','Code Expert: 0/10 tests'],
+    intro:['public static void main(String[] args) {','    student.bestehen(); // TODO','}','Let me run you through Code Expert. Expect red.'],
+    win:['BUILD SUCCESSFUL. All tests green.','Fine. You pass. I am still deducting a point for code style.'],
+    lose:['Exception in thread "main": StudentNotPreparedException','    at Basisjahr.herbstsemester(ETH.java:1)'],
     phases:A=>[
       {name:'Syntax Error',rate:1.3,atk:[()=>A.rain({n:12,g:';',c:CG,pinkEvery:6}),()=>A.aimed({n:2,g:'{ }',c:CG,spread:0.2,speed:290})]},
       {name:'NullPointerException',rate:1.5,atk:[()=>A.bar({text:'NPE!',speed:320}),()=>{A.aimed({g:'null',c:CR,speed:300});A.later(0.45,()=>A.aimed({g:'null',pink:true,speed:210}));},()=>A.bar({text:'null',speed:360})]},
       {name:'while (true)',rate:2.1,atk:[()=>A.spiral({arms:3,steps:14,g:'()',c:CG,pinkEvery:5}),()=>A.bar({text:'STACK!',speed:340})]}]},
-  linalg:{id:'linalg',name:'Prof. Eigen',course:'Linear Algebra',lvl:3,ects:7,where:'HG',hp:270,pal:profPal('#8a5a2b','#2c5d8f','#c0392b'),
+  linalg:{id:'linalg',name:'Prof. Dr. Heidi Eigenwert',short:'Prof. Eigenwert',course:'Lineare Algebra',courseShort:'LinAlg',sem:'HS',lvl:2,kp:7,hall:'HG F 1',hp:260,sprite:'f',pal:profPal('#e3c16f','#2c5d8f','#c0392b'),
     chalk:['Av = λv','det(A − λI) = 0','rank A + dim ker A = n','A⁻¹ exists ⇔ det A ≠ 0'],
-    intro:['Welcome. Today, we transform you.','You are a vector. I am the matrix.','Let us see whether you are an eigenvector... or just noise.'],
-    win:['You kept your direction under transformation.','A true eigenvector. λ = impressive.'],
-    lose:['det(you) = 0.','Not invertible. Come back with full rank.'],
+    intro:['Grüezi! Let us look at this in ℝ³. Everything is easier in ℝ³.','You are a vector. I am the matrix.','Let us see if you are an eigenvector... or just noise.'],
+    win:['You kept your direction under my transformation.','A true eigenvector. Your eigenvalue? Positive. Very positive.'],
+    lose:['det(you) = 0.','Not invertible. Come back with full rank, then we talk.'],
     phases:A=>[
-      {name:'Vectors',rate:1.3,atk:[()=>A.aimed({n:4,spread:0.22,g:'→',c:CB,speed:300}),()=>A.aimed({g:'I',pink:true,speed:230}),()=>A.ring({n:8,g:'λ',c:CB})]},
-      {name:'Matrix Multiplication',rate:1.9,atk:[()=>A.vlas({xs:[40,160,280,400]}),()=>A.vlas({xs:[100,220,340]}),()=>A.aimed({n:3,g:'λ',c:CB,pink:'mid'})]},
-      {name:'Determinant = 0',rate:1.8,atk:[()=>{A.hlas({y:FLOOR-12});A.later(1.5,()=>A.hlas({y:FLOOR-70}));},()=>A.atPlayer({count:2}),()=>A.ring({n:10,g:'det',c:CB,pinkEvery:5})]}]},
-  analysis:{id:'analysis',name:'Prof. Epsilon',course:'Analysis',lvl:4,ects:8,where:'HG',hp:290,pal:profPal('#eeeeee','#8f5a2c','#2c3e50'),
+      {name:'Vektoren',rate:1.3,atk:[()=>A.aimed({n:4,spread:0.22,g:'→',c:CB,speed:300}),()=>A.aimed({g:'I',pink:true,speed:230}),()=>A.ring({n:8,g:'λ',c:CB})]},
+      {name:'Matrixmultiplikation',rate:1.9,atk:[()=>A.vlas({xs:[40,160,280,400]}),()=>A.vlas({xs:[100,220,340]}),()=>A.aimed({n:3,g:'λ',c:CB,pink:'mid'})]},
+      {name:'Determinante = 0',rate:1.8,atk:[()=>{A.hlas({y:FLOOR-12});A.later(1.5,()=>A.hlas({y:FLOOR-70}));},()=>A.atPlayer({count:2}),()=>A.ring({n:10,g:'det',c:CB,pinkEvery:5})]}]},
+  ad:{id:'ad',name:'Prof. Dr. Vreni Rekursion',short:'Prof. Rekursion',course:'Algorithmen und Datenstrukturen',courseShort:'A&D',sem:'HS',lvl:3,kp:7,hall:'HG F 1',hp:270,sprite:'f',pal:profPal('#7a4a2a','#a0522d','#f1c40f'),
+    chalk:['T(n) = 2T(n/2) + O(n)','⇒ T(n) = O(n log n)','Invariante: A[1..i] sortiert','Dijkstra: Kanten ≥ 0'],
+    intro:['To understand recursion, you must first understand recursion.','Today I sort you. In O(n log n), if you behave.','Bubble sort if you don\'t.'],
+    win:['Sorted. Stable, even.','Your runtime was... acceptable. Θ(respect).'],
+    lose:['Worst case. O(n²).','Back to the base case. Try again with a better invariant.'],
+    phases:A=>[
+      {name:'O-Notation',rate:1.35,atk:[()=>A.aimed({n:3,g:'O(n)',c:CT,spread:0.28}),()=>A.rain({n:10,g:'n²',c:CT,pinkEvery:5}),()=>A.aimed({g:'O(1)',pink:true,speed:220})]},
+      {name:'Mergesort',rate:1.9,atk:[()=>A.sweep({from:30,to:430,step:80,gap:0.22}),()=>A.bounce({n:5,g:['3','1','4','1','5'],c:CT,pink:true})]},
+      {name:'Rekursion',rate:1.8,atk:[()=>A.spiral({arms:4,steps:10,g:'f(n−1)',c:CT,pinkEvery:4,speed:160}),()=>A.ring({n:10,g:'n−1',c:CT,pinkEvery:5})]}]},
+  analysis:{id:'analysis',name:'Prof. Dr. Urs Grenzwert',short:'Prof. Grenzwert',course:'Analysis I',courseShort:'Analysis I',sem:'FS',lvl:3,kp:7,hall:'HG F 1',hp:290,sprite:'m',pal:profPal('#f0f0f0','#8f5a2c','#2c3e50'),
     chalk:['∀ε > 0 ∃δ > 0','lim 1/n = 0','f′(x) = lim (f(x+h) − f(x)) / h','∫ eˣ dx = eˣ + C'],
-    intro:['For every ε > 0 there exists a δ > 0...','...such that you will not dodge my attacks.','Let ε be your hope. Let it tend to zero.'],
-    win:['Your performance... converges.','Absolutely, even. Well done.'],
-    lose:['lim (your HP) = 0.','The sequence diverges. Revisit the definitions.'],
+    intro:['For every ε > 0 there exists a δ > 0...','...such that your chances become arbitrarily small.','Let ε be your hope. Now let it tend to zero.'],
+    win:['Your performance converges.','Absolutely, even. Gut gemacht.'],
+    lose:['lim (your HP) = 0.','The sequence diverges. Revisit the definitions. Slowly.'],
     phases:A=>[
-      {name:'Let ε > 0',rate:1.7,atk:[()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.42}),()=>A.sine({n:6,g:'ε',c:CO,ys:[FLOOR-130],amp:25,gap:0.25}),()=>A.aimed({g:'dx',pink:true,speed:220})]},
-      {name:'Choose δ',rate:1.8,atk:[()=>A.homing({n:3,g:'δ',c:CO,pink:true}),()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.4})]},
-      {name:'lim x → you',rate:1.9,atk:[()=>A.atPlayer({count:3}),()=>{A.sine({n:4,g:'∞',c:CO,ys:[FLOOR-45],amp:40,gap:0.45});A.homing({n:2,g:'δ',c:CO});}]}]},
-  ddca:{id:'ddca',name:'Prof. Gate',course:'Digital Design',lvl:5,ects:7,where:'CAB',hp:300,pal:profPal('#c96a3a','#555c66','#f1c40f'),
-    chalk:['A NAND B = ¬(A ∧ B)','0b1011 = 11','f = 1 / T','Y = A ⊕ B'],
-    intro:['Every computer is just billions of tiny gates.','Today, I am the gate.','And you... are a 0.'],
-    win:['Signal received: 1.','You switched states. Respect.'],
+      {name:'Sei ε > 0',rate:1.7,atk:[()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.42}),()=>A.sine({n:6,g:'ε',c:CO,ys:[FLOOR-130],amp:25,gap:0.25}),()=>A.aimed({g:'dx',pink:true,speed:220})]},
+      {name:'Wähle δ',rate:1.8,atk:[()=>A.homing({n:3,g:'δ',c:CO,pink:true}),()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.4})]},
+      {name:'lim x → du',rate:1.9,atk:[()=>A.atPlayer({count:3}),()=>{A.sine({n:4,g:'∞',c:CO,ys:[FLOOR-45],amp:40,gap:0.45});A.homing({n:2,g:'δ',c:CO});}]}]},
+  ddca:{id:'ddca',name:'Prof. Dr. Gion Gatter',short:'Prof. Gatter',course:'Digital Design and Computer Architecture',courseShort:'DDCA',sem:'FS',lvl:4,kp:7,hall:'HG F 1',hp:300,sprite:'b',pal:profPal('#c96a3a','#555c66','#f1c40f'),
+    chalk:['A NAND B = ¬(A ∧ B)','0b1011 = 11','f = 1 / T','add t0, t1, t2'],
+    intro:['Allegra! Every computer is just billions of tiny gates.','Today, I am the gate.','And you... are a 0.'],
+    win:['Signal received: 1.','You switched on the rising edge. Respect.'],
     lose:['Timing violation detected.','You missed the clock edge. Again.'],
     phases:A=>[
       {name:'Bits',rate:1.3,atk:[()=>A.bounce({n:4,g:['0','1'],c:CV}),()=>A.aimed({n:3,g:'1',c:CV,spread:0.3,pink:'mid'})]},
-      {name:'Clock Signal',rate:1.2,atk:[()=>A.bar({text:'CLK',speed:300,c:CV}),()=>A.bar({text:'CLK',speed:300,high:true,c:CV}),()=>A.aimed({g:'1',pink:true,speed:220})]},
-      {name:'Logic Gates',rate:1.6,atk:[()=>A.ring({n:9,g:['AND','OR','XOR','NOT'],c:CV,pinkEvery:3}),()=>A.vlas({xs:[60,200,340]}),()=>A.bounce({n:4,g:['0','1'],c:CV})]}]},
-  basis:{id:'basis',name:'THE BASISPRÜFUNG',course:'All of it. 3 hours.',lvl:1,ects:24,where:'HG',hp:520,exam:true,
+      {name:'Taktsignal',rate:1.2,atk:[()=>A.bar({text:'CLK',speed:300,c:CV}),()=>A.bar({text:'CLK',speed:300,high:true,c:CV}),()=>A.aimed({g:'1',pink:true,speed:220})]},
+      {name:'Logikgatter',rate:1.6,atk:[()=>A.ring({n:9,g:['AND','OR','XOR','NOT'],c:CV,pinkEvery:3}),()=>A.vlas({xs:[60,200,340]}),()=>A.bounce({n:4,g:['0','1'],c:CV})]}]},
+  aw:{id:'aw',name:'Prof. Dr. Erwin Erwartungswert',short:'Prof. Erwartungswert',course:'Algorithmen und Wahrscheinlichkeit',courseShort:'A&W',sem:'FS',lvl:4,kp:7,hall:'HG F 1',hp:300,sprite:'m',pal:profPal('#9a9a9a','#2f6b5a','#e67e22'),
+    chalk:['E[X] = Σ x · Pr[X = x]','Pr[A ∪ B] ≤ Pr[A] + Pr[B]','E[X + Y] = E[X] + E[Y]','Las Vegas ≠ Monte Carlo'],
+    intro:['Welcome. Let X be the number of attacks you dodge.','E[X] = ... let me compute ... oh dear.','With high probability, this ends badly for you.'],
+    win:['An outlier! Statistically, you should not exist.','I will need to update my priors.'],
+    lose:['As predicted. Pr[you pass] was always small.','But the expected number of attempts is finite. Try again.'],
+    phases:A=>[
+      {name:'Zufall',rate:1.4,atk:[()=>A.bounce({n:4,g:['1/6','1/2','P(A)'],c:CM}),()=>A.rain({n:12,g:['?','1/6'],c:CM,smin:140,smax:300,pinkEvery:6}),()=>A.aimed({g:'E[X]',pink:true,speed:220})]},
+      {name:'Erwartungswert',rate:1.5,atk:[()=>A.ring({n:12,g:'E[X]',c:CM,pinkEvery:6}),()=>A.aimed({n:5,g:'1/2',c:CM,spread:0.25,speed:300})]},
+      {name:'Markov-Kette',rate:1.8,atk:[()=>A.vrand({n:3}),()=>{A.homing({n:3,g:'P',c:CM,pink:true});A.later(0.8,()=>A.vrand({n:2}));}]}]},
+  pprog:{id:'pprog',name:'Prof. Dr. Sämi Semaphor',short:'Prof. Semaphor',course:'Parallele Programmierung',courseShort:'PProg',sem:'FS',lvl:5,kp:7,hall:'HG F 1',hp:310,sprite:'b',pal:profPal('#2b2b2b','#6b2d5c','#ecf0f1'),
+    chalk:['synchronized (lock) { ... }','wait() / notify()','Amdahl: S = 1 / (s + (1−s)/n)','Deadlock: 4 Bedingungen'],
+    intro:['Hoi zäme! Today we do everything in parallel.','I will attack you with four threads at once.','Don\'t worry. Probably no race conditions. Probably.'],
+    win:['Deadlock-free and correct. Rare. Beautiful.','You may release the lock now.'],
+    lose:['Race condition detected. You lost.','Next time, synchronize your jumps.'],
+    phases:A=>[
+      {name:'Threads',rate:1.5,atk:[()=>{A.sine({n:6,g:'T1',c:CV,ys:[FLOOR-120],amp:14,gap:0.22});A.sine({n:6,g:'T2',c:CV,ys:[FLOOR-80],amp:10,gap:0.22});},()=>A.aimed({n:2,g:'T3',c:CV,spread:0.2,speed:300}),()=>A.aimed({g:'join()',pink:true,speed:220})]},
+      {name:'Race Condition',rate:1.6,atk:[()=>{A.bar({text:'RACE',speed:420});A.later(0.7,()=>A.bar({text:'RACE',speed:260,high:true}));},()=>A.aimed({g:'lock()',pink:true,speed:230}),()=>A.rain({n:8,g:'++',c:CV})]},
+      {name:'Deadlock',rate:2.2,atk:[()=>{A.vlas({xs:[30,430]});A.later(0.5,()=>A.vlas({xs:[90,370]}));A.later(1.0,()=>A.vlas({xs:[150,310]}));},()=>A.aimed({n:3,g:'wait()',c:CV,spread:0.2,pink:'mid'})]}]},
+  block1:{id:'block1',name:'BASISPRÜFUNG · BLOCK 1',short:'Block 1',course:'Diskrete Mathe · LinAlg · EProg · A&D',courseShort:'Block 1',sem:'HS',lvl:1,kp:0,hall:'Prüfungsraum',hp:440,exam:true,paper:'#c0392b',block:'BLOCK 1',
     chalk:['Aufgabe 1 (12 Punkte)','Aufgabe 2 (18 Punkte)','Aufgabe 3 (30 Punkte)','Viel Erfolg!'],
-    intro:['...','I am every exercise you skipped.','Every lecture you watched at 2× speed.','I am the BASISPRÜFUNG. Three hours. No cheat sheet.'],
+    intro:['...','I am every Serie you skipped this Herbstsemester.','Every lecture you watched at 2× speed.','BASISPRÜFUNG, BLOCK 1. Three hours. No cheat sheet.'],
     win:['...','...you passed.','(The exam quietly turns into a "Bestanden" email.)'],
-    lose:['NOT PASSED.','You may try again... while the semester lasts.'],
-    phases:A=>[BOSSES.diskret.phases(A)[2],BOSSES.eprog.phases(A)[1],BOSSES.linalg.phases(A)[1],BOSSES.analysis.phases(A)[2],BOSSES.ddca.phases(A)[2]]
-      .map((p,i)=>({name:`Part ${i+1}: ${p.name}`,rate:p.rate*0.9,atk:p.atk}))}
+    lose:['NOT PASSED.','You may try again... while the year lasts.'],
+    phases:A=>[BOSSES.diskret.phases(A)[2],BOSSES.eprog.phases(A)[1],BOSSES.linalg.phases(A)[1],BOSSES.ad.phases(A)[2]].map((p,i)=>({name:`Aufgabe ${i+1}: ${p.name}`,rate:p.rate*0.9,atk:p.atk}))},
+  block2:{id:'block2',name:'BASISPRÜFUNG · BLOCK 2',short:'Block 2',course:'Analysis I · DDCA · A&W · PProg',courseShort:'Block 2',sem:'FS',lvl:1,kp:0,hall:'Prüfungsraum',hp:480,exam:true,paper:'#1f5fa8',block:'BLOCK 2',
+    chalk:['Aufgabe 1 (15 Punkte)','Aufgabe 2 (20 Punkte)','Aufgabe 3 (25 Punkte)','Viel Erfolg!'],
+    intro:['...','So. The Frühjahrssemester, compressed into three hours.','Analysis, gates, probabilities and threads. All at once.','BASISPRÜFUNG, BLOCK 2. Begin.'],
+    win:['...','...BESTANDEN.','You are officially through the Basisjahr.'],
+    lose:['NOT PASSED.','You may try again... while the year lasts.'],
+    phases:A=>[BOSSES.analysis.phases(A)[2],BOSSES.ddca.phases(A)[2],BOSSES.aw.phases(A)[2],BOSSES.pprog.phases(A)[2]].map((p,i)=>({name:`Aufgabe ${i+1}: ${p.name}`,rate:p.rate*0.9,atk:p.atk}))}
 };
 
 /* ---------------- boss fight ---------------- */
-function drawLecture(B){rect(0,0,W,H,'#2b2438');for(let x=0;x<W;x+=64)rect(x,0,2,FLOOR,'#30293f');
+function drawLecture(B,t){rect(0,0,W,H,'#2b2438');for(let x=0;x<W;x+=64)rect(x,0,2,FLOOR,'#30293f');
   rect(118,64,404,146,'#5a3d26');rect(124,70,392,132,B.exam?'#24242c':'#1f3b2d');
   B.chalk.forEach((s,i)=>txt(s,140,78+i*30,{size:22,color:'rgba(230,240,230,.78)'}));rect(124,202,392,6,'#7a5232');
+  const pw=tw(B.hall,14)+12;rect(124,50,pw,14,'#1d2633');txt(B.hall,124+pw/2,50,{size:14,align:'center',color:'#fff'});
+  if(B.exam){const left=Math.max(0,180-t*2),hh=Math.floor(left/60),mm=Math.floor(left%60);txt(`Restzeit ${hh}:${String(mm).padStart(2,'0')}`,160+tw(B.chalk[3],22),168,{size:22,color:'#ff6b6b'});}
   rect(0,FLOOR,W,H-FLOOR,'#4b3527');for(let x=0;x<W;x+=48)rect(x,FLOOR,2,H-FLOOR,'#3c2a1f');rect(0,FLOOR,W,3,'#6b4c38');
   rect(572,FLOOR-58,50,58,'#6b4a2b');rect(568,FLOOR-62,58,8,'#8a6238');}
-function drawExam(x,y,flash,t){const w=112,h=132;ctx.save();ctx.translate(x,y+h/2);ctx.rotate(Math.sin(t*1.5)*0.05);ctx.translate(-w/2,-h/2);
-  rect(5,5,w,h,'rgba(0,0,0,.35)');rect(0,0,w,h,flash?'#fff':'#f4f1e8');rect(0,0,w,20,flash?'#fff':'#c0392b');txt('BASISPRÜFUNG',w/2,2,{size:16,align:'center',color:'#fff'});
-  rect(18,28,30,3,'#1a1a1a');rect(64,28,30,3,'#1a1a1a');rect(22,34,22,9,'#1a1a1a');rect(68,34,22,9,'#1a1a1a');rect(27,36,6,5,'#ff4d6d');rect(73,36,6,5,'#ff4d6d');
-  rect(34,54,44,6,'#1a1a1a');for(let i=0;i<6;i++)rect(12,72+i*9,w-24,2,'#c9c2b0');txt('Note: ?',w-12,h-18,{size:16,align:'right',color:'#c0392b'});ctx.restore();}
-
+function drawExam(x,y,flash,t,B){const w=112,h=132;ctx.save();ctx.translate(x,y+h/2);ctx.rotate(Math.sin(t*1.5)*0.05);ctx.translate(-w/2,-h/2);
+  rect(5,5,w,h,'rgba(0,0,0,.35)');rect(0,0,w,h,flash?'#fff':'#f4f1e8');rect(0,0,w,20,flash?'#fff':B.paper);txt('BASISPRÜFUNG',w/2,2,{size:16,align:'center',color:'#fff'});
+  txt(B.block,w/2,22,{size:14,align:'center',color:B.paper});
+  rect(18,36,30,3,'#1a1a1a');rect(64,36,30,3,'#1a1a1a');rect(22,42,22,9,'#1a1a1a');rect(68,42,22,9,'#1a1a1a');rect(27,44,6,5,'#ff4d6d');rect(73,44,6,5,'#ff4d6d');
+  rect(34,60,44,6,'#1a1a1a');for(let i=0;i<5;i++)rect(12,76+i*9,w-24,2,'#c9c2b0');txt('Note: ?',w-12,h-18,{size:16,align:'right',color:B.paper});ctx.restore();}
 function makeCombat(id,done){const B=BOSSES[id];
-  const maxHp=hpFor(G.level)+(G.buff?1:0);
+  const maxHp=hpFor(G.level)+(G.buff?1:0)+(B.exam&&G.prep?1:0);
   const S={music:id==='basis'?'final':'boss',t:0,st:'intro',stT:0,paused:false,hitstop:0,shake:0,banner:'',bannerT:0,beam:0,wob:G.buff,ended:false,hits:0,
     boss:{hp:B.hp,max:B.hp,ph:-1,x:530,flash:0,atkT:1,ai:0},
     p:{x:90,y:FLOOR,vx:0,vy:0,ground:true,hp:maxHp,max:maxHp,inv:0,dash:0,dashCd:0,cool:0,sup:0,dir:1,anim:0,parry:0},
     shots:[],projs:[],lasers:[],ev:[],parts:[]};
-  G.buff=false;
+  G.buff=false;if(B.exam)G.prep=false;
   const mouth=()=>({x:S.boss.x-34,y:FLOOR-78}),pc=()=>({x:S.p.x,y:S.p.y-14});
   const later=(d,f)=>S.ev.push({t:d,f});
   const gl=g=>Array.isArray(g)?pick(g):g;
@@ -200,6 +244,8 @@ function makeCombat(id,done){const B=BOSSES[id];
     sine({n=6,g='~',c=CB,amp=40,freq=4,speed=200,gap=0.25,ys=null}={}){for(let i=0;i<n;i++)later(i*gap,()=>{const m=mouth(),by=ys?ys[i%ys.length]:m.y;proj({x:m.x,y:by,by,vx:-speed,sine:true,amp,freq,g:gl(g),c});});},
     homing({n=3,g='δ',c=CO,speed=130,dur=2.6,pink=false}={}){for(let i=0;i<n;i++)later(i*0.35,()=>{const m=mouth();proj({x:m.x,y:m.y-20+i*20,vx:-speed,vy:0,homing:dur,speed,g:gl(g),c,pink:pink&&i===n-1,life:7});});},
     atPlayer({count=3,gap=0.7,th=30}={}){for(let i=0;i<count;i++)later(i*gap,()=>A.vlas({xs:[clamp(S.p.x,20,440)],th,warn:0.65,dur:0.35}));},
+    sweep({from=30,to=430,step=80,gap=0.22,warn=0.6,dur=0.3,th=24}={}){let k=0;for(let x=from;x<=to;x+=step,k++){const xx=x;later(k*gap,()=>A.vlas({xs:[xx],warn,dur,th}));}},
+    vrand({n=3,th=26}={}){const xs=[];let tries=0;while(xs.length<n&&tries<60){tries++;const x=rnd(30,430);if(xs.every(v=>Math.abs(v-x)>100))xs.push(x);}A.vlas({xs,th});},
     spiral({arms=4,steps=12,speed=170,g='•',c='#fff',dt=0.13,pinkEvery=0}={}){for(let k=0;k<steps;k++)later(k*dt,()=>A.ring({n:arms,speed,g,c,off:k*0.33,pinkEvery:pinkEvery&&k%pinkEvery===0?arms:0}));}
   };
   const PH=B.phases(A);
@@ -255,12 +301,12 @@ function makeCombat(id,done){const B=BOSSES[id];
   S.draw=()=>{const p=S.p,b=S.boss;ctx.save();
     if(S.shake>0)ctx.translate(rnd(-4,4),rnd(-3,3));
     if(S.wob&&S.st==='fight')ctx.translate(Math.sin(S.t*1.7)*4,Math.sin(S.t*1.3)*2);
-    drawLecture(B);
+    drawLecture(B,S.t);
     for(const l of S.lasers){const warn=l.t<l.warn,blink=Math.floor(l.t*12)%2?'rgba(255,80,80,.9)':'rgba(255,80,80,.35)';
       if(l.v){if(warn){rect(l.pos-1,40,2,FLOOR-40,blink);rect(l.pos-l.th/2,40,l.th,FLOOR-40,'rgba(255,80,80,.10)');}else{rect(l.pos-l.th/2,40,l.th,FLOOR-40,'#ff4d6d');rect(l.pos-l.th/4,40,l.th/2,FLOOR-40,'#fff');}}
       else{if(warn){rect(0,l.pos-1,W,2,blink);rect(0,l.pos-l.th/2,W,l.th,'rgba(255,80,80,.10)');}else{rect(0,l.pos-l.th/2,W,l.th,'#ff4d6d');rect(0,l.pos-l.th/4,W,l.th/2,'#fff');}}}
     const bob=Math.sin(S.t*2.2)*3;ctx.globalAlpha=S.st==='win'?Math.max(0,1-S.stT/2.6):1;
-    if(B.exam)drawExam(b.x,FLOOR-140+bob,b.flash>0,S.t);else spr(PROF,B.pal,b.x-42,FLOOR-112+bob,7,true,b.flash>0?'#ffffff':null);
+    if(B.exam)drawExam(b.x,FLOOR-140+bob,b.flash>0,S.t,B);else spr(PROF_SPR[B.sprite||'m'],B.pal,b.x-42,FLOOR-112+bob,7,true,b.flash>0?'#ffffff':null);
     ctx.globalAlpha=1;
     for(const s of S.shots){rect(s.x-7,s.y-2,12,4,'#fff3a0');rect(s.x+5,s.y-1,3,2,'#ff9f43');}
     for(const q of S.projs){if(q.rect){rect(q.x-q.w/2,q.y-q.h/2,q.w,q.h,'#1b0f14');rect(q.x-q.w/2+2,q.y-q.h/2+2,q.w-4,q.h-4,q.c);txt(q.g,q.x,q.y-q.h/2+2,{size:20,align:'center',color:'#1b0f14'});continue;}
@@ -278,9 +324,9 @@ function makeCombat(id,done){const B=BOSSES[id];
     for(let i=1;i<PH.length;i++)rect(W-260+246*(1-i/PH.length),26,2,12,'#000');
     txt(B.course,W-12,40,{size:16,align:'right',color:'#cfc9e8',shadow:'#000'});
     if(S.bannerT>0&&S.st==='fight'){ctx.globalAlpha=clamp(S.bannerT,0,1);const w=tw(S.banner,16,PX)+30;rect(W/2-w/2,72,w,32,'#000');txt(S.banner,W/2,80,{font:PX,size:16,align:'center',color:'#ffd166'});ctx.globalAlpha=1;}
-    if(S.st==='intro'){rect(0,0,W,H,'rgba(0,0,0,.4)');txt(B.name,W/2,112,{font:PX,size:24,align:'center',shadow:'#000'});txt(B.course,W/2,146,{size:24,align:'center',color:'#cfc9e8',shadow:'#000'});
+    if(S.st==='intro'){rect(0,0,W,H,'rgba(0,0,0,.4)');txt(B.name,W/2,112,{font:PX,size:tw(B.name,24,PX)>600?16:24,align:'center',shadow:'#000'});txt(B.course,W/2,146,{size:24,align:'center',color:'#cfc9e8',shadow:'#000'});
       txt(S.stT<1.4?'READY?':'GO!',W/2,186,{font:PX,size:32,align:'center',color:S.stT<1.4?'#ffd166':'#9be564',shadow:'#000'});
-      txt('hold X shoot · Z jump · Z in the air on pink = parry · C dash',W/2,236,{size:18,align:'center',color:'#fff',shadow:'#000'});}
+      txt('X shoot · Z jump · Z on pink = parry · C dash',W/2,236,{size:18,align:'center',color:'#fff',shadow:'#000'});}
     if(S.st==='win')txt(B.exam?'BESTANDEN!':'PASSED!',W/2,140,{font:PX,size:32,align:'center',color:'#9be564',shadow:'#000'});
     if(S.st==='lose')txt('NICHT BESTANDEN',W/2,140,{font:PX,size:24,align:'center',color:'#ff5d5d',shadow:'#000'});
     if(S.paused){rect(0,0,W,H,'rgba(0,0,0,.65)');txt('PAUSED',W/2,130,{font:PX,size:24,align:'center'});txt('Z / Esc: resume · Q: give up and leave the lecture hall',W/2,172,{size:20,align:'center',color:'#cfc9e8'});}};

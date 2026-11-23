@@ -32,13 +32,13 @@ kbd{display:inline-block;min-width:1.5em;padding:0 5px;border:1px solid #4a4766;
 </head>
 <body>
 <main>
-<header><h1>ETH: Year One</h1><p>Übungen, beer, five professors, one Basisprüfung.</p></header>
+<header><h1>ETH: Year One</h1><p>The Basisjahr: Übungen, beer, eight professors, two Basisprüfung blocks.</p></header>
 <div class="case"><canvas id="game" width="640" height="360" tabindex="0" aria-label="ETH: Year One. Click, then play with the keyboard."></canvas></div>
 <div class="keys">
 <div><b>Explore</b> · <kbd>←↑→↓</kbd>/<kbd>WASD</kbd> move · <kbd>Z</kbd> talk / confirm · <kbd>X</kbd> menu · hold <kbd>C</kbd> run</div>
 <div><b>Fight</b> · <kbd>←</kbd><kbd>→</kbd> move · <kbd>Z</kbd> jump, again in the air on <span class="pink">pink</span> = parry · hold <kbd>X</kbd> shoot · <kbd>C</kbd> dash · <kbd>V</kbd> super · <kbd>Esc</kbd> pause</div>
 </div>
-<p class="note">Click the game so it gets your keyboard. <kbd>M</kbd> mutes. Fan-made parody: all professors are fictional. Progress saves in this browser only.</p>
+<p class="note">Click the game so it gets your keyboard. <kbd>M</kbd> mutes. Fan-made parody: all professors and their lines are fictional. Progress saves in this browser only.</p>
 </main>
 <script>
 (()=>{
@@ -120,9 +120,12 @@ const P_SIDE=["....hhhh....","...hhhhhhh..","..hhhhhhhhh.","..hhhssssss.","..hhs
 const LEGS_F=[["..ppp..ppp..","..ppp..ppp..","..ooo..ooo.."],["..ppp..ppp..","..ooo..ppp..","........ooo."],["..ppp..ppp..","..ppp..ooo..","..ooo......."]];
 const LEGS_S=[["...ppp.pp...","...ppp.pp...","...ooo.oo..."],["..pp...pp...","..pp...pp...",".ooo...ooo.."]];
 const PROF=["..hhhhhhhh..",".hhhhhhhhhh.","hhhhhhhhhhhh",".hhsssssshh.",".hgggssgggh.","..gkgssgkg..","..ssssssss..","...shhhhs...","..cccttccc..",".ccccttcccc.",".scccttcccs.",".sccccccccs.","..cccccccc..","..pppppppp..","..ppp..ppp..","..ooo..ooo.."];
+const PROF_F=["...hhhhhh...","..hhhhhhhh..",".hhhhhhhhhh.",".hhsssssshh.",".hgggssgggh.",".hgkgssgkgh.",".hhssmmsshh.",".hh.ssss.hh.",".hcccttccch.",".ccccttcccc.",".scccttcccs.",".sccccccccs.","..cccccccc..","..cccccccc..","..ppp..ppp..","..ooo..ooo.."];
+const PROF_B=["............","...ssssss...","..ssssssss..",".hssssssssh.",".hgggssgggh.","..gkgssgkg..","..sshhhhss..","...ssmmss...","..cccttccc..",".ccccttcccc.",".scccttcccs.",".sccccccccs.","..cccccccc..","..pppppppp..","..ppp..ppp..","..ooo..ooo.."];
+const PROF_SPR={m:PROF,f:PROF_F,b:PROF_B};
 const HEART=[".rr.rr.","rrrrrrr","rrrrrrr",".rrrrr.","..rrr..","...r..."];
 const mkPal=(h,b,p='#2b2b38',s='#f2c7a5')=>({h,s,k:'#1a1a1a',m:'#c96a6a',b,w:'#e8e8e8',p,o:'#111'});
-const profPal=(h,c,t,s='#f2c7a5')=>({h,s,g:'#1a1a1a',k:'#1a1a1a',c,t,p:'#2b2b38',o:'#111'});
+const profPal=(h,c,t,s='#f2c7a5')=>({h,s,g:'#8a939b',k:'#1a1a1a',m:'#b5574f',c,t,p:'#2b2b38',o:'#111'});
 const PAL={player:mkPal('#3b2a1e','#1f407a')};
 function drawChar(pal,dir,frame,x,y,s=2){const side=dir==='left'||dir==='right';const body=dir==='up'?P_BACK:dir==='down'?P_FRONT:P_SIDE;const legs=side?LEGS_S[frame%2]:LEGS_F[frame%3];
   const ox=x-6*s,oy=y-16*s,fl=dir==='left';rect(x-5*s,y-s,10*s,s+1,'rgba(0,0,0,.25)');spr(body,pal,ox,oy,s,fl);spr(legs,pal,ox,oy+13*s,s,fl);}
@@ -165,105 +168,243 @@ function drawDlg(){const d=dlg,x=20,y=244,w=600,h=108;ubox(x,y,w,h);
       ubox(cx,cy,cw,chh);d.choices.forEach((c,i)=>{txt(c,cx+36,cy+9+i*26,{size:20,color:i===d.sel?'#ffd166':'#fff'});if(i===d.sel)drawHeart(cx+13,cy+14+i*26,2);});}
     else if(Math.floor(performance.now()/300)%2)txt('▼',x+w-26,y+h-26,{size:18,color:'#ffd166'});}}
 /* ---------------- maps ---------------- */
+const DR=(m,c,r,dir)=>[m,c,r,dir];
 const MAPS={
-  campus:{name:'ETH Zentrum · Polyterrasse',music:'campus',outdoor:true,pano:true,theme:{},
-    rows:["FFFFFFFFFDFFFFFFFFFF","F,,T,,,,,=,,,,,,T,,F","D==================D","F,,,,,,,,=,,,,,,,,,F","F,T,,,,,,=,,,,,,,T,F","F,,,,,,,,=,,,,,,,,,F","F==================F","F===B========B=====F","^^^^^^^^^^^^^^^^^^^^","~~~~~~~~~~~~~~~~~~~~"],
-    doors:{'9,0':['hg',9,8,'up'],'0,2':['cab',18,5,'left'],'19,2':['mensa',1,5,'right']},
-    signs:[[9,0,'HG'],[0,1,'CAB'],[19,1,'MENSA']]},
-  hg:{name:'HG · Hauptgebäude',music:'indoor',theme:{f1:'#e6dfd2',f2:'#d9d1c2',wall:'#a39276',trim:'#7d6f59',hi:'#b8a88c',table:'#8b5a2b'},
-    rows:["####E####N####E#####","#L................L#","#..p............p..#","#..................#","#..................#","#..................#","#..................#","#p................p#","#..................#","#########D##########"],
-    doors:{'9,9':['campus',9,1,'down']},signs:[[4,0,'HG F1'],[14,0,'EXAM']]},
-  cab:{name:'CAB · Computer Science',music:'indoor',theme:{f1:'#cfd5dc',f2:'#c3cad2',wall:'#34465c',trim:'#243243',hi:'#46607d',table:'#eceff1'},
-    rows:["#####E######E#######","#..................#","#.SS.........V.....#","#..................#","#..tt..........tt..#","#..................D","#..tt..........tt..#","#..................#","#p......L..L......p#","####################"],
-    doors:{'19,5':['campus',1,2,'right']},signs:[[5,0,'ÜBUNG'],[12,0,'LECTURE']]},
-  mensa:{name:'Polymensa',music:'indoor',theme:{f1:'#e0cba6',f2:'#d4bd96',wall:'#8a5a3c',trim:'#6b4430',hi:'#a06d4c',table:'#a0703f'},
-    rows:["####################","#MMMMMMMM....C...J.#","#..................#","#..tttt....tttt....#","#..................#","D..................#","#..tttt....tttt....#","#..................#","#p................p#","####################"],
-    doors:{'0,5':['campus',18,2,'left']},signs:[]}
+  campus:{name:'Polyterrasse · ETH Zentrum',music:'campus',
+    rows:["SSSSSSSSSSSSSSSSSSSS","FFFFFFFFFFFFFFFFFFFF","FFFFFFFFFDDFFFFFFFFF","h__________________h","D..................D","h.T..............T.h","h..l...........l.PPh","h..B.....B.....B.PPh","^^^^^^^^^^^^^^^^^^^^","~~~~~~~~~~~~~~~~~~~~"],
+    doors:{'9,2':DR('hg',9,8,'up'),'10,2':DR('hg',10,8,'up'),'0,4':DR('uni',18,4,'left'),'19,4':DR('mensa',1,5,'right')},
+    signs:[[0,3,'← CAB'],[19,3,'MENSA ↓']]},
+  uni:{name:'Universitätstrasse · CAB',music:'campus',
+    rows:["FFFFFFFFFFFFFFFFFFFF","FFFFFFFFFFFFFFFFFFFF","FFFFFFFFFDDFFFFFFFFF","h__________________h","hbb................D","h.....A.......B....h","sssZssssssssssssssss","RRRRRRRRRRRRRRRRRRRR","RRRRRRRRRRRRRRRRRRRR","gggggggggggggggggggg"],
+    doors:{'9,2':DR('cab',9,8,'up'),'10,2':DR('cab',10,8,'up'),'19,4':DR('campus',1,4,'right')},
+    signs:[[19,3,'POLYTERRASSE →']]},
+  hg:{name:'HG · Haupthalle',music:'indoor',
+    rows:["####E####N##L##E####","#..................#","#..................#","#...O...O..O...O...#","#p................p#","#..................#","#...O...O..O...O...#","#..................#","#B................B#","#########DD#########"],
+    doors:{'9,9':DR('campus',9,3,'down'),'10,9':DR('campus',10,3,'down')},
+    signs:[[4,0,'HG F 1'],[12,0,'BIBLIOTHEK'],[15,0,'PRÜFUNG']]},
+  cab:{name:'CAB · Departement Informatik',music:'indoor',
+    rows:["###E###v####G###KK##","#..................#","#V.................#","#..tt....YY....tt..#","#.......YYYY.......#","#..................#","#..tt..........tt..#","#..................#","#p..LL............p#","#########DD#########"],
+    doors:{'9,9':DR('uni',9,3,'down'),'10,9':DR('uni',10,3,'down')},
+    signs:[[3,0,'ÜBUNG'],[7,0,'VIS'],[12,0,'CABinett'],[16.5,0,'food&lab']]},
+  mensa:{name:'Mensa Polyterrasse',music:'indoor',
+    rows:["#RRRRRRRWWWWWWWWWWW#","#MMMMMMM..........J#","#..................#","#..tttt....tttt....#","#..................#","D..tttt....tttt....#","#..................#","#..tttt....tttt....#","#p................p#","####################"],
+    doors:{'0,5':DR('campus',18,4,'left')},signs:[]}
 };
-const SOLID=new Set('#F^~TLpStVMCJNEB'.split(''));
-const INTERACT=new Set('VCMJNBELTSp^~t'.split(''));
+const SOLID=new Set('#FSh^~TlBPObEFNLVKvGYtpMRWJAZg'.split(''));
+const INTERACT=new Set('BPT^~FShlZAbRgENLOpvGKVYtMWJ'.split(''));
 const NPCS=[
-  {id:'exch',map:'campus',c:6,r:3,name:'Exchange student',pal:mkPal('#d9b13b','#2e8b57'),dir:'down',lines:[
-    ["Grüezi! Three weeks here and I still can't find my lecture hall.","Is it in the basement? Everything here is in the basement."],
-    ["My Swiss German so far: 'Merci vilmal' and 'Chuchichäschtli'.","I use the second one for everything. Nobody has corrected me yet."]]},
-  {id:'senior',map:'campus',c:13,r:4,name:'Third-year student',pal:mkPal('#1c1c1c','#7a3b3b'),dir:'left',lines:[
-    ["Basisprüfung? Oh, you'll be fine.","...","(They stare into the distance for ten full seconds.)"],
-    ["Pro tip: Übungen in CAB give XP. Professors only respect levels.","And higher levels give you more HP in fights."],
+  {id:'anouk',map:'campus',c:6,r:5,name:'Anouk (exchange student)',pal:mkPal('#d9b13b','#2e8b57'),dir:'down',lines:[
+    ["Salut! I came from Lyon for one semester.","Three weeks in and I still can't find my lecture hall. Is everything here in the basement?"],
+    ["My Swiss German so far: 'Grüezi', 'Merci vilmal' and 'Chuchichäschtli'.","I use the last one for everything. Nobody has corrected me yet."]]},
+  {id:'severin',map:'campus',c:12,r:4,name:'Severin (3rd semester)',pal:mkPal('#1c1c1c','#7a3b3b'),dir:'left',lines:[
+    ["Basisprüfung? Oh, you'll be fine.","...","(He stares at the Alps for ten full seconds.)"],
+    ["Pro tip: get the old exams from VIS in CAB.","Block 1 covers the HS courses, Block 2 the FS ones. Pass both and the Basisjahr is done."],
     ["Never trust a TA who says 'this one is easy'.","That's how they got me in week 4."]]},
-  {id:'tourist',map:'campus',c:11,r:7,name:'Tourist',pal:mkPal('#a0522d','#e67e22','#3b5b8a'),dir:'down',lines:[
-    ["What a view! The whole city, the lake, the Alps...","This terrace is the only thing at ETH without a deadline."],
-    ["When your week is done, sit on one of the benches here.","Sleeping is a valid strategy. Ask any student."]]},
-  {id:'lost',map:'hg',c:6,r:5,name:'Lost freshman',pal:mkPal('#5a3b22','#16a085'),dir:'down',lines:[
-    ["Which way is lecture hall F1? I've passed this staircase six times.","This building is a maze designed by someone who hated freshmen."],
-    ["I asked a professor for directions.","He said: 'It is left as an exercise.'"]]},
-  {id:'stress',map:'hg',c:13,r:3,name:'Stressed student',pal:mkPal('#2b2b2b','#8e44ad'),dir:'left',lines:[
+  {id:'tourist',map:'campus',c:12,r:7,name:'Tourist',pal:mkPal('#a0522d','#e67e22','#3b5b8a'),dir:'down',lines:[
+    ["What a view! Grossmünster, the lake, the Alps...","This terrace is the only place at ETH without a deadline."],
+    ["I came up with the Polybahn. Two and a half minutes!","Students sleep on these benches, you know. Very relaxing city."]]},
+  {id:'jonas',map:'uni',c:7,r:4,name:'Jonas (VIS)',pal:mkPal('#6b4a2b','#1f5fa8'),dir:'down',lines:[
+    ["Hoi! I'm from VIS, the computer science student association.","Our office in CAB has the Prüfungssammlung: old exams. Pure gold before a Basisprüfung block."],
+    ["Erstsemestrigenfest on Friday! Bring friends.","Or bring your Serie. We won't judge. Much."]]},
+  {id:'velo',map:'uni',c:13,r:6,name:'Cyclist',pal:mkPal('#2b2b2b','#16a085'),dir:'left',lines:[
+    ["Careful on Universitätstrasse. The tram always wins.","Tram 10 goes down to the main station. And to the airport, if the Basisprüfung goes badly."]]},
+  {id:'mia',map:'hg',c:6,r:5,name:'Mia (lost first-year)',pal:mkPal('#5a3b22','#16a085'),dir:'down',lines:[
+    ["Which way is HG F 1? I've passed this staircase six times.","This building was designed by someone who really hated freshmen."],
+    ["I asked a professor for directions.","He said: 'This is left as an exercise.'"]]},
+  {id:'luca',map:'hg',c:13,r:2,name:'Luca (stressed)',pal:mkPal('#2b2b2b','#8e44ad'),dir:'left',lines:[
     ["I just proved P = NP!","...wait. I proved 1 = 1.","That still counts for partial credit, right?"],
-    ["The big door on the right is the exam room.","It only opens once all five professors are defeated.","Like a boss rush. Because it is one."]]},
-  {id:'ta',map:'cab',c:7,r:1,name:'TA',pal:mkPal('#c0392b','#f39c12'),dir:'down',lines:[
-    ["Hi! I'm your TA. The Übungsraum is the door on the left.","Today's exercise is easy. It says so on the sheet."],
+    ["The door on the right is the exam room.","Block 1 opens once all four HS professors are beaten. Block 2 needs the four FS ones."]]},
+  {id:'brunner',map:'hg',c:2,r:7,name:'Herr Brunner (Hauswart)',pal:mkPal('#9a9a9a','#34495e','#34495e'),dir:'right',lines:[
+    ["Grüezi. Please don't run in the Haupthalle.","Semper would be turning in his grave."],
+    ["I've seen thousands of first-years come through here.","The ones who sleep and eat properly do best. Just saying."]]},
+  {id:'laura',map:'cab',c:4,r:1,name:'Laura (TA)',pal:mkPal('#c0392b','#f39c12'),dir:'down',lines:[
+    ["Hi! I'm your TA. The Übungsraum is right here.","This week's Serie is easy. It says so on the sheet."],
     ["If you don't understand something, just ask!","(Nobody has ever asked.)"],
-    ["The lecture hall door on the right: Prof. Null and Prof. Gate teach there.","The others are in HG."]]},
-  {id:'sleeper',map:'cab',c:3,r:3,name:'Sleeping student',pal:mkPal('#6b4a2b','#95a5a6'),dir:'down',lines:[
+    ["That yellow thing is a real Cray supercomputer from the 80s.","Now it's mostly a bench. Like most of us after Block 1."]]},
+  {id:'tim',map:'cab',c:3,r:4,name:'Tim (asleep)',pal:mkPal('#6b4a2b','#95a5a6'),dir:'up',lines:[
     ["Zzz... the induction step... holds for n+1... zzz"],
-    ["Zzz... five more minutes... then I'll start the exercise sheet... zzz"]]},
-  {id:'debug',map:'cab',c:17,r:4,name:'Debugging student',pal:mkPal('#111111','#34495e'),dir:'left',lines:[
+    ["Zzz... five more minutes... then Code Expert... zzz"]]},
+  {id:'elias',map:'cab',c:16,r:4,name:'Elias (debugging)',pal:mkPal('#111111','#34495e'),dir:'left',lines:[
     ["It works on my machine.","My machine is the only machine that matters."],
     ["I've been staring at this NullPointerException since Tuesday.","I think it's staring back."]]},
-  {id:'queue',map:'mensa',c:6,r:2,name:'Student in the queue',pal:mkPal('#8a5a2b','#c0392b'),dir:'up',lines:[
-    ["I've been in this queue since the first lecture.","Time moves differently in the Mensa line."]]},
-  {id:'mathguy',map:'mensa',c:13,r:4,name:'Math student',pal:mkPal('#e0c068','#2c3e50'),dir:'left',lines:[
-    ["Mensa theorem: Menu 1 ∪ Menu 2 = pasta.","Proof: by observation, every single day."],
-    ["The coffee machine eats coins with probability ¼.","I collected data. I have nothing else in my life."]]}
+  {id:'ramon',map:'cab',c:12,r:4,name:'Ramon',pal:mkPal('#e0c068','#c0392b'),dir:'left',lines:[
+    ["This Cray was a supercomputer once.","Now it's the comfiest bench in CAB. Same, honestly."]]},
+  {id:'sara',map:'mensa',c:5,r:2,name:'Sara (in the queue)',pal:mkPal('#8a5a2b','#c0392b'),dir:'up',lines:[
+    ["The LOCAL line is long again.","Time moves differently in the Mensa queue."],
+    ["Natürlich vegi is cheaper and the queue is shorter.","Best algorithm I learned this semester."]]},
+  {id:'noah',map:'mensa',c:13,r:4,name:'Noah (math student)',pal:mkPal('#e0c068','#2c3e50'),dir:'left',lines:[
+    ["Mensa theorem: every menu converges to pasta.","Proof: by observation, every single day."],
+    ["These windows have the best view at ETH.","Second best: the Polybahn. Third: the 'Bestanden' email."]]}
 ];
 const npcAt=(m,c,r)=>NPCS.find(n=>n.map===m&&n.c===c&&n.r===r);
 const tileAt=(m,c,r)=>{const rows=MAPS[m].rows;return r>=0&&r<rows.length&&c>=0&&c<rows[r].length?rows[r][c]:null;};
 function solidAt(px,py){const c=Math.floor(px/TS),r=Math.floor(py/TS),ch=tileAt(G.map,c,r);if(ch===null)return true;return SOLID.has(ch)||!!npcAt(G.map,c,r);}
 const blocked=(x,y)=>solidAt(x-7,y-8)||solidAt(x+7,y-8)||solidAt(x-7,y-1)||solidAt(x+7,y-1);
 
-/* ---------------- tiles ---------------- */
-function drawTile(m,ch,c,r){const x=c*TS,y=HUD+r*TS,T=m.theme;
-  const floor=()=>{if(m.outdoor){rect(x,y,TS,TS,'#5b8f3a');rect(x+((c*11+r*5)%26)+2,y+((c*3+r*17)%26)+2,2,2,'#79b24f');rect(x+((c*5+r*13)%26)+3,y+((c*13+r*7)%26)+3,2,2,'#4b7a2f');}else rect(x,y,TS,TS,(c+r)%2?T.f1:T.f2);};
-  const cobble=()=>{rect(x,y,TS,TS,'#bdb5a6');rect(x,y+15,TS,2,'#a8a091');rect(x+(r%2?6:22),y,2,15,'#a8a091');rect(x+(r%2?22:6),y+17,2,15,'#a8a091');};
-  switch(ch){
-    case ',':case '.':floor();break;
-    case '=':cobble();break;
-    case 'T':floor();rect(x+13,y+18,6,13,'#6b4a2b');rect(x+4,y+3,24,17,'#2f6b2a');rect(x+8,y-1,16,24,'#2f6b2a');rect(x+9,y+3,8,6,'#3f8a35');break;
-    case 'F':rect(x,y,TS,TS,'#d9d0bf');rect(x,y+TS-3,TS,3,'#b3a994');rect(x+8,y+6,16,18,'#3e5770');rect(x+8,y+6,16,3,'#2b3e52');rect(x+15,y+6,2,18,'#cfc6b4');break;
-    case 'D':rect(x,y,TS,TS,m.outdoor?'#d9d0bf':T.wall);rect(x+4,y+2,24,30,'#3b2616');rect(x+6,y+4,20,28,'#7a5032');rect(x+15,y+4,2,28,'#5a3a22');rect(x+20,y+18,3,3,'#e0c068');break;
-    case 'E':rect(x,y,TS,TS,T.wall);rect(x+2,y+2,28,30,'#2e1d10');rect(x+4,y+4,11,28,'#5e3b22');rect(x+17,y+4,11,28,'#5e3b22');rect(x+6,y+10,7,8,'#9fc3e0');rect(x+19,y+10,7,8,'#9fc3e0');break;
-    case '#':rect(x,y,TS,TS,T.wall);rect(x,y,TS,3,T.hi);rect(x,y+TS-5,TS,5,T.trim);break;
-    case '^':cobble();rect(x,y+8,TS,3,'#2c2c34');for(let i=2;i<TS;i+=8)rect(x+i,y+8,2,20,'#2c2c34');rect(x,y+26,TS,3,'#2c2c34');break;
-    case '~':break;
-    case 'L':floor();rect(x+2,y+1,28,30,'#5a3b22');for(let i=0;i<3;i++){rect(x+4,y+4+i*9,24,7,'#2e1d10');for(let j=0;j<5;j++)rect(x+5+j*5,y+5+i*9,4,6,['#c0392b','#2980b9','#27ae60','#f1c40f','#8e44ad'][(j+i+c)%5]);}break;
-    case 'p':floor();rect(x+10,y+20,12,10,'#a0522d');rect(x+8,y+6,16,15,'#3f8a35');rect(x+12,y+2,8,8,'#4fa043');break;
-    case 'S':floor();rect(x,y+8,TS,20,'#8e3434');rect(x,y+4,TS,10,'#a84444');rect(x+2,y+14,TS-4,8,'#b85454');break;
-    case 't':floor();rect(x+2,y+8,30,18,'rgba(0,0,0,.18)');rect(x,y+4,TS,18,T.table);rect(x+2,y+22,3,8,'#555');rect(x+27,y+22,3,8,'#555');break;
-    case 'V':floor();rect(x+3,y-10,26,40,'#7a1f1f');rect(x+4,y-9,24,38,'#c0392b');rect(x+7,y-6,13,24,'#1d2b38');
-      for(let i=0;i<3;i++)for(let j=0;j<2;j++)rect(x+9+j*6,y-4+i*8,3,6,'#f1c40f');rect(x+22,y-4,4,10,'#ecf0f1');rect(x+7,y+21,18,5,'#111');
-      rect(x+4,y-9,24,2,(Math.floor(performance.now()/500)%2)?'#ff8a8a':'#c0392b');break;
-    case 'M':floor();rect(x,y+4,TS,24,'#7f8a93');rect(x,y+2,TS,6,'#c8d0d6');if(c%2)rect(x+6,y+10,20,10,'#e6e1d3');break;
-    case 'C':floor();rect(x+6,y-4,20,32,'#2d2d33');rect(x+9,y,14,8,'#5d6d7e');rect(x+20,y+12,3,3,(Math.floor(performance.now()/400)%2)?'#ff4d4d':'#5a1a1a');rect(x+12,y+18,8,8,'#ecf0f1');break;
-    case 'J':floor();rect(x+14,y+16,4,14,'#5a3b22');rect(x+2,y,28,20,'#b07b46');rect(x+5,y+3,9,7,'#fff');rect(x+17,y+5,9,9,'#ffe08a');rect(x+7,y+12,8,6,'#cde');break;
-    case 'N':rect(x,y,TS,TS,T.wall);rect(x+2,y+4,28,22,'#7a5232');rect(x+4,y+6,24,18,'#b07b46');rect(x+6,y+8,8,7,'#fff');rect(x+16,y+9,9,10,'#ffe08a');rect(x+8,y+16,7,6,'#f8b4c4');break;
-    case 'B':cobble();rect(x+2,y+12,28,6,'#8b5a2b');rect(x+2,y+6,28,4,'#a0703f');rect(x+4,y+18,3,8,'#333');rect(x+25,y+18,3,8,'#333');break;
-    default:floor();
-  }}
-function drawPano(){const y=HUD+9*TS;rect(0,y,W,TS,'#9cc3e4');ctx.fillStyle='#eef3f8';ctx.beginPath();ctx.moveTo(0,y+16);
-  for(let i=0;i<=16;i++){ctx.lineTo(i*40+20,y+3+(i%3)*3);ctx.lineTo(i*40+40,y+16);}ctx.lineTo(W,y+32);ctx.lineTo(0,y+32);ctx.closePath();ctx.fill();
-  rect(0,y+16,W,7,'#4f7fb0');for(let x=0;x<W;x+=18){const hh=4+(x*7)%9;rect(x,y+32-hh,14,hh,'#6b7c93');rect(x+3,y+32-hh-3,8,3,'#8a5a4a');}}
+/* ---------------- shared painting helpers ---------------- */
+function speck(x,y,c,seed){for(let i=0;i<4;i++){const h=(seed*73+i*37)%997;rect(x+(h%27)+2,y+((h*7)%27)+2,2,2,c);}}
+function drawBench(x,y){rect(x+2,y+10,28,5,'#8b5a2b');rect(x+2,y+16,28,5,'#a0703f');rect(x+4,y+21,3,8,'#333');rect(x+25,y+21,3,8,'#333');}
+function plant(x,y){rect(x+10,y+20,12,10,'#a0522d');rect(x+8,y+6,16,15,'#3f8a35');rect(x+12,y+2,8,8,'#4fa043');}
+function circ(x,y,r,c){ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+function skyline(x0,y0,w,h){ // Zurich old town as seen from the Polyterrasse
+  const g=ctx.createLinearGradient(0,y0,0,y0+h);g.addColorStop(0,'#a9cdea');g.addColorStop(1,'#e3eef7');ctx.fillStyle=g;ctx.fillRect(x0,y0,w,h);
+  const s=w/640,X=v=>x0+v*s;
+  ctx.fillStyle='#4f6b4a';ctx.beginPath();ctx.moveTo(X(0),y0+h*0.5);ctx.quadraticCurveTo(X(120),y0+h*0.22,X(270),y0+h*0.56);ctx.lineTo(X(270),y0+h*0.7);ctx.lineTo(X(0),y0+h*0.7);ctx.closePath();ctx.fill();
+  rect(X(118),y0+h*0.06,2,h*0.22,'#9aa3ab');rect(X(115),y0+h*0.1,8,3,'#cfd6dc');
+  ctx.fillStyle='#e9eef5';ctx.beginPath();ctx.moveTo(X(280),y0+h*0.55);
+  [[300,.42],[330,.48],[360,.3],[395,.44],[430,.26],[470,.42],[510,.32],[550,.46],[600,.3],[640,.44]].forEach(([px,py])=>ctx.lineTo(X(px),y0+h*py));
+  ctx.lineTo(X(640),y0+h*0.6);ctx.lineTo(X(280),y0+h*0.6);ctx.closePath();ctx.fill();
+  rect(X(280),y0+h*0.56,X(640)-X(280),h*0.08,'#5d8fbf');
+  const roofY=y0+h*0.66;
+  for(let x=0;x<640;x+=14){const hh=h*0.2+((x*13)%7),bx=X(x);rect(bx,y0+h-hh,12*s,hh,'#e7dcc4');ctx.fillStyle=(x/14)%3===0?'#9c4a33':'#b0583b';
+    ctx.beginPath();ctx.moveTo(bx-1,y0+h-hh);ctx.lineTo(bx+6*s,y0+h-hh-6);ctx.lineTo(bx+13*s,y0+h-hh);ctx.fill();}
+  rect(X(366),roofY-14,12*s,h,'#e6dcc6');ctx.fillStyle='#3f4a45';ctx.beginPath();ctx.moveTo(X(364),roofY-14);ctx.lineTo(X(372),roofY-24);ctx.lineTo(X(380),roofY-14);ctx.fill();circ(X(372),roofY-7,3,'#d4a017');
+  rect(X(416),roofY-10,8*s,h,'#d8d2c4');ctx.fillStyle='#4f8f7b';ctx.beginPath();ctx.moveTo(X(414),roofY-10);ctx.lineTo(X(420),roofY-30);ctx.lineTo(X(426),roofY-10);ctx.fill();
+  for(const tx of [466,484]){rect(X(tx),roofY-16,10*s,h,'#efe5cc');ctx.fillStyle='#3b3f45';ctx.beginPath();ctx.ellipse(X(tx)+5*s,roofY-16,5*s,7,0,Math.PI,0);ctx.fill();rect(X(tx)+4*s,roofY-26,2,4,'#3b3f45');}}
+function drawTram(x,y){for(let s=0;s<2;s++){const sx=x+s*114;rect(sx,y,110,42,'#f4f6f8');rect(sx,y+28,110,10,'#1f5fa8');rect(sx,y,110,3,'#d9dee3');
+    for(let i=0;i<5;i++)rect(sx+8+i*20,y+8,14,13,'#2c3e50');rect(sx,y+40,110,3,'#333');}
+  rect(x+110,y+4,4,34,'#1f2a33');rect(x+44,y-7,26,2,'#444');rect(x+56,y-7,2,7,'#444');txt('10',x+8,y+27,{size:12,color:'#fff'});}
+
+/* ---------------- tile painters per map ---------------- */
+const TILE={
+  campus(ch,c,r,x,y){
+    const plaza=()=>{rect(x,y,TS,TS,(c+r)%2?'#cfcac1':'#c9c4ba');rect(x,y,TS,1,'#b9b3a8');rect(x,y,1,TS,'#b9b3a8');speck(x,y,'#bdb7ac',c*31+r*17);};
+    switch(ch){
+      case '.':case 'P':plaza();break;
+      case 'D':if(r===4)plaza();break;
+      case '_':rect(x,y,TS,TS,'#dad3c5');for(let i=0;i<4;i++)rect(x,y+i*8+6,TS,2,'#bfb7a8');break;
+      case 'h':plaza();rect(x+1,y+4,30,26,'#2f5e32');rect(x+3,y+4,26,6,'#3f7a3f');speck(x,y+6,'#264d29',c*7+r);break;
+      case 'T':plaza();rect(x+4,y+18,24,13,'#9c968c');rect(x+4,y+18,24,3,'#b5afa5');rect(x+14,y+6,4,13,'#5a3e28');circ(x+16,y+3,15,'#3d7a38');circ(x+11,y-2,6,'#4f9447');break;
+      case 'l':plaza();rect(x+15,y-14,3,42,'#2b2b30');rect(x+11,y-20,11,8,'#2b2b30');rect(x+13,y-18,7,4,'#ffe9a8');rect(x+12,y+26,9,3,'#2b2b30');break;
+      case 'B':plaza();drawBench(x,y);break;
+      default:break;}},
+  uni(ch,c,r,x,y){
+    const pave=()=>{rect(x,y,TS,TS,'#d9d5cc');rect(x,y+15,TS,1,'#c6c1b6');rect(x+(r%2?8:24),y,1,TS,'#c6c1b6');};
+    switch(ch){
+      case '.':case 'D':pave();break;
+      case '_':rect(x,y,TS,TS,'#cfc9bd');for(let i=0;i<4;i++)rect(x,y+i*8+6,TS,2,'#b6af9f');break;
+      case 'h':pave();rect(x+1,y+4,30,26,'#2f5e32');rect(x+3,y+4,26,6,'#3f7a3f');break;
+      case 'b':pave();rect(x+2,y+24,28,2,'#7f8c8d');ctx.strokeStyle='#2c3e50';ctx.lineWidth=2;
+        for(const wx of [9,23]){ctx.beginPath();ctx.arc(x+wx,y+20,6,0,Math.PI*2);ctx.stroke();}rect(x+9,y+13,14,2,(c%2)?'#c0392b':'#2980b9');rect(x+15,y+9,2,6,'#2c3e50');break;
+      case 'A':pave();rect(x+8,y-18,16,46,'#3d4b3f');rect(x+9,y-12,14,10,'#f1c40f');rect(x+9,y,14,12,'#e74c3c');rect(x+9,y+14,14,8,'#ecf0f1');rect(x+6,y-22,20,5,'#2c3a2f');break;
+      case 'B':pave();drawBench(x,y);break;
+      case 's':rect(x,y,TS,TS,'#a3a3a3');rect(x,y+TS-4,TS,4,'#c9c9c9');rect(x,y,1,TS,'#959595');break;
+      case 'Z':rect(x,y,TS,TS,'#a3a3a3');rect(x,y+TS-4,TS,4,'#c9c9c9');rect(x+15,y-18,3,46,'#2b2b30');rect(x+6,y-26,21,14,'#1f4f8f');txt('H',x+16,y-27,{size:16,align:'center',color:'#fff'});break;
+      default:break;}},
+  hg(ch,c,r,x,y){
+    const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#e6dcc8':'#ddd1ba');rect(x+4,y+4,24,24,(c+r)%2?'#ece3d1':'#e3d8c3');rect(x,y,TS,1,'#c9bb9f');rect(x,y,1,TS,'#c9bb9f');};
+    const wall=()=>{rect(x,y,TS,TS,'#c8b48c');rect(x,y+TS-5,TS,5,'#a8956f');rect(x,y,TS,3,'#d6c4a0');};
+    switch(ch){
+      case '.':fl();break;
+      case '#':wall();if(r===0){ctx.fillStyle='#b59f76';ctx.beginPath();ctx.arc(x+16,y+14,9,Math.PI,0);ctx.fill();rect(x+7,y+14,18,12,'#b59f76');}else if(c===0||c===19)rect(x+12,y,8,TS,'#bda983');break;
+      case 'O':fl();rect(x+6,y+24,20,6,'#cdbf9f');rect(x+9,y-26,14,50,'#f1e9d6');rect(x+19,y-26,4,50,'#d8cbb0');rect(x+6,y-30,20,6,'#d9ccb0');rect(x+7,y-33,18,3,'#e6dbc2');break;
+      case 'E':wall();rect(x+2,y+2,28,30,'#3a2618');rect(x+4,y+6,11,26,'#6b4428');rect(x+17,y+6,11,26,'#6b4428');rect(x+12,y+18,2,3,'#e0c068');rect(x+18,y+18,2,3,'#e0c068');break;
+      case 'L':wall();rect(x+2,y+2,28,30,'#3a2618');rect(x+4,y+6,11,26,'#8fb0c8');rect(x+17,y+6,11,26,'#8fb0c8');rect(x+15,y+6,2,26,'#3a2618');break;
+      case 'N':wall();rect(x+2,y+4,28,22,'#7a5232');rect(x+4,y+6,24,18,'#b07b46');rect(x+6,y+8,8,7,'#fff');rect(x+16,y+9,9,10,'#ffe08a');rect(x+8,y+16,7,6,'#f8b4c4');break;
+      case 'p':fl();plant(x,y);break;
+      case 'B':fl();drawBench(x,y);break;
+      case 'D':fl();rect(x+2,y+18,28,12,'#7a2e2e');break;
+      default:fl();}},
+  cab(ch,c,r,x,y){
+    const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#cfccc4':'#c7c3ba');rect(x,y,TS,1,'#b3afa5');rect(x,y,1,TS,'#b3afa5');};
+    const wall=()=>{rect(x,y,TS,TS,'#e8e4dc');rect(x,y+TS-6,TS,6,'#8d8a83');rect(x,y+8,TS,2,'#d8d3c8');};
+    const door=col=>{wall();rect(x+4,y+2,24,30,'#3b2a1c');rect(x+6,y+4,20,28,col);rect(x+21,y+18,3,3,'#e0c068');};
+    switch(ch){
+      case '.':case 'Y':fl();break;
+      case '#':wall();break;
+      case 'E':door('#6b4a2b');break;
+      case 'v':door('#1f5fa8');break;
+      case 'G':door('#5b2c6f');break;
+      case 'K':wall();rect(x,y+10,TS,22,'#8b6a4a');rect(x,y+8,TS,4,'#c8a27a');rect(x+3,y+12,26,8,'#bfe3f0');rect(x+6,y+15,7,3,'#d68a3c');rect(x+18,y+15,7,3,'#d68a3c');break;
+      case 'V':fl();rect(x+3,y-10,26,40,'#2c3e50');rect(x+4,y-9,24,38,'#34495e');rect(x+7,y-6,13,24,'#1d2b38');
+        for(let i=0;i<3;i++)for(let j=0;j<2;j++)rect(x+9+j*6,y-4+i*8,3,6,'#f1c40f');rect(x+22,y-4,4,10,'#ecf0f1');rect(x+7,y+21,18,5,'#111');
+        rect(x+4,y-9,24,2,(Math.floor(performance.now()/500)%2)?'#ffd166':'#34495e');break;
+      case 't':fl();rect(x,y+6,TS,16,'#f2f2f2');rect(x,y+20,TS,2,'#bdbdbd');rect(x+8,y+8,14,9,'#2c3e50');rect(x+9,y+9,12,6,'#7fdbff');break;
+      case 'L':fl();rect(x+2,y+1,28,30,'#5a3b22');for(let i=0;i<3;i++){rect(x+4,y+4+i*9,24,7,'#2e1d10');for(let j=0;j<5;j++)rect(x+5+j*5,y+5+i*9,4,6,['#c0392b','#2980b9','#27ae60','#f1c40f','#8e44ad'][(j+i+c)%5]);}break;
+      case 'p':fl();plant(x,y);break;
+      case 'D':fl();rect(x+2,y+18,28,12,'#2c3e50');break;
+      default:fl();}},
+  mensa(ch,c,r,x,y){
+    const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#e3d8c4':'#ddd1bb');rect(x,y,TS,1,'#cdbfa5');};
+    switch(ch){
+      case '.':fl();break;
+      case 'D':fl();rect(x,y+4,6,24,'#6b4428');break;
+      case '#':rect(x,y,TS,TS,'#c9b597');rect(x,y+TS-5,TS,5,'#a8926f');break;
+      case 'M':fl();rect(x,y+6,TS,24,'#9aa4ad');rect(x,y+4,TS,5,'#d4dbe0');rect(x+2,y,TS-4,4,'rgba(200,230,255,.6)');
+        rect(x+5,y+11,10,8,['#e67e22','#27ae60','#f1c40f','#c0392b'][c%4]);rect(x+18,y+11,10,8,['#ecf0f1','#d35400','#8e44ad','#16a085'][c%4]);break;
+      case 't':fl();rect(x,y+8,TS,14,'#b07b46');rect(x,y+8,TS,2,'#c98f55');if(c%2){rect(x+8,y+11,8,6,'#fff');rect(x+10,y+12,4,3,'#e67e22');}break;
+      case 'J':fl();rect(x+14,y+16,4,14,'#5a3b22');rect(x+2,y,28,20,'#b07b46');rect(x+5,y+3,9,7,'#fff');rect(x+17,y+5,9,9,'#ffe08a');rect(x+7,y+12,8,6,'#cde');break;
+      case 'p':fl();plant(x,y);break;
+      default:break;}}
+};
+
+/* ---------------- set pieces drawn after tiles ---------------- */
+const PAINT={
+  campus(t){const y0=HUD,fy=y0+32;
+    const g=ctx.createLinearGradient(0,y0,0,fy);g.addColorStop(0,'#86b6de');g.addColorStop(1,'#cde2f1');ctx.fillStyle=g;ctx.fillRect(0,y0,W,32);
+    ctx.fillStyle='#46555f';ctx.beginPath();ctx.ellipse(320,fy-2,64,30,0,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#55666f';ctx.beginPath();ctx.moveTo(300,fy-2);ctx.ellipse(300,fy-2,30,26,0,Math.PI,1.5*Math.PI);ctx.closePath();ctx.fill();
+    for(let i=-2;i<=2;i++)rect(320+i*22,fy-26+Math.abs(i)*5,2,24-Math.abs(i)*5,'#3a4750');
+    rect(0,fy-4,W,4,'#bba779');rect(0,fy,W,64,'#dccba4');
+    for(let c=0;c<20;c++){if(c>=8&&c<=11)continue;const x=c*TS;
+      rect(x,fy,3,32,'#cebd94');ctx.fillStyle='#46596c';ctx.beginPath();ctx.arc(x+16,fy+12,7,Math.PI,0);ctx.fill();rect(x+9,fy+12,14,14,'#46596c');
+      rect(x+15,fy+5,2,21,'#cdbb92');rect(x+7,fy+26,18,3,'#c2ae85');}
+    rect(0,fy+31,W,4,'#c4b088');for(let yy=fy+38;yy<fy+64;yy+=6)rect(0,yy,W,1,'#c6b48c');
+    for(let c=0;c<20;c++){if(c>=8&&c<=11)continue;const x=c*TS;rect(x+10,fy+40,12,15,'#3f5164');rect(x+10,fy+40,12,2,'#2d3a48');}
+    ctx.fillStyle='#e9dcb9';ctx.beginPath();ctx.moveTo(248,fy-2);ctx.lineTo(320,fy-20);ctx.lineTo(392,fy-2);ctx.closePath();ctx.fill();rect(248,fy-3,144,3,'#cdbd96');
+    rect(256,fy-2,128,66,'#e5d6b0');
+    for(const cx of [262,278,352,368]){rect(cx,fy,10,62,'#f2e8cc');rect(cx+8,fy,2,62,'#d4c6a2');rect(cx-2,fy-2,14,4,'#d9c9a3');rect(cx-2,fy+60,14,4,'#d9c9a3');}
+    rect(292,fy+24,56,40,'#2a1c12');ctx.fillStyle='#2a1c12';ctx.beginPath();ctx.arc(320,fy+24,28,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#9fb8cc';ctx.beginPath();ctx.arc(320,fy+24,22,Math.PI,0);ctx.fill();rect(319,fy+2,2,22,'#2a1c12');
+    rect(296,fy+28,23,36,'#6b4428');rect(321,fy+28,23,36,'#6b4428');rect(300,fy+32,15,12,'#7d5233');rect(325,fy+32,15,12,'#7d5233');
+    const sx=544,sy=y0+6*TS;rect(sx+2,sy+2,60,62,'#e8e6e1');rect(sx+2,sy+2,60,14,'#c0392b');txt('POLYBAHN',sx+32,sy+2,{size:14,align:'center',color:'#fff'});
+    rect(sx+8,sy+22,48,14,'#7fa6c6');rect(sx+24,sy+40,16,24,'#5c6670');
+    const by=y0+8*TS;rect(0,by,W,16,'#cfc9bd');rect(0,by,W,5,'#ece6da');for(let x=3;x<W;x+=9)rect(x,by+5,4,8,'#ddd5c6');rect(0,by+12,W,4,'#d2c9b8');
+    const py=by+16;skyline(0,py,W,H-py);
+    ctx.strokeStyle='#6d6d6d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(560,py);ctx.lineTo(640,H);ctx.stroke();
+    const k=(Math.sin(t*0.4)+1)/2;ctx.save();ctx.translate(566+k*40,py+6+k*22);ctx.rotate(0.5);rect(-14,-7,28,14,'#c0392b');rect(-11,-4,22,5,'#f5d6a1');ctx.restore();},
+  uni(t){const y0=HUD;
+    rect(0,y0,W,14,'#5c6268');for(let c=0;c<20;c+=2){rect(c*TS+10,y0+2,12,10,'#7d858c');rect(c*TS+13,y0+5,6,6,'#2f3a44');}
+    rect(0,y0+14,W,4,'#b9ad8f');rect(0,y0+18,W,78,'#d6cbb0');rect(0,y0+50,W,3,'#c3b696');
+    for(let c=0;c<20;c++){if(c===9||c===10)continue;const x=c*TS;
+      rect(x+9,y0+22,14,24,'#3f5164');rect(x+7,y0+20,18,3,'#c3b696');rect(x+15,y0+22,2,24,'#cfc4a8');
+      rect(x+9,y0+58,14,24,'#3f5164');rect(x+7,y0+56,18,3,'#c3b696');rect(x+15,y0+58,2,24,'#cfc4a8');}
+    rect(0,y0+86,W,10,'#b9ad8f');
+    rect(286,y0+50,68,46,'#1f2a33');for(let i=0;i<5;i++)rect(288+i*16,y0+52,2,44,'#9aa5ad');rect(280,y0+46,80,6,'#9aa0a6');
+    txt('CAB',320,y0+24,{font:PX,size:16,align:'center',color:'#2a3440'});
+    const ry=y0+7*TS;rect(0,ry,W,64,'#55585e');for(const k of [14,22,42,50])rect(0,ry+k,W,2,'#8e9196');rect(0,ry-1,W,1,'#33363b');
+    drawTram(((t*70)%1500)-520,ry+10);
+    const gy=y0+9*TS;rect(0,gy,W,32,'#a9a9a9');for(let x=0;x<W;x+=80){rect(x+6,gy+8,68,24,'#d9cfb8');rect(x+16,gy+14,12,10,'#3f5164');rect(x+48,gy+14,12,10,'#3f5164');}},
+  hg(){ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
+  cab(){drawCray(320,HUD+4*TS+6);},
+  mensa(){const y0=HUD;rect(32,y0,224,32,'#5b3a26');
+    const board=(x,title,price,col)=>{rect(x,y0+3,104,26,'#1d1d1f');rect(x,y0+3,104,10,col);txt(title,x+52,y0+2,{size:12,align:'center'});txt(price,x+52,y0+13,{size:16,align:'center',color:'#ffd166'});};
+    board(38,'natürlich vegi','5.40','#3c8d40');board(146,'LOCAL','10.50','#c0392b');
+    const wx=256,ww=352;rect(wx,y0,ww,32,'#2f353b');ctx.save();ctx.beginPath();ctx.rect(wx+2,y0+2,ww-4,28);ctx.clip();skyline(wx,y0+2,ww,28);ctx.restore();
+    for(let x=wx;x<=wx+ww;x+=32)rect(x-1,y0,3,32,'#2f353b');}
+};
+function drawCray(cx,cy){
+  ctx.fillStyle='#3d2a22';ctx.beginPath();ctx.ellipse(cx,cy+14,76,22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#6b3a2a';ctx.beginPath();ctx.ellipse(cx,cy+10,72,18,0,0,Math.PI*2);ctx.fill();
+  const panels=[];for(let i=0;i<14;i++){const a=(i+0.5)/14*Math.PI*2;if(Math.sin(a)<-0.8)continue;panels.push({a,x:cx+Math.cos(a)*50,y:cy+Math.sin(a)*12});}
+  panels.sort((p,q)=>p.y-q.y);
+  for(const p of panels){const sh=0.72+0.28*Math.max(0,Math.sin(p.a)+0.3),col=`rgb(${Math.round(242*sh)},${Math.round(194*sh)},${Math.round(48*sh)})`;
+    rect(p.x-7,p.y-46,14,46,col);rect(p.x-7,p.y-46,14,3,'#fff2b0');rect(p.x-7,p.y-3,14,3,'#7a5a10');}
+  ctx.fillStyle='#7a4532';ctx.beginPath();ctx.ellipse(cx,cy+12,72,16,0,0,Math.PI);ctx.fill();
+  const lw=tw('CRAY X-MP/28',14)+10;rect(cx-lw/2,cy+30,lw,14,'#1d2633');txt('CRAY X-MP/28',cx,cy+30,{size:14,align:'center',color:'#f2c230'});}
 function drawSign(c,r,s){const w=tw(s,14)+8,cx=clamp(c*TS+16,w/2+2,W-w/2-2),y=HUD+r*TS+1;rect(cx-w/2,y,w,13,'#1d2633');txt(s,cx,y,{size:14,align:'center',color:'#fff'});}
 
 /* ---------------- HUD ---------------- */
 function drawHUD(){rect(0,0,W,HUD,'#0c0a16');rect(0,HUD-2,W,2,'#2a2445');
   let x=10;const item=(s,c,y)=>{txt(s,x,y,{size:18,color:c});x+=tw(s,18)+14;};
-  item(`WEEK ${G.week}/14`,'#ffd166',3);item(`AP ${'●'.repeat(G.ap)}${'○'.repeat(3-G.ap)}`,'#7fdbff',3);item(`LV ${G.level}`,'#fff',3);item(`XP ${G.xp}/${nextXP()}`,'#fff',3);item(`ECTS ${G.ects}/60`,'#9be564',3);
+  item(`${semester()} · WEEK ${G.week}/14`,'#ffd166',3);item(`AP ${'●'.repeat(G.ap)}${'○'.repeat(3-G.ap)}`,'#7fdbff',3);item(`LV ${G.level}`,'#fff',3);item(`XP ${G.xp}/${nextXP()}`,'#fff',3);item(`KP ${G.ects}/56`,'#9be564',3);
   x=10;item(`SANITY ${G.sanity}`,G.sanity<25?'#ff5d5d':'#fff',20);item(`${chf(G.money)} CHF`,'#fff',20);item(`BEER ${G.beers}`,'#f1c40f',20);if(G.buff)item('(buzzed)','#ff6ad5',20);
   txt(MAPS[G.map].name,W-10,20,{size:18,align:'right',color:'#8f89b0'});}
 
 /* ---------------- overworld scene ---------------- */
 const DIRV={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
-const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,
-  update(dt){this.banner-=dt;if(lock)return;
+const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,t:0,
+  update(dt){this.t+=dt;this.banner-=dt;if(lock)return;
     if(back()){flow(menu);return;}
     if(hit('ok')){const v=DIRV[G.dir],c=Math.floor((G.x+v[0]*22)/TS),r=Math.floor((G.y-8+v[1]*24)/TS);
       const n=npcAt(G.map,c,r);if(n){flow(()=>talkNPC(n));return;}
@@ -276,9 +417,9 @@ const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,
       this.anim+=dt*(keys.c?12:8);this.moving=true;}else this.moving=false;
     const d=MAPS[G.map].doors[Math.floor(G.x/TS)+','+Math.floor((G.y-6)/TS)];
     if(d){lock=true;this.moving=false;SFX.door();fadeTo(()=>{G.map=d[0];G.x=d[1]*TS+16;G.y=d[2]*TS+28;G.dir=d[3];playSong(MAPS[G.map].music);this.banner=2.2;lock=false;});}},
-  draw(){const m=MAPS[G.map];rect(0,0,W,H,'#000');
-    m.rows.forEach((row,r)=>{for(let c=0;c<row.length;c++)drawTile(m,row[c],c,r);});
-    if(m.pano)drawPano();m.signs.forEach(s=>drawSign(...s));
+  draw(){const m=MAPS[G.map],tp=TILE[G.map];rect(0,0,W,H,'#000');
+    m.rows.forEach((row,r)=>{for(let c=0;c<row.length;c++)tp(row[c],c,r,c*TS,HUD+r*TS);});
+    PAINT[G.map](this.t);m.signs.forEach(s=>drawSign(...s));
     const side=G.dir==='left'||G.dir==='right',f=this.moving?(side?Math.floor(this.anim)%2:1+Math.floor(this.anim)%2):0;
     const ents=NPCS.filter(n=>n.map===G.map).map(n=>({y:n.r*TS+30,d:()=>drawChar(n.pal,n.face||n.dir,0,n.c*TS+16,HUD+n.r*TS+30)}));
     ents.push({y:G.y,d:()=>drawChar(PAL.player,G.dir,f,G.x,HUD+G.y)});ents.sort((a,b)=>a.y-b.y).forEach(e=>e.d());
@@ -286,13 +427,17 @@ const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,
     if(this.banner>0){ctx.globalAlpha=clamp(this.banner,0,1);const s=m.name,w=tw(s,22)+30;rect(W/2-w/2,52,w,30,'rgba(0,0,0,.75)');txt(s,W/2,56,{size:22,align:'center',color:'#ffd166'});ctx.globalAlpha=1;}}
 };
 /* ---------------- content ---------------- */
-const FLYERS=['* LOST: motivation. Last seen in week 2. Reward: 5 CHF.',
-  '* SELLING: Analysis script. Slightly tear-stained. Price negotiable.',
+const FLYERS=['* VIS PRÜFUNGSSAMMLUNG: old exams, now only slightly coffee-stained. CAB, VIS office.',
+  '* LOST: motivation. Last seen in week 2. Reward: one Gipfeli.',
   '* ROOM FOR RENT in Zurich: 1 m², 1200 CHF/month, shared bathroom. Call now!',
-  '* STUDY GROUP seeks one member who actually did the exercises.',
+  '* LERNGRUPPE Analysis I seeks one member who actually solved the Serie.',
   '* FREE: 200 pages of notes. Written in a font only the author can read.',
-  '* PARTY on Friday! Theme: "Things I should be studying instead."'];
-const DISHES=['Pasta, but different','Vegi curry (the brave choice)','Schnitzel with fries','Mystery bowl','Älplermagronen','Pasta, again'];
+  '* ERSTSEMESTRIGENFEST on Friday! Snacks while stocks last.'];
+const POSTERS=['* A poster: "POLYBALL: dress code black tie. Dress code for the Basisprüfung: panic."',
+  '* A poster: "VSETH: your student union. We fight for longer Mensa opening hours."',
+  '* A poster: "Lost: one Velo, red, probably still locked somewhere on this street."'];
+const VEGI=['Gefüllte Aubergine with Bratkartoffeln','Vegi curry with rice','Älplermagronen with Apfelmus','Pasta al pomodoro'];
+const LOCAL=['Zürcher Geschnetzeltes with Rösti','Rindshackfleisch-Pilzragout with Spätzli','Poulet with Pommes'];
 const TA_INTRO=[["Today: find the bug. It's only one line. It's always only one line."],
   ["Quick quiz! Don't worry, it's not graded. (It is a little bit graded.)"],
   ["Okay, I'll explain the solution now. ...Any questions?"]];
@@ -302,12 +447,15 @@ const CONTROLS=['* EXPLORE: arrows/WASD move · Z talk & confirm · X menu · ho
   '* M mutes the sound. Have fun, and drink responsibly (in-game too).'];
 
 /* ---------------- helpers ---------------- */
-const BOSS_ORDER=['diskret','eprog','linalg','analysis','ddca'];
-const beatenCount=()=>BOSS_ORDER.filter(id=>G.beaten[id]).length;
-const allBeaten=()=>beatenCount()===5;
+const HS=['diskret','eprog','linalg','ad'],FS=['analysis','ddca','aw','pprog'],BOSS_ORDER=HS.concat(FS);
+const semester=()=>G.week<=7?'HS':'FS';
+const beatenOf=l=>l.filter(id=>G.beaten[id]).length;
+const beatenCount=()=>beatenOf(BOSS_ORDER);
+const available=id=>BOSSES[id].sem==='HS'||G.week>=8;
+const mark=id=>G.beaten[id]?'✓':!available(id)?'(FS)':G.level<BOSSES[id].lvl?`(LV ${BOSSES[id].lvl})`:'·';
 async function gainXP(n){const old=G.level,oldHp=hpFor(old);G.xp+=n;G.level=levelFor(G.xp);const lines=[`* +${n} XP.`];
   if(G.level>old){SFX.level();lines.push(`* LEVEL UP! You are now LV ${G.level}.`);if(hpFor(G.level)>oldHp)lines.push(`* Your max HP in fights is now ${hpFor(G.level)}.`);
-    const un=BOSS_ORDER.filter(id=>BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>`${BOSSES[id].name} (${BOSSES[id].where})`);if(un.length)lines.push(`* Unlocked: ${un.join(', ')}.`);}
+    const un=BOSS_ORDER.filter(id=>available(id)&&BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>BOSSES[id].short);if(un.length)lines.push(`* Unlocked in HG F 1: ${un.join(', ')}.`);}
   await say(lines);}
 async function spendAP(){if(G.ap<=0){SFX.bad();await say(["* You're exhausted. No energy left this week.","* Sit on a bench at the Polyterrasse to go home and sleep."]);return false;}G.ap--;return true;}
 async function afterAction(){
@@ -316,43 +464,90 @@ async function afterAction(){
 async function nextWeek(burnout){
   await new Promise(r=>fadeTo(()=>{G.week++;G.ap=3;G.sanity=burnout?40:Math.min(100,G.sanity+30);G.money+=2000;G.map='campus';G.x=4*TS+16;G.y=6*TS+28;G.dir='down';playSong('campus');r();}));
   if(G.week>14)return endGame(false);
-  const left=15-G.week,lines=[`* WEEK ${G.week} of 14.`,'* Your parents sent 20.00 CHF. "Eat something proper!"'];
-  if(G.week===8)lines.push('* Halfway through the semester. The Mensa queue is now part of your identity.');
-  if(G.week>=11&&!allBeaten())lines.push(`* ${left} week${left>1?'s':''} left. You still need to beat ${5-beatenCount()} professor${5-beatenCount()>1?'s':''} before the Basisprüfung.`);
-  if(G.week===14)lines.push('* FINAL WEEK. Pass the Basisprüfung this week, or repeat the year!');
+  const left=15-G.week,lines=[`* ${semester()} · WEEK ${G.week} of 14.`,'* Your parents sent 20.00 CHF. "Eat something proper!"'];
+  if(G.week===8)lines.push('* The Herbstsemester is over. You spent the winter break with old exams and Raclette.',
+    '* FRÜHJAHRSSEMESTER! New professors in HG F 1: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
+  if(G.week>=11){const miss=[];if(!G.beaten.block1)miss.push('Block 1');if(!G.beaten.block2)miss.push('Block 2');
+    if(miss.length)lines.push(`* ${left} week${left>1?'s':''} left. Still to pass: ${miss.join(' and ')} of the Basisprüfung.`);}
+  if(G.week===14)lines.push('* FINAL WEEK. Pass both Basisprüfung blocks this week, or repeat the Basisjahr!');
   await say(lines);saveGame();}
 function endGame(passed){return new Promise(r=>fadeTo(()=>{setScene(makeEnding(passed));r();}));}
 async function talkNPC(n){const i=G.talk[n.id]||0;G.talk[n.id]=i+1;n.face={up:'down',down:'up',left:'right',right:'left'}[G.dir];await say(n.lines[i%n.lines.length],n.name);n.face=null;}
 
 /* ---------------- interactions ---------------- */
 async function interact(ch,c,r){const m=G.map;
-  if(ch==='V')return vending();if(ch==='C')return coffee();if(ch==='M')return mensaFood();if(ch==='J')return jobBoard();
-  if(ch==='N')return say([pick(FLYERS)]);if(ch==='B')return bench();
-  if(ch==='E'){if(m==='cab'&&c===5)return uebungRoom();if(m==='cab'&&c===12)return lectureHall(['eprog','ddca']);
-    if(m==='hg'&&c===4)return lectureHall(['diskret','linalg','analysis']);if(m==='hg'&&c===14)return examRoom();}
-  if(ch==='L')return say([pick(["* A shelf of scripts. One is titled 'Analysis, 2nd edition (now with more errors)'.","* Books on algorithms, sorted. You check: it's bubble sort order.","* Old exams. They look... suspiciously familiar."])]);
-  if(ch==='T')return say(['* A tree. It has no exercise sheet. Lucky tree.']);
-  if(ch==='S')return say(['* A sofa. It has absorbed the souls of countless all-nighters.']);
-  if(ch==='p')return say(['* A plant. It is thriving. Unlike you.']);
-  if(ch==='t')return say([pick(['* Someone left an exercise sheet here. Question 3 just says "obviously".','* A table. Sticky. Mensa-adjacent.','* A table with a laptop sticker: "I paused my game to be here."'])]);
-  if(ch==='^'||ch==='~')return say(['* The view over Zurich. The lake glitters. The Alps pretend not to see you.']);}
+  if(m==='campus'){
+    if(ch==='B')return bench();if(ch==='P')return polybahn();
+    if(ch==='T')return say(['* A tree on the Polyterrasse. It has seen generations of students cry here. It stays calm.']);
+    if(ch==='l')return say(['* A lamp post. At night the whole terrace glows. Romantic, unless you are in Lernphase.']);
+    if(ch==='h')return say(['* A perfectly trimmed hedge. Swiss precision.']);
+    if(ch==='^'||ch==='~')return say(['* The view: the old town, the Grossmünster towers, the lake, the Alps, the Uetliberg.','* For a moment the Basisprüfung feels very far away.']);
+    if(ch==='F'||ch==='S')return say(['* The Hauptgebäude. Gottfried Semper\'s city-facing facade from 1864; the dark dome was added by Gustav Gull in the 1920s.','* It looks like it is judging your study habits.']);}
+  if(m==='uni'){
+    if(ch==='Z')return say(['* Tram stop "ETH/Universitätsspital". Tram 10 goes down to the main station and out to the airport.','* You briefly consider the airport. Then you remember the Serie is due on Monday.']);
+    if(ch==='A')return say([pick(POSTERS)]);
+    if(ch==='b')return say(['* A forest of bikes. Half of them have not moved since 2009.']);
+    if(ch==='R')return say(['* Universitätstrasse. Trams, bikes, and the occasional lost tourist.']);
+    if(ch==='g')return say(['* The other side of the street. Same as this side, minus the exercise sheets.']);
+    if(ch==='h')return say(['* A hedge. Well-groomed. More than can be said for anyone in Lernphase.']);
+    if(ch==='B')return say(['* A bench in front of CAB. Prime spot for complaining about Serien.']);
+    if(ch==='F')return say(['* CAB: the old chemistry building, here since 1886. A plaque calls it a "Chemical Landmark".','* Today it is the home of the computer science department. The chemicals have been replaced by caffeine.']);}
+  if(m==='hg'){
+    if(ch==='E'&&c===4)return lectureHall();if(ch==='E'&&c===15)return examRoom();
+    if(ch==='N')return say([pick(FLYERS)]);if(ch==='L')return library();
+    if(ch==='O')return say(['* A massive stone column. It has held up the HG for over a century.','* You can barely hold up your sleep schedule.']);
+    if(ch==='B')return say(['* A wooden bench in the Haupthalle. Someone carved "BP 2x" into it. Respect.']);
+    if(ch==='p')return say(['* A plant. It is thriving. Unlike you.']);}
+  if(m==='cab'){
+    if(ch==='E')return uebungRoom();if(ch==='v')return visOffice();if(ch==='K')return foodLab();if(ch==='V')return vending();if(ch==='Y')return cray();
+    if(ch==='G')return say(['* CABinett, the student party room.','* A poster on the door: "Lernphase? Never heard of it. Friday, 20:00."']);
+    if(ch==='t')return say([pick(['* A laptop with 47 tabs open. One of them is Code Expert. The rest are not.','* Someone left this week\'s Serie here. Exercise 3 just says "obviously".'])]);
+    if(ch==='L')return say(['* Textbooks. One is open at "Chapter 1: Introduction". The bookmark has not moved since September.']);
+    if(ch==='p')return say(['* A plant. The only thing in CAB getting enough light.']);}
+  if(m==='mensa'){
+    if(ch==='M')return mensaFood();if(ch==='J')return jobBoard();
+    if(ch==='R')return say(['* Two menu lines today: "natürlich vegi" and "LOCAL".','* The prices are written in a font size designed to cause emotional damage.']);
+    if(ch==='W')return say(['* Big windows over the old town. The best view in Zurich, served with pasta.']);
+    if(ch==='t')return say([pick(['* A table. Sticky. Mensa-adjacent.','* Someone left half a Gipfeli on a tray. Respect the dead.'])]);
+    if(ch==='p')return say(['* A plant. It eats better than you.']);}}
 async function vending(){
-  const c=await ask('* A humming vending machine. The most reliable machine in CAB. Cold beer: 2.50 CHF.',['Buy a beer','Leave']);if(c!==0)return;
-  if(G.money<250){SFX.bad();return say(['* INSUFFICIENT FUNDS.',G.ects<30?'* ...like your ECTS.':'* The machine judges you silently.']);}
+  const c=await ask('* The beer vending machine of CAB. The most reliable machine in the building. 2.50 CHF.',['Buy a beer','Leave']);if(c!==0)return;
+  if(G.money<250){SFX.bad();return say(['* INSUFFICIENT FUNDS.',G.ects<28?'* ...like your KP.':'* The machine judges you silently.']);}
   G.money-=250;G.beers++;SFX.coin();await say(['* Clunk. A cold beer drops.','* (Drink it from the menu with X: +15 Sanity and +1 HP in your next fight.)']);}
-async function coffee(){
-  const c=await ask('* Coffee machine, 1.50 CHF. A sticker says "WORKS (mostly)".',['Buy a coffee','Leave']);if(c!==0)return;
-  if(G.money<150){SFX.bad();return say(['* Not enough money. Not even for coffee.']);}
-  G.money-=150;if(Math.random()<0.25){SFX.bad();return say(['* The machine eats your coins and makes a satisfied noise.','* No coffee. Classic.']);}
-  G.stats.coffees++;G.sanity=Math.min(100,G.sanity+10);SFX.coin();await say(['* You get a coffee. It tastes like debugging. +10 Sanity.']);}
-async function mensaFood(){const d=DISHES[(G.week*3+G.ap)%DISHES.length];
-  const c=await ask(`* Polymensa. Today: "${d}". 7.00 CHF.`,['Eat (7.00 CHF)','Leave']);if(c!==0)return;
-  if(G.money<700){SFX.bad();return say(['* Not enough money. You stare at the menu until the queue pushes you out.']);}
-  G.money-=700;G.sanity=Math.min(100,G.sanity+20);SFX.coin();await say([`* You eat "${d}". It is... food. +20 Sanity.`]);}
+async function foodLab(){
+  const c=await ask('* food&lab, the CAB cafeteria. Coffee 3.00 · Gipfeli 2.00.',['Coffee (+10 Sanity)','Gipfeli (+8 Sanity)','Leave']);if(c<0||c>1)return;
+  const price=c===0?300:200,gain=c===0?10:8;
+  if(G.money<price){SFX.bad();return say(['* Not enough money. You stare at the Gipfeli. The Gipfeli stares back.']);}
+  G.money-=price;G.sanity=Math.min(100,G.sanity+gain);if(c===0)G.stats.coffees++;SFX.coin();
+  await say([c===0?'* A coffee. It tastes like debugging. +10 Sanity.':'* A buttery Gipfeli. For a moment, everything is fine. +8 Sanity.']);}
+async function cray(){
+  if(G.cray===G.week)return say(['* You already sat on the Cray this week. It needs to cool down. So do you.']);
+  const c=await ask('* The Cray X-MP/28, a real supercomputer from the 1980s. Today: the comfiest bench in CAB.',['Sit down for a while','Leave']);if(c!==0)return;
+  G.cray=G.week;G.sanity=Math.min(100,G.sanity+8);await say(['* You sit on a machine that once filled a computing centre. Now it holds your backpack.','* +8 Sanity.']);}
+async function visOffice(){
+  const c=await ask('* VIS office. Home of the legendary Prüfungssammlung: old exams from years past.',['Study old exams (1 AP)','Chat with VIS','Leave']);
+  if(c===1)return say([pick(['"Erstsemestrigenfest on Friday! Snacks while stocks last."','"Do old exams under real conditions: timer, no phone, no crying."','"Block 1 is the HS courses, Block 2 the FS ones. You need both."'])],'VIS');
+  if(c!==0)return;if(!await spendAP())return;G.sanity=Math.max(0,G.sanity-10);G.prep=true;
+  await say(['* You work through three old exams. Patterns emerge. The exam writers are only human.','* Altprüfungen bonus: +1 HP in your next Basisprüfung block. (−10 Sanity)']);await gainXP(35);await afterAction();}
+async function library(){
+  const c=await ask('* ETH-Bibliothek. So quiet you can hear people panicking about Lernphase.',['Study the script (1 AP)','Leave']);if(c!==0)return;
+  if(!await spendAP())return;G.sanity=Math.max(0,G.sanity-10);
+  await say([pick(['* You read the script for three hours. You understood one theorem. It was the one with the picture.','* You find a seat by the window and actually work. A rare, beautiful moment.']),'* (−10 Sanity)']);
+  await gainXP(30);await afterAction();}
+async function polybahn(){
+  const c=await ask('* POLYBAHN. Down to Central in two and a half minutes, then into the Niederdorf.',['Night out in the Niederdorf (1 AP, 15 CHF)','Leave']);if(c!==0)return;
+  if(G.money<1500){SFX.bad();return say(['* You count your coins. The Niederdorf will have to wait.']);}
+  if(!await spendAP())return;G.money-=1500;G.sanity=Math.min(100,G.sanity+30);SFX.coin();
+  await say(['* You ride the Polybahn down, eat a Döner in the Niederdorf and walk along the Limmat.','* +30 Sanity, −15 CHF. You did not think about Serien for three whole hours.']);await afterAction();}
+async function mensaFood(){const i=G.week*3+G.ap,v=VEGI[i%VEGI.length],l=LOCAL[i%LOCAL.length];
+  const c=await ask(`* Mensa Polyterrasse. natürlich vegi: ${v}. LOCAL: ${l}.`,['natürlich vegi · 5.40','LOCAL · 10.50','Leave']);if(c<0||c>1)return;
+  const price=c===0?540:1050,gain=c===0?15:25;
+  if(G.money<price){SFX.bad();return say(['* Not enough money. You stare at the menu until the queue pushes you along.']);}
+  G.money-=price;G.sanity=Math.min(100,G.sanity+gain);SFX.coin();await say([`* You eat ${c===0?v:l}. +${gain} Sanity.`]);}
 async function jobBoard(){
-  const c=await ask('* JOB BOARD: "Hilfsassistent wanted to correct exercise sheets." +30 CHF, −15 Sanity, 1 AP.',['Work a shift','Leave']);if(c!==0)return;
+  const c=await ask('* JOB BOARD: "Hilfsassistent wanted to correct Serien." +30 CHF, −15 Sanity, 1 AP.',['Work a shift','Leave']);if(c!==0)return;
   if(!await spendAP())return;G.money+=3000;G.sanity=Math.max(0,G.sanity-15);G.stats.shifts++;SFX.coin();
-  await say([`* You correct ${30+Math.floor(Math.random()*40)} exercise sheets.`,pick(['* Most of them prove that 1 = 1. One proves that 1 = 2.','* One student wrote "see attached" and attached nothing.','* Someone drew a very detailed cat instead of a proof. Partial credit.']),'* +30.00 CHF, −15 Sanity.']);
+  await say([`* You correct ${30+Math.floor(Math.random()*40)} Serien.`,pick(['* Most of them prove that 1 = 1. One proves that 1 = 2.','* One student wrote "see attached" and attached nothing.','* Someone drew a very detailed cat instead of a proof. Partial credit.']),'* +30.00 CHF, −15 Sanity.']);
   await afterAction();}
 async function bench(){
   const c=await ask('* A bench on the Polyterrasse. Zurich glitters below.',['Go home & sleep (next week)','Enjoy the view','Leave']);
@@ -362,36 +557,44 @@ async function bench(){
 async function uebungRoom(){
   const c=await ask('* Übungsraum. Which Übung? (1 AP, −10 Sanity)',['Programming: find the bug','Math & Logic: quiz','Q&A: survive "Any questions?"','Leave']);
   if(c<0||c>2)return;if(!await spendAP())return;
-  await say(pick(TA_INTRO[c]),'TA');
+  await say(pick(TA_INTRO[c]),'Laura (TA)');
   const score=await new Promise(res=>fadeTo(()=>setScene([makeBug,makeQuiz,makeDodge][c](res))));
   G.sanity=Math.max(0,G.sanity-10);G.stats.ubungen++;
-  const xp=Math.round(20+score*50);
-  await say([`* Übung done. Score: ${Math.round(score*100)}%.`,score>=0.8?pick(['TA: "Wow. Someone actually did the exercises."','TA: "Perfect! Please explain it to the others."']):score>=0.4?'TA: "Not bad! Partial credit is still credit."':'TA: "...we will go over this again next week."']);
-  await gainXP(xp);await afterAction();}
-async function lectureHall(list){
-  const opts=list.map(id=>{const b=BOSSES[id];return `${b.name} · ${b.course}`+(G.beaten[id]?' ✓':G.level<b.lvl?` (LV ${b.lvl})`:'');});opts.push('Leave');
-  const c=await ask('* Lecture hall. Who do you challenge? (1 AP)',opts);if(c<0||c>=list.length)return;
+  await say([`* Übung done. Score: ${Math.round(score*100)}%.`,score>=0.8?pick(['Laura: "Wow. Someone actually did the Serie."','Laura: "Perfect! Please explain it to the others."']):score>=0.4?'Laura: "Not bad! Partial credit is still credit."':'Laura: "...we will go over this again next week."']);
+  await gainXP(Math.round(20+score*50));await afterAction();}
+async function lectureHall(){
+  let list=HS;
+  if(G.week>=8){const s=await ask('* HG F 1. Which semester\'s lecture?',['Herbstsemester (HS)','Frühjahrssemester (FS)','Leave']);if(s<0||s>1)return;list=s===0?HS:FS;}
+  const opts=list.map(id=>{const b=BOSSES[id],mk=mark(id);return `${b.short} · ${b.courseShort}${mk==='·'?'':' '+mk}`;});opts.push('Leave');
+  const c=await ask(`* HG F 1. ${list===HS?'Herbstsemester':'Frühjahrssemester'}: who do you challenge? (1 AP)`,opts);if(c<0||c>=list.length)return;
   const id=list[c],b=BOSSES[id];
-  if(G.level<b.lvl)return say([`* ${b.name} looks at you over their glasses.`,`* "Come back at LV ${b.lvl}. The Übungen exist for a reason."`]);
+  if(G.level<b.lvl)return say([`* ${b.short} looks at you over their glasses.`,`* "Come back at LV ${b.lvl}. The Übungen exist for a reason."`]);
   if(G.beaten[id]){const r=await ask(`* You already passed ${b.course}. Rematch for fun? (1 AP, small XP)`,['Rematch','Leave']);if(r!==0)return;}
   if(!await spendAP())return;await fight(id);}
-async function examRoom(){const n=beatenCount();
-  if(n<5)return say(['* PRÜFUNGSRAUM. The door is sealed.',`* A sign: "Basisprüfung — admission only after defeating all 5 professors." (${n}/5)`]);
-  const c=await ask('* The Basisprüfung waits behind this door. Three hours. No cheat sheet. Enter? (1 AP)',['Enter','Not yet']);if(c!==0)return;
-  if(!await spendAP())return;await fight('basis');}
+async function examRoom(){const b1=beatenOf(HS),b2=beatenOf(FS);
+  const st=(id,n,sem)=>G.beaten[id]?' ✓':n<4?` (${n}/4 ${sem} profs)`:'';
+  const c=await ask('* PRÜFUNGSRAUM. The Basisprüfung comes in two blocks. Three hours each. No cheat sheet.',[`Block 1 · HS courses${st('block1',b1,'HS')}`,`Block 2 · FS courses${st('block2',b2,'FS')}`,'Leave']);
+  if(c<0||c>1)return;const id=c===0?'block1':'block2',n=c===0?b1:b2;
+  if(G.beaten[id])return say(['* You already passed this block. The exam office sends a polite email: "Please stop."']);
+  if(n<4)return say([`* Sealed. Admission to Block ${c+1} requires defeating all four ${c===0?'HS':'FS'} professors in HG F 1. (${n}/4)`]);
+  if(!await spendAP())return;await fight(id);}
 async function fight(id){const b=BOSSES[id];
   await say(b.intro,b.name);
   if(G.buff)await say(['* The beer kicks in. +1 HP. The room is... slightly wobbly.']);
+  if(b.exam&&G.prep)await say(['* You remember the old exams from VIS. +1 HP.']);
   const r=await new Promise(res=>fadeTo(()=>setScene(makeCombat(id,res))));
-  if(r.gaveUp){G.sanity=Math.max(0,G.sanity-10);await say(['* You sneak out of the lecture hall. Nobody saw. Probably. (−10 Sanity)']);return afterAction();}
+  if(r.gaveUp){G.sanity=Math.max(0,G.sanity-10);await say(['* You sneak out of the room. Nobody saw. Probably. (−10 Sanity)']);return afterAction();}
   if(r.won){const first=!G.beaten[id];G.beaten[id]=true;G.stats.wins++;G.stats.grades.push(r.grade);G.sanity=Math.max(0,G.sanity-5);
     await say(b.win,b.name);
-    if(id==='basis'){G.passed=true;G.ects+=b.ects;return endGame(true);}
-    if(first){G.ects+=b.ects;await say([`* PASSED with grade ${r.grade.toFixed(2)}! +${b.ects} ECTS.`]);await gainXP(40);
-      if(allBeaten())await say(['* All five professors defeated!','* The exam room in HG is open now. The Basisprüfung awaits.']);}
+    if(b.exam){await say([`* ${b.name}: BESTANDEN with grade ${r.grade.toFixed(2)}!`]);
+      if(G.beaten.block1&&G.beaten.block2){G.passed=true;return endGame(true);}
+      await say([`* One block down. ${G.beaten.block1?'Block 2':'Block 1'} is still to go.`]);await gainXP(60);return afterAction();}
+    if(first){G.ects+=b.kp;await say([`* PASSED with grade ${r.grade.toFixed(2)}! +${b.kp} KP.`]);await gainXP(40);
+      if(b.sem==='HS'&&beatenOf(HS)===4)await say(['* All four HS professors defeated!','* Block 1 of the Basisprüfung is open in the HG exam room.']);
+      if(b.sem==='FS'&&beatenOf(FS)===4)await say(['* All four FS professors defeated!','* Block 2 of the Basisprüfung is open in the HG exam room.']);}
     else{await say([`* Rematch won with grade ${r.grade.toFixed(2)}. Your ego grows.`]);await gainXP(10);}}
   else{G.stats.losses++;G.sanity=Math.max(0,G.sanity-20);await say(b.lose,b.name);
-    await say([`* Grade ${r.grade.toFixed(2)}. Not passed. (−20 Sanity)`,'* Tip: higher levels give more HP, and a beer gives +1 HP. Pink things can be parried!']);}
+    await say([`* Grade ${r.grade.toFixed(2)}. Not passed. (−20 Sanity)`,'* Tip: higher levels give more HP, a beer gives +1 HP, and pink things can be parried.']);}
   await afterAction();}
 
 /* ---------------- menu ---------------- */
@@ -401,16 +604,18 @@ async function menu(){
     if(G.beers<=0)return say(['* You have no beer. The vending machine in CAB can fix that.']);
     G.beers--;G.stats.beers++;G.sanity=Math.min(100,G.sanity+15);G.buff=true;SFX.coin();
     return say(['* You drink a beer. +15 Sanity.','* Liquid courage: +1 HP in your next fight. (Side effects may include wobbling.)']);}
-  if(c===1)return say([`* WEEK ${G.week}/14 · AP ${G.ap}/3 · LV ${G.level} · XP ${G.xp}/${nextXP()} · ECTS ${G.ects}/60`,
-    `* Sanity ${G.sanity}/100 · ${chf(G.money)} CHF · Beers ${G.beers} · Fight HP ${hpFor(G.level)}${G.buff?' (+1 beer)':''}`,
-    '* Professors: '+BOSS_ORDER.map(id=>`${BOSSES[id].name} ${G.beaten[id]?'✓':G.level<BOSSES[id].lvl?'(LV '+BOSSES[id].lvl+')':'·'}`).join(', ')]);
+  if(c===1){const sn=id=>`${BOSSES[id].short.replace('Prof. ','')} ${mark(id)}`;
+    return say([`* ${semester()} · WEEK ${G.week}/14 · AP ${G.ap}/3 · LV ${G.level} · XP ${G.xp}/${nextXP()} · KP ${G.ects}/56`,
+      `* Sanity ${G.sanity}/100 · ${chf(G.money)} CHF · Beers ${G.beers} · Fight HP ${hpFor(G.level)}${G.buff?' (+1 beer)':''}${G.prep?' (+1 old exams)':''}`,
+      '* HS: '+HS.map(sn).join(', '),'* FS: '+FS.map(sn).join(', '),
+      `* Basisprüfung: Block 1 ${G.beaten.block1?'✓':'·'} · Block 2 ${G.beaten.block2?'✓':'·'}`]);}
   if(c===2)return say([saveGame()?'* Progress saved (in this browser).':'* Saving is not available here, sorry.']);
   if(c===3)return say(CONTROLS);
   if(c===4){const q=await ask('* Quit to the title screen? Unsaved progress is lost.',['Quit','Cancel']);if(q===0)fadeTo(()=>setScene(makeTitle()));}}
 
 /* ---------------- title / intro / ending ---------------- */
 function makeTitle(){const hasSave=!!loadSave(),opts=hasSave?['Continue','New game','Controls']:['New game','Controls'];
-  const stars=Array.from({length:70},()=>({x:rnd(0,W),y:rnd(0,230),s:Math.random()<0.2?2:1,p:rnd(0,6)}));
+  const stars=Array.from({length:70},()=>({x:rnd(0,W),y:rnd(0,220),s:Math.random()<0.2?2:1,p:rnd(0,6)}));
   const S={music:'title',sel:0,t:0};
   S.update=dt=>{S.t+=dt;if(lock)return;const n=opts.length;
     if(hit('up')){S.sel=(S.sel+n-1)%n;SFX.select();}if(hit('down')){S.sel=(S.sel+1)%n;SFX.select();}
@@ -420,36 +625,39 @@ function makeTitle(){const hasSave=!!loadSave(),opts=hasSave?['Continue','New ga
       else flow(()=>say(CONTROLS));}};
   S.draw=()=>{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0d0a24');g.addColorStop(1,'#2b1f4a');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
     for(const s of stars){ctx.globalAlpha=0.45+0.55*Math.abs(Math.sin(S.t*1.3+s.p));rect(s.x,s.y,s.s,s.s,'#fff');}ctx.globalAlpha=1;
-    ctx.fillStyle='#161032';ctx.beginPath();ctx.arc(320,306,50,Math.PI,0);ctx.fill();rect(313,248,14,10,'#161032');rect(90,306,460,54,'#161032');
-    for(let i=0;i<12;i++){const lit=((i*7+3)%5)<2;rect(108+i*36,316,14,18,lit?'#ffd16688':'#2a2152');}
-    rect(0,338,W,3,'#0a0718');for(let x=4;x<W;x+=12)rect(x,338,2,22,'#0a0718');
-    txt('ETH:',W/2,34,{font:PX,size:24,align:'center',color:'#ffd166',shadow:'#000'});
-    txt('YEAR ONE',W/2,68,{font:PX,size:32,align:'center',color:'#fff',shadow:'#ff6ad5'});
-    txt('survive your first year of Computer Science',W/2,112,{size:20,align:'center',color:'#cfc9e8'});
-    opts.forEach((o,i)=>{const y=150+i*30;txt(o,W/2,y,{font:PX,size:16,align:'center',color:i===S.sel?'#ffd166':'#8f89b0'});if(i===S.sel)drawHeart(W/2-tw(o,16,PX)/2-26,y+1,2);});
-    txt('↑↓ choose · Z select',W/2,228,{size:16,align:'center',color:'#6f6990'});};
+    const base=262;ctx.fillStyle='#1b2036';ctx.beginPath();ctx.ellipse(320,base,66,32,0,Math.PI,0);ctx.fill();rect(314,base-38,12,8,'#1b2036');
+    rect(40,base,560,H-base,'#171a2e');ctx.fillStyle='#1d2137';ctx.beginPath();ctx.moveTo(250,base+2);ctx.lineTo(320,base-14);ctx.lineTo(390,base+2);ctx.fill();
+    for(let i=0;i<14;i++){const x=58+i*38;if(x>240&&x<400)continue;const lit=((i*7+3)%5)<2;ctx.fillStyle=lit?'#ffd16699':'#2a2152';ctx.beginPath();ctx.arc(x+7,base+16,7,Math.PI,0);ctx.fill();rect(x,base+16,14,14,lit?'#ffd16699':'#2a2152');}
+    for(const cx of [262,278,352,368])rect(cx,base+4,8,52,'#252a44');ctx.fillStyle='#ffd16655';ctx.beginPath();ctx.arc(320,base+30,22,Math.PI,0);ctx.fill();rect(298,base+30,44,30,'#ffd16655');
+    rect(0,336,W,4,'#0a0718');for(let x=4;x<W;x+=10)rect(x,340,4,12,'#0a0718');rect(0,352,W,8,'#0a0718');
+    txt('ETH:',W/2,30,{font:PX,size:24,align:'center',color:'#ffd166',shadow:'#000'});
+    txt('YEAR ONE',W/2,64,{font:PX,size:32,align:'center',color:'#fff',shadow:'#ff6ad5'});
+    txt('survive the Basisjahr in Computer Science',W/2,108,{size:20,align:'center',color:'#cfc9e8'});
+    opts.forEach((o,i)=>{const y=142+i*28;txt(o,W/2,y,{font:PX,size:16,align:'center',color:i===S.sel?'#ffd166':'#8f89b0'});if(i===S.sel)drawHeart(W/2-tw(o,16,PX)/2-26,y+1,2);});
+    txt('↑↓ choose · Z select',W/2,214,{size:16,align:'center',color:'#6f6990'});};
   return S;}
-async function intro(){await say(['* September. You got into Computer Science at ETH Zürich.','* In 14 weeks: the BASISPRÜFUNG.',
-  '* To be allowed in, you must defeat all five professors in their lecture halls (HG and CAB).',
+async function intro(){await say(['* September. You got into Computer Science at ETH Zürich. Welcome to the Basisjahr.',
+  '* Weeks 1–7 are the Herbstsemester (HS), weeks 8–14 the Frühjahrssemester (FS).',
+  '* Beat the four professors of each semester in HG F 1, then pass Basisprüfung Block 1 and Block 2 in the HG exam room.',
   '* Übungen in CAB give XP. Levels unlock professors and give you more HP in fights.',
   '* You have 3 AP (energy) per week. Sit on a Polyterrasse bench to sleep and start a new week.',
-  '* Also, there is a beer vending machine in CAB. Just saying.']);saveGame();}
+  '* Also: there is a beer vending machine in CAB. Just saying.']);saveGame();}
 function makeEnding(passed){clearSave();const gr=G.stats.grades,avg=gr.length?gr.reduce((a,b)=>a+b,0)/gr.length:0;
   const conf=Array.from({length:60},()=>({x:rnd(0,W),y:rnd(-H,0),v:rnd(30,90),c:pick(['#ffd166','#ff6ad5','#9be564','#7fdbff'])}));
   const S={music:passed?'ending':'title',t:0};
   S.update=dt=>{S.t+=dt;for(const c of conf){c.y+=c.v*dt;if(c.y>H)c.y=-10;}if(S.t>1.5&&hit('ok'))fadeTo(()=>setScene(makeTitle()));};
   S.draw=()=>{rect(0,0,W,H,passed?'#0f2a1d':'#2a0f16');if(passed)for(const c of conf)rect(c.x,c.y,4,6,c.c);
-    txt(passed?'BASISPRÜFUNG':'NOT PASSED',W/2,40,{font:PX,size:24,align:'center',color:passed?'#9be564':'#ff5d5d',shadow:'#000'});
+    txt(passed?'BASISJAHR':'NOT PASSED',W/2,40,{font:PX,size:24,align:'center',color:passed?'#9be564':'#ff5d5d',shadow:'#000'});
     txt(passed?'BESTANDEN!':'See you next year.',W/2,78,{font:PX,size:16,align:'center',color:'#fff',shadow:'#000'});
-    const lines=passed?[`You survived year one in ${G.week} week${G.week>1?'s':''}.`,`ECTS ${G.ects}/60 · Level ${G.level} · Average grade ${avg?avg.toFixed(2):'–'}`,
-      `Beers ${G.stats.beers} · Coffees ${G.stats.coffees} · Übungen ${G.stats.ubungen} · Shifts ${G.stats.shifts}`,`Fights lost along the way: ${G.stats.losses}`,'Year two awaits. (Not in this game. Yet.)']
-      :['The semester ended before you passed the Basisprüfung.',`ECTS ${G.ects}/60 · Level ${G.level} · Professors defeated ${beatenCount()}/5`,
-      'Repeating the first year is a classic. Many legends did.','Tip: Übungen early, beer before fights, parry the pink.'];
+    const lines=passed?[`You passed the Basisjahr in ${G.week} week${G.week>1?'s':''}.`,`KP ${G.ects}/56 · Level ${G.level} · Average grade ${avg?avg.toFixed(2):'–'}`,
+      `Beers ${G.stats.beers} · Coffees ${G.stats.coffees} · Übungen ${G.stats.ubungen} · Shifts ${G.stats.shifts}`,`Fights lost along the way: ${G.stats.losses}`,'Second year awaits. (Not in this game. Yet.)']
+      :['The semester ended before you passed the Basisprüfung.',`KP ${G.ects}/56 · Level ${G.level} · Professors ${beatenCount()}/8 · Blocks ${(G.beaten.block1?1:0)+(G.beaten.block2?1:0)}/2`,
+      'Repeating the Basisjahr is a classic. Many legends did.','Tip: Übungen early, old exams from VIS, beer before fights, parry the pink.'];
     lines.forEach((l,i)=>txt(l,W/2,130+i*30,{size:22,align:'center',color:'#fff'}));
     if(S.t>1.5)txt('Press Z to return to the title screen',W/2,320,{size:18,align:'center',color:'#cfc9e8'});};
   return S;}
 /* ---------------- shared minigame bits ---------------- */
-const COURSE={diskret:'Discrete Mathematics',linalg:'Linear Algebra',analysis:'Analysis',eprog:'Intro to Programming',ddca:'Digital Design',life:'Student Life'};
+const COURSE={diskret:'Diskrete Mathematik',linalg:'Lineare Algebra',eprog:'Einführung in die Programmierung',ad:'Algorithmen und Datenstrukturen',analysis:'Analysis I',ddca:'Digital Design and Computer Architecture',aw:'Algorithmen und Wahrscheinlichkeit',pprog:'Parallele Programmierung',life:'Studileben'};
 function introCard(t,sub){rect(0,0,W,H,'rgba(0,0,0,.84)');txt(t,W/2,140,{font:PX,size:16,align:'center',color:'#ffd166'});txt(sub,W/2,176,{size:22,align:'center',color:'#fff'});txt('GET READY...',W/2,214,{size:20,align:'center',color:'#8f89b0'});}
 function bgGrid(c){rect(0,0,W,H,c);for(let x=0;x<W;x+=32)rect(x,0,1,H,'#17152c');for(let y=0;y<H;y+=32)rect(0,y,W,1,'#17152c');}
 function endMini(S,done,score){if(S.ended)return;S.ended=true;fadeTo(()=>{setScene(OW);done(score);});}
@@ -477,6 +685,16 @@ const QUIZ=[
   {k:'ddca',q:'How many different values can 8 bits represent?',o:['256','255','8','512']},
   {k:'ddca',q:'Binary 1011 in decimal is...',o:['11','13','9','1011']},
   {k:'ddca',q:'Which gate outputs 1 exactly when its two inputs differ?',o:['XOR','AND','NOR','NAND']},
+  {k:'ad',q:'Mergesort sorts n elements in (worst case)...',o:['O(n log n)','O(n²)','O(n)','O(log n)']},
+  {k:'ad',q:'Which data structure is first-in, first-out (FIFO)?',o:['Queue','Stack','Heap','Binary tree']},
+  {k:'ad',q:'Dijkstra\'s algorithm requires edge weights that are...',o:['non-negative','integers','negative','all equal']},
+  {k:'ad',q:'The height of a balanced binary search tree with n nodes is...',o:['O(log n)','O(n)','O(1)','O(n log n)']},
+  {k:'aw',q:'Expected value of one roll of a fair six-sided die?',o:['3.5','3','6','1/6']},
+  {k:'aw',q:'Probability of two heads in two fair coin flips?',o:['1/4','1/2','1/3','1']},
+  {k:'aw',q:'Events A and B are independent exactly when...',o:['Pr[A ∩ B] = Pr[A] · Pr[B]','Pr[A ∪ B] = Pr[A] + Pr[B]','Pr[A] = Pr[B]','A ∩ B = ∅']},
+  {k:'pprog',q:'Two threads write the same variable without synchronization. That is a...',o:['race condition','deadlock','livelock','stack overflow']},
+  {k:'pprog',q:'In Java, which keyword makes a method mutually exclusive on its object?',o:['synchronized','volatile','static','final']},
+  {k:'pprog',q:'Mutual exclusion, hold and wait, no preemption and circular wait are the conditions for...',o:['deadlock','starvation','parallel speedup','garbage collection']},
   {k:'life',q:'The most reliable machine in CAB is the...',o:['beer vending machine','coffee machine','printer','submission server']},
   {k:'life',q:'A TA says "this exercise is easy". This means...',o:['it is not easy','it is easy','there is no exercise','free points for everyone']},
   {k:'life',q:'Best strategy for the week before the Basisprüfung?',o:['Sleep, eat, review old exams','Learn everything from scratch at 3am','Become one with the Mensa queue','Panic, but efficiently']}
@@ -548,7 +766,7 @@ function makeDodge(done){const bx=220,by=170,bw=200,bh=130;
     if(S.t>=S.dur)endMini(S,done,clamp(1-S.hits*0.12,0,1));};
   S.draw=()=>{rect(0,0,W,H,'#000');
     txt('ÜBUNG · Q&A SESSION',24,14,{font:PX,size:16,color:'#ffd166'});txt(`Awkward moments: ${S.hits}`,W-24,12,{size:20,align:'right',color:'#cfc9e8'});
-    spr(PROF,profPal('#c0392b','#f39c12','#2c3e50'),W/2-24,42,4);
+    spr(PROF_F,profPal('#c0392b','#f39c12','#2c3e50'),W/2-24,42,4);
     const q=QS[S.q],qw=tw(q,20)+24;ubox(W/2-qw/2,114,qw,32);txt(q,W/2,120,{size:20,align:'center'});
     ubox(bx-3,by-3,bw+6,bh+6);ctx.save();ctx.beginPath();ctx.rect(bx,by,bw,bh);ctx.clip();
     for(const b of S.bul)txt('?',b.x,b.y,{size:22,align:'center',base:'middle',color:'#ffd166'});ctx.restore();
@@ -558,81 +776,115 @@ function makeDodge(done){const bx=220,by=170,bw=200,bh=130;
     if(S.intro>0)introCard('"ANY QUESTIONS?"','Dodge the question marks. Never make eye contact.');};
   return S;}
 
-/* ---------------- professors ---------------- */
-const CY='#ffd166',CR='#ff6b6b',CG='#9be564',CB='#7fdbff',CO='#ffa94d',CV='#c3a6ff';
+/* ---------------- professors (fictional, Swiss-flavoured) ---------------- */
+const CY='#ffd166',CR='#ff6b6b',CG='#9be564',CB='#7fdbff',CO='#ffa94d',CV='#c3a6ff',CT='#5fe3c0',CM='#ff9ff3';
 const BOSSES={
-  diskret:{id:'diskret',name:'Prof. Diskret',course:'Discrete Mathematics',lvl:1,ects:7,where:'HG',hp:220,pal:profPal('#dddddd','#6b4b8a','#e0c068'),
-    chalk:['∀x ∃y: P(x, y)','¬(A ∧ B) ≡ ¬A ∨ ¬B','|P(S)| = 2^|S|','Proof: trivial. ∎'],
-    intro:['Ah. A new student. Let us begin with a simple lemma:','For all students x, there exists an exam y such that x fails y.','Prove me wrong.'],
-    win:['...impossible. Your proof is... correct.','I shall write "trivial" next to it, out of respect.'],
-    lose:['As expected. The proof is left as an exercise to the reader.','The reader is you. Try again.'],
+  diskret:{id:'diskret',name:'Prof. Dr. Reto Beweisli',short:'Prof. Beweisli',course:'Diskrete Mathematik',courseShort:'Diskrete Mathe',sem:'HS',lvl:1,kp:7,hall:'HG F 1',hp:220,sprite:'m',pal:profPal('#ececec','#5a3f7a','#e0c068'),
+    chalk:['∀x ∃y: P(x, y)','¬(A ∧ B) ≡ ¬A ∨ ¬B','|P(S)| = 2^|S|','Beweis: trivial. □'],
+    intro:['Grüezi mitenand. Welcome to Diskrete Mathematik.','Today\'s lemma: for every student x there exists a Serie y that x does not finish.','The proof is trivial. I will now spend ninety minutes on it.'],
+    win:['...your argument is correct. And complete.','I am writing "trivial" next to it. That is the highest praise I give.'],
+    lose:['As expected. The remaining cases are left as an exercise.','Come back when your proof has fewer holes than an Emmentaler.'],
     phases:A=>[
-      {name:'Lemma 1: Quantifiers',rate:1.35,atk:[()=>A.aimed({n:3,g:'∀',c:CY}),()=>A.aimed({n:3,g:'∃',c:CY,spread:0.35}),()=>A.aimed({g:'∎',pink:true,speed:220})]},
-      {name:'Proof by Induction',rate:1.5,atk:[()=>A.bounce({n:3,g:['n','n+1'],c:CG}),()=>A.aimed({n:5,spread:0.3,g:'∀',c:CY,speed:280}),()=>A.bounce({n:3,g:'∎',c:CG,pink:true})]},
-      {name:'Proof by Contradiction',rate:1.35,atk:[()=>A.ring({n:12,g:'¬',c:CR,pinkEvery:4}),()=>A.aimed({n:3,g:'⊥',c:CR,speed:340,spread:0.18}),()=>A.rain({n:9,g:['∃','∀','¬'],c:CY,pinkEvery:5})]}]},
-  eprog:{id:'eprog',name:'Prof. Null',course:'Intro to Programming',lvl:2,ects:7,where:'CAB',hp:250,pal:profPal('#2b2b2b','#3b6e3b','#e8e8e8'),
-    chalk:['public static void main(...)','int x = null; // ?!','while (true) { cry(); }','O(n log n)'],
-    intro:['public static void main(String[] args) {','    student.pass(); // TODO','}','...let me compile you. Expect errors.'],
-    win:['BUILD SUCCESSFUL.','Fine. You may pass. I am still deducting points for code style.'],
-    lose:['Exception in thread "main": StudentNotPreparedException','    at Life.firstYear(ETH.java:1)'],
+      {name:'Lemma 1: Quantoren',rate:1.35,atk:[()=>A.aimed({n:3,g:'∀',c:CY}),()=>A.aimed({n:3,g:'∃',c:CY,spread:0.35}),()=>A.aimed({g:'□',pink:true,speed:220})]},
+      {name:'Beweis durch Induktion',rate:1.5,atk:[()=>A.bounce({n:3,g:['n','n+1'],c:CG}),()=>A.aimed({n:5,spread:0.3,g:'∀',c:CY,speed:280}),()=>A.bounce({n:3,g:'□',c:CG,pink:true})]},
+      {name:'Widerspruchsbeweis',rate:1.35,atk:[()=>A.ring({n:12,g:'¬',c:CR,pinkEvery:4}),()=>A.aimed({n:3,g:'⊥',c:CR,speed:340,spread:0.18}),()=>A.rain({n:9,g:['∃','∀','¬'],c:CY,pinkEvery:5})]}]},
+  eprog:{id:'eprog',name:'Prof. Dr. Beat Nullpointer',short:'Prof. Nullpointer',course:'Einführung in die Programmierung',courseShort:'EProg',sem:'HS',lvl:2,kp:7,hall:'HG F 1',hp:250,sprite:'b',pal:profPal('#6b4a2b','#2e7d4f','#e8e8e8'),
+    chalk:['public static void main(...)','int x = null; // ?!','while (true) { cry(); }','Code Expert: 0/10 tests'],
+    intro:['public static void main(String[] args) {','    student.bestehen(); // TODO','}','Let me run you through Code Expert. Expect red.'],
+    win:['BUILD SUCCESSFUL. All tests green.','Fine. You pass. I am still deducting a point for code style.'],
+    lose:['Exception in thread "main": StudentNotPreparedException','    at Basisjahr.herbstsemester(ETH.java:1)'],
     phases:A=>[
       {name:'Syntax Error',rate:1.3,atk:[()=>A.rain({n:12,g:';',c:CG,pinkEvery:6}),()=>A.aimed({n:2,g:'{ }',c:CG,spread:0.2,speed:290})]},
       {name:'NullPointerException',rate:1.5,atk:[()=>A.bar({text:'NPE!',speed:320}),()=>{A.aimed({g:'null',c:CR,speed:300});A.later(0.45,()=>A.aimed({g:'null',pink:true,speed:210}));},()=>A.bar({text:'null',speed:360})]},
       {name:'while (true)',rate:2.1,atk:[()=>A.spiral({arms:3,steps:14,g:'()',c:CG,pinkEvery:5}),()=>A.bar({text:'STACK!',speed:340})]}]},
-  linalg:{id:'linalg',name:'Prof. Eigen',course:'Linear Algebra',lvl:3,ects:7,where:'HG',hp:270,pal:profPal('#8a5a2b','#2c5d8f','#c0392b'),
+  linalg:{id:'linalg',name:'Prof. Dr. Heidi Eigenwert',short:'Prof. Eigenwert',course:'Lineare Algebra',courseShort:'LinAlg',sem:'HS',lvl:2,kp:7,hall:'HG F 1',hp:260,sprite:'f',pal:profPal('#e3c16f','#2c5d8f','#c0392b'),
     chalk:['Av = λv','det(A − λI) = 0','rank A + dim ker A = n','A⁻¹ exists ⇔ det A ≠ 0'],
-    intro:['Welcome. Today, we transform you.','You are a vector. I am the matrix.','Let us see whether you are an eigenvector... or just noise.'],
-    win:['You kept your direction under transformation.','A true eigenvector. λ = impressive.'],
-    lose:['det(you) = 0.','Not invertible. Come back with full rank.'],
+    intro:['Grüezi! Let us look at this in ℝ³. Everything is easier in ℝ³.','You are a vector. I am the matrix.','Let us see if you are an eigenvector... or just noise.'],
+    win:['You kept your direction under my transformation.','A true eigenvector. Your eigenvalue? Positive. Very positive.'],
+    lose:['det(you) = 0.','Not invertible. Come back with full rank, then we talk.'],
     phases:A=>[
-      {name:'Vectors',rate:1.3,atk:[()=>A.aimed({n:4,spread:0.22,g:'→',c:CB,speed:300}),()=>A.aimed({g:'I',pink:true,speed:230}),()=>A.ring({n:8,g:'λ',c:CB})]},
-      {name:'Matrix Multiplication',rate:1.9,atk:[()=>A.vlas({xs:[40,160,280,400]}),()=>A.vlas({xs:[100,220,340]}),()=>A.aimed({n:3,g:'λ',c:CB,pink:'mid'})]},
-      {name:'Determinant = 0',rate:1.8,atk:[()=>{A.hlas({y:FLOOR-12});A.later(1.5,()=>A.hlas({y:FLOOR-70}));},()=>A.atPlayer({count:2}),()=>A.ring({n:10,g:'det',c:CB,pinkEvery:5})]}]},
-  analysis:{id:'analysis',name:'Prof. Epsilon',course:'Analysis',lvl:4,ects:8,where:'HG',hp:290,pal:profPal('#eeeeee','#8f5a2c','#2c3e50'),
+      {name:'Vektoren',rate:1.3,atk:[()=>A.aimed({n:4,spread:0.22,g:'→',c:CB,speed:300}),()=>A.aimed({g:'I',pink:true,speed:230}),()=>A.ring({n:8,g:'λ',c:CB})]},
+      {name:'Matrixmultiplikation',rate:1.9,atk:[()=>A.vlas({xs:[40,160,280,400]}),()=>A.vlas({xs:[100,220,340]}),()=>A.aimed({n:3,g:'λ',c:CB,pink:'mid'})]},
+      {name:'Determinante = 0',rate:1.8,atk:[()=>{A.hlas({y:FLOOR-12});A.later(1.5,()=>A.hlas({y:FLOOR-70}));},()=>A.atPlayer({count:2}),()=>A.ring({n:10,g:'det',c:CB,pinkEvery:5})]}]},
+  ad:{id:'ad',name:'Prof. Dr. Vreni Rekursion',short:'Prof. Rekursion',course:'Algorithmen und Datenstrukturen',courseShort:'A&D',sem:'HS',lvl:3,kp:7,hall:'HG F 1',hp:270,sprite:'f',pal:profPal('#7a4a2a','#a0522d','#f1c40f'),
+    chalk:['T(n) = 2T(n/2) + O(n)','⇒ T(n) = O(n log n)','Invariante: A[1..i] sortiert','Dijkstra: Kanten ≥ 0'],
+    intro:['To understand recursion, you must first understand recursion.','Today I sort you. In O(n log n), if you behave.','Bubble sort if you don\'t.'],
+    win:['Sorted. Stable, even.','Your runtime was... acceptable. Θ(respect).'],
+    lose:['Worst case. O(n²).','Back to the base case. Try again with a better invariant.'],
+    phases:A=>[
+      {name:'O-Notation',rate:1.35,atk:[()=>A.aimed({n:3,g:'O(n)',c:CT,spread:0.28}),()=>A.rain({n:10,g:'n²',c:CT,pinkEvery:5}),()=>A.aimed({g:'O(1)',pink:true,speed:220})]},
+      {name:'Mergesort',rate:1.9,atk:[()=>A.sweep({from:30,to:430,step:80,gap:0.22}),()=>A.bounce({n:5,g:['3','1','4','1','5'],c:CT,pink:true})]},
+      {name:'Rekursion',rate:1.8,atk:[()=>A.spiral({arms:4,steps:10,g:'f(n−1)',c:CT,pinkEvery:4,speed:160}),()=>A.ring({n:10,g:'n−1',c:CT,pinkEvery:5})]}]},
+  analysis:{id:'analysis',name:'Prof. Dr. Urs Grenzwert',short:'Prof. Grenzwert',course:'Analysis I',courseShort:'Analysis I',sem:'FS',lvl:3,kp:7,hall:'HG F 1',hp:290,sprite:'m',pal:profPal('#f0f0f0','#8f5a2c','#2c3e50'),
     chalk:['∀ε > 0 ∃δ > 0','lim 1/n = 0','f′(x) = lim (f(x+h) − f(x)) / h','∫ eˣ dx = eˣ + C'],
-    intro:['For every ε > 0 there exists a δ > 0...','...such that you will not dodge my attacks.','Let ε be your hope. Let it tend to zero.'],
-    win:['Your performance... converges.','Absolutely, even. Well done.'],
-    lose:['lim (your HP) = 0.','The sequence diverges. Revisit the definitions.'],
+    intro:['For every ε > 0 there exists a δ > 0...','...such that your chances become arbitrarily small.','Let ε be your hope. Now let it tend to zero.'],
+    win:['Your performance converges.','Absolutely, even. Gut gemacht.'],
+    lose:['lim (your HP) = 0.','The sequence diverges. Revisit the definitions. Slowly.'],
     phases:A=>[
-      {name:'Let ε > 0',rate:1.7,atk:[()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.42}),()=>A.sine({n:6,g:'ε',c:CO,ys:[FLOOR-130],amp:25,gap:0.25}),()=>A.aimed({g:'dx',pink:true,speed:220})]},
-      {name:'Choose δ',rate:1.8,atk:[()=>A.homing({n:3,g:'δ',c:CO,pink:true}),()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.4})]},
-      {name:'lim x → you',rate:1.9,atk:[()=>A.atPlayer({count:3}),()=>{A.sine({n:4,g:'∞',c:CO,ys:[FLOOR-45],amp:40,gap:0.45});A.homing({n:2,g:'δ',c:CO});}]}]},
-  ddca:{id:'ddca',name:'Prof. Gate',course:'Digital Design',lvl:5,ects:7,where:'CAB',hp:300,pal:profPal('#c96a3a','#555c66','#f1c40f'),
-    chalk:['A NAND B = ¬(A ∧ B)','0b1011 = 11','f = 1 / T','Y = A ⊕ B'],
-    intro:['Every computer is just billions of tiny gates.','Today, I am the gate.','And you... are a 0.'],
-    win:['Signal received: 1.','You switched states. Respect.'],
+      {name:'Sei ε > 0',rate:1.7,atk:[()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.42}),()=>A.sine({n:6,g:'ε',c:CO,ys:[FLOOR-130],amp:25,gap:0.25}),()=>A.aimed({g:'dx',pink:true,speed:220})]},
+      {name:'Wähle δ',rate:1.8,atk:[()=>A.homing({n:3,g:'δ',c:CO,pink:true}),()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.4})]},
+      {name:'lim x → du',rate:1.9,atk:[()=>A.atPlayer({count:3}),()=>{A.sine({n:4,g:'∞',c:CO,ys:[FLOOR-45],amp:40,gap:0.45});A.homing({n:2,g:'δ',c:CO});}]}]},
+  ddca:{id:'ddca',name:'Prof. Dr. Gion Gatter',short:'Prof. Gatter',course:'Digital Design and Computer Architecture',courseShort:'DDCA',sem:'FS',lvl:4,kp:7,hall:'HG F 1',hp:300,sprite:'b',pal:profPal('#c96a3a','#555c66','#f1c40f'),
+    chalk:['A NAND B = ¬(A ∧ B)','0b1011 = 11','f = 1 / T','add t0, t1, t2'],
+    intro:['Allegra! Every computer is just billions of tiny gates.','Today, I am the gate.','And you... are a 0.'],
+    win:['Signal received: 1.','You switched on the rising edge. Respect.'],
     lose:['Timing violation detected.','You missed the clock edge. Again.'],
     phases:A=>[
       {name:'Bits',rate:1.3,atk:[()=>A.bounce({n:4,g:['0','1'],c:CV}),()=>A.aimed({n:3,g:'1',c:CV,spread:0.3,pink:'mid'})]},
-      {name:'Clock Signal',rate:1.2,atk:[()=>A.bar({text:'CLK',speed:300,c:CV}),()=>A.bar({text:'CLK',speed:300,high:true,c:CV}),()=>A.aimed({g:'1',pink:true,speed:220})]},
-      {name:'Logic Gates',rate:1.6,atk:[()=>A.ring({n:9,g:['AND','OR','XOR','NOT'],c:CV,pinkEvery:3}),()=>A.vlas({xs:[60,200,340]}),()=>A.bounce({n:4,g:['0','1'],c:CV})]}]},
-  basis:{id:'basis',name:'THE BASISPRÜFUNG',course:'All of it. 3 hours.',lvl:1,ects:24,where:'HG',hp:520,exam:true,
+      {name:'Taktsignal',rate:1.2,atk:[()=>A.bar({text:'CLK',speed:300,c:CV}),()=>A.bar({text:'CLK',speed:300,high:true,c:CV}),()=>A.aimed({g:'1',pink:true,speed:220})]},
+      {name:'Logikgatter',rate:1.6,atk:[()=>A.ring({n:9,g:['AND','OR','XOR','NOT'],c:CV,pinkEvery:3}),()=>A.vlas({xs:[60,200,340]}),()=>A.bounce({n:4,g:['0','1'],c:CV})]}]},
+  aw:{id:'aw',name:'Prof. Dr. Erwin Erwartungswert',short:'Prof. Erwartungswert',course:'Algorithmen und Wahrscheinlichkeit',courseShort:'A&W',sem:'FS',lvl:4,kp:7,hall:'HG F 1',hp:300,sprite:'m',pal:profPal('#9a9a9a','#2f6b5a','#e67e22'),
+    chalk:['E[X] = Σ x · Pr[X = x]','Pr[A ∪ B] ≤ Pr[A] + Pr[B]','E[X + Y] = E[X] + E[Y]','Las Vegas ≠ Monte Carlo'],
+    intro:['Welcome. Let X be the number of attacks you dodge.','E[X] = ... let me compute ... oh dear.','With high probability, this ends badly for you.'],
+    win:['An outlier! Statistically, you should not exist.','I will need to update my priors.'],
+    lose:['As predicted. Pr[you pass] was always small.','But the expected number of attempts is finite. Try again.'],
+    phases:A=>[
+      {name:'Zufall',rate:1.4,atk:[()=>A.bounce({n:4,g:['1/6','1/2','P(A)'],c:CM}),()=>A.rain({n:12,g:['?','1/6'],c:CM,smin:140,smax:300,pinkEvery:6}),()=>A.aimed({g:'E[X]',pink:true,speed:220})]},
+      {name:'Erwartungswert',rate:1.5,atk:[()=>A.ring({n:12,g:'E[X]',c:CM,pinkEvery:6}),()=>A.aimed({n:5,g:'1/2',c:CM,spread:0.25,speed:300})]},
+      {name:'Markov-Kette',rate:1.8,atk:[()=>A.vrand({n:3}),()=>{A.homing({n:3,g:'P',c:CM,pink:true});A.later(0.8,()=>A.vrand({n:2}));}]}]},
+  pprog:{id:'pprog',name:'Prof. Dr. Sämi Semaphor',short:'Prof. Semaphor',course:'Parallele Programmierung',courseShort:'PProg',sem:'FS',lvl:5,kp:7,hall:'HG F 1',hp:310,sprite:'b',pal:profPal('#2b2b2b','#6b2d5c','#ecf0f1'),
+    chalk:['synchronized (lock) { ... }','wait() / notify()','Amdahl: S = 1 / (s + (1−s)/n)','Deadlock: 4 Bedingungen'],
+    intro:['Hoi zäme! Today we do everything in parallel.','I will attack you with four threads at once.','Don\'t worry. Probably no race conditions. Probably.'],
+    win:['Deadlock-free and correct. Rare. Beautiful.','You may release the lock now.'],
+    lose:['Race condition detected. You lost.','Next time, synchronize your jumps.'],
+    phases:A=>[
+      {name:'Threads',rate:1.5,atk:[()=>{A.sine({n:6,g:'T1',c:CV,ys:[FLOOR-120],amp:14,gap:0.22});A.sine({n:6,g:'T2',c:CV,ys:[FLOOR-80],amp:10,gap:0.22});},()=>A.aimed({n:2,g:'T3',c:CV,spread:0.2,speed:300}),()=>A.aimed({g:'join()',pink:true,speed:220})]},
+      {name:'Race Condition',rate:1.6,atk:[()=>{A.bar({text:'RACE',speed:420});A.later(0.7,()=>A.bar({text:'RACE',speed:260,high:true}));},()=>A.aimed({g:'lock()',pink:true,speed:230}),()=>A.rain({n:8,g:'++',c:CV})]},
+      {name:'Deadlock',rate:2.2,atk:[()=>{A.vlas({xs:[30,430]});A.later(0.5,()=>A.vlas({xs:[90,370]}));A.later(1.0,()=>A.vlas({xs:[150,310]}));},()=>A.aimed({n:3,g:'wait()',c:CV,spread:0.2,pink:'mid'})]}]},
+  block1:{id:'block1',name:'BASISPRÜFUNG · BLOCK 1',short:'Block 1',course:'Diskrete Mathe · LinAlg · EProg · A&D',courseShort:'Block 1',sem:'HS',lvl:1,kp:0,hall:'Prüfungsraum',hp:440,exam:true,paper:'#c0392b',block:'BLOCK 1',
     chalk:['Aufgabe 1 (12 Punkte)','Aufgabe 2 (18 Punkte)','Aufgabe 3 (30 Punkte)','Viel Erfolg!'],
-    intro:['...','I am every exercise you skipped.','Every lecture you watched at 2× speed.','I am the BASISPRÜFUNG. Three hours. No cheat sheet.'],
+    intro:['...','I am every Serie you skipped this Herbstsemester.','Every lecture you watched at 2× speed.','BASISPRÜFUNG, BLOCK 1. Three hours. No cheat sheet.'],
     win:['...','...you passed.','(The exam quietly turns into a "Bestanden" email.)'],
-    lose:['NOT PASSED.','You may try again... while the semester lasts.'],
-    phases:A=>[BOSSES.diskret.phases(A)[2],BOSSES.eprog.phases(A)[1],BOSSES.linalg.phases(A)[1],BOSSES.analysis.phases(A)[2],BOSSES.ddca.phases(A)[2]]
-      .map((p,i)=>({name:`Part ${i+1}: ${p.name}`,rate:p.rate*0.9,atk:p.atk}))}
+    lose:['NOT PASSED.','You may try again... while the year lasts.'],
+    phases:A=>[BOSSES.diskret.phases(A)[2],BOSSES.eprog.phases(A)[1],BOSSES.linalg.phases(A)[1],BOSSES.ad.phases(A)[2]].map((p,i)=>({name:`Aufgabe ${i+1}: ${p.name}`,rate:p.rate*0.9,atk:p.atk}))},
+  block2:{id:'block2',name:'BASISPRÜFUNG · BLOCK 2',short:'Block 2',course:'Analysis I · DDCA · A&W · PProg',courseShort:'Block 2',sem:'FS',lvl:1,kp:0,hall:'Prüfungsraum',hp:480,exam:true,paper:'#1f5fa8',block:'BLOCK 2',
+    chalk:['Aufgabe 1 (15 Punkte)','Aufgabe 2 (20 Punkte)','Aufgabe 3 (25 Punkte)','Viel Erfolg!'],
+    intro:['...','So. The Frühjahrssemester, compressed into three hours.','Analysis, gates, probabilities and threads. All at once.','BASISPRÜFUNG, BLOCK 2. Begin.'],
+    win:['...','...BESTANDEN.','You are officially through the Basisjahr.'],
+    lose:['NOT PASSED.','You may try again... while the year lasts.'],
+    phases:A=>[BOSSES.analysis.phases(A)[2],BOSSES.ddca.phases(A)[2],BOSSES.aw.phases(A)[2],BOSSES.pprog.phases(A)[2]].map((p,i)=>({name:`Aufgabe ${i+1}: ${p.name}`,rate:p.rate*0.9,atk:p.atk}))}
 };
 
 /* ---------------- boss fight ---------------- */
-function drawLecture(B){rect(0,0,W,H,'#2b2438');for(let x=0;x<W;x+=64)rect(x,0,2,FLOOR,'#30293f');
+function drawLecture(B,t){rect(0,0,W,H,'#2b2438');for(let x=0;x<W;x+=64)rect(x,0,2,FLOOR,'#30293f');
   rect(118,64,404,146,'#5a3d26');rect(124,70,392,132,B.exam?'#24242c':'#1f3b2d');
   B.chalk.forEach((s,i)=>txt(s,140,78+i*30,{size:22,color:'rgba(230,240,230,.78)'}));rect(124,202,392,6,'#7a5232');
+  const pw=tw(B.hall,14)+12;rect(124,50,pw,14,'#1d2633');txt(B.hall,124+pw/2,50,{size:14,align:'center',color:'#fff'});
+  if(B.exam){const left=Math.max(0,180-t*2),hh=Math.floor(left/60),mm=Math.floor(left%60);txt(`Restzeit ${hh}:${String(mm).padStart(2,'0')}`,160+tw(B.chalk[3],22),168,{size:22,color:'#ff6b6b'});}
   rect(0,FLOOR,W,H-FLOOR,'#4b3527');for(let x=0;x<W;x+=48)rect(x,FLOOR,2,H-FLOOR,'#3c2a1f');rect(0,FLOOR,W,3,'#6b4c38');
   rect(572,FLOOR-58,50,58,'#6b4a2b');rect(568,FLOOR-62,58,8,'#8a6238');}
-function drawExam(x,y,flash,t){const w=112,h=132;ctx.save();ctx.translate(x,y+h/2);ctx.rotate(Math.sin(t*1.5)*0.05);ctx.translate(-w/2,-h/2);
-  rect(5,5,w,h,'rgba(0,0,0,.35)');rect(0,0,w,h,flash?'#fff':'#f4f1e8');rect(0,0,w,20,flash?'#fff':'#c0392b');txt('BASISPRÜFUNG',w/2,2,{size:16,align:'center',color:'#fff'});
-  rect(18,28,30,3,'#1a1a1a');rect(64,28,30,3,'#1a1a1a');rect(22,34,22,9,'#1a1a1a');rect(68,34,22,9,'#1a1a1a');rect(27,36,6,5,'#ff4d6d');rect(73,36,6,5,'#ff4d6d');
-  rect(34,54,44,6,'#1a1a1a');for(let i=0;i<6;i++)rect(12,72+i*9,w-24,2,'#c9c2b0');txt('Note: ?',w-12,h-18,{size:16,align:'right',color:'#c0392b'});ctx.restore();}
-
+function drawExam(x,y,flash,t,B){const w=112,h=132;ctx.save();ctx.translate(x,y+h/2);ctx.rotate(Math.sin(t*1.5)*0.05);ctx.translate(-w/2,-h/2);
+  rect(5,5,w,h,'rgba(0,0,0,.35)');rect(0,0,w,h,flash?'#fff':'#f4f1e8');rect(0,0,w,20,flash?'#fff':B.paper);txt('BASISPRÜFUNG',w/2,2,{size:16,align:'center',color:'#fff'});
+  txt(B.block,w/2,22,{size:14,align:'center',color:B.paper});
+  rect(18,36,30,3,'#1a1a1a');rect(64,36,30,3,'#1a1a1a');rect(22,42,22,9,'#1a1a1a');rect(68,42,22,9,'#1a1a1a');rect(27,44,6,5,'#ff4d6d');rect(73,44,6,5,'#ff4d6d');
+  rect(34,60,44,6,'#1a1a1a');for(let i=0;i<5;i++)rect(12,76+i*9,w-24,2,'#c9c2b0');txt('Note: ?',w-12,h-18,{size:16,align:'right',color:B.paper});ctx.restore();}
 function makeCombat(id,done){const B=BOSSES[id];
-  const maxHp=hpFor(G.level)+(G.buff?1:0);
+  const maxHp=hpFor(G.level)+(G.buff?1:0)+(B.exam&&G.prep?1:0);
   const S={music:id==='basis'?'final':'boss',t:0,st:'intro',stT:0,paused:false,hitstop:0,shake:0,banner:'',bannerT:0,beam:0,wob:G.buff,ended:false,hits:0,
     boss:{hp:B.hp,max:B.hp,ph:-1,x:530,flash:0,atkT:1,ai:0},
     p:{x:90,y:FLOOR,vx:0,vy:0,ground:true,hp:maxHp,max:maxHp,inv:0,dash:0,dashCd:0,cool:0,sup:0,dir:1,anim:0,parry:0},
     shots:[],projs:[],lasers:[],ev:[],parts:[]};
-  G.buff=false;
+  G.buff=false;if(B.exam)G.prep=false;
   const mouth=()=>({x:S.boss.x-34,y:FLOOR-78}),pc=()=>({x:S.p.x,y:S.p.y-14});
   const later=(d,f)=>S.ev.push({t:d,f});
   const gl=g=>Array.isArray(g)?pick(g):g;
@@ -650,6 +902,8 @@ function makeCombat(id,done){const B=BOSSES[id];
     sine({n=6,g='~',c=CB,amp=40,freq=4,speed=200,gap=0.25,ys=null}={}){for(let i=0;i<n;i++)later(i*gap,()=>{const m=mouth(),by=ys?ys[i%ys.length]:m.y;proj({x:m.x,y:by,by,vx:-speed,sine:true,amp,freq,g:gl(g),c});});},
     homing({n=3,g='δ',c=CO,speed=130,dur=2.6,pink=false}={}){for(let i=0;i<n;i++)later(i*0.35,()=>{const m=mouth();proj({x:m.x,y:m.y-20+i*20,vx:-speed,vy:0,homing:dur,speed,g:gl(g),c,pink:pink&&i===n-1,life:7});});},
     atPlayer({count=3,gap=0.7,th=30}={}){for(let i=0;i<count;i++)later(i*gap,()=>A.vlas({xs:[clamp(S.p.x,20,440)],th,warn:0.65,dur:0.35}));},
+    sweep({from=30,to=430,step=80,gap=0.22,warn=0.6,dur=0.3,th=24}={}){let k=0;for(let x=from;x<=to;x+=step,k++){const xx=x;later(k*gap,()=>A.vlas({xs:[xx],warn,dur,th}));}},
+    vrand({n=3,th=26}={}){const xs=[];let tries=0;while(xs.length<n&&tries<60){tries++;const x=rnd(30,430);if(xs.every(v=>Math.abs(v-x)>100))xs.push(x);}A.vlas({xs,th});},
     spiral({arms=4,steps=12,speed=170,g='•',c='#fff',dt=0.13,pinkEvery=0}={}){for(let k=0;k<steps;k++)later(k*dt,()=>A.ring({n:arms,speed,g,c,off:k*0.33,pinkEvery:pinkEvery&&k%pinkEvery===0?arms:0}));}
   };
   const PH=B.phases(A);
@@ -705,12 +959,12 @@ function makeCombat(id,done){const B=BOSSES[id];
   S.draw=()=>{const p=S.p,b=S.boss;ctx.save();
     if(S.shake>0)ctx.translate(rnd(-4,4),rnd(-3,3));
     if(S.wob&&S.st==='fight')ctx.translate(Math.sin(S.t*1.7)*4,Math.sin(S.t*1.3)*2);
-    drawLecture(B);
+    drawLecture(B,S.t);
     for(const l of S.lasers){const warn=l.t<l.warn,blink=Math.floor(l.t*12)%2?'rgba(255,80,80,.9)':'rgba(255,80,80,.35)';
       if(l.v){if(warn){rect(l.pos-1,40,2,FLOOR-40,blink);rect(l.pos-l.th/2,40,l.th,FLOOR-40,'rgba(255,80,80,.10)');}else{rect(l.pos-l.th/2,40,l.th,FLOOR-40,'#ff4d6d');rect(l.pos-l.th/4,40,l.th/2,FLOOR-40,'#fff');}}
       else{if(warn){rect(0,l.pos-1,W,2,blink);rect(0,l.pos-l.th/2,W,l.th,'rgba(255,80,80,.10)');}else{rect(0,l.pos-l.th/2,W,l.th,'#ff4d6d');rect(0,l.pos-l.th/4,W,l.th/2,'#fff');}}}
     const bob=Math.sin(S.t*2.2)*3;ctx.globalAlpha=S.st==='win'?Math.max(0,1-S.stT/2.6):1;
-    if(B.exam)drawExam(b.x,FLOOR-140+bob,b.flash>0,S.t);else spr(PROF,B.pal,b.x-42,FLOOR-112+bob,7,true,b.flash>0?'#ffffff':null);
+    if(B.exam)drawExam(b.x,FLOOR-140+bob,b.flash>0,S.t,B);else spr(PROF_SPR[B.sprite||'m'],B.pal,b.x-42,FLOOR-112+bob,7,true,b.flash>0?'#ffffff':null);
     ctx.globalAlpha=1;
     for(const s of S.shots){rect(s.x-7,s.y-2,12,4,'#fff3a0');rect(s.x+5,s.y-1,3,2,'#ff9f43');}
     for(const q of S.projs){if(q.rect){rect(q.x-q.w/2,q.y-q.h/2,q.w,q.h,'#1b0f14');rect(q.x-q.w/2+2,q.y-q.h/2+2,q.w-4,q.h-4,q.c);txt(q.g,q.x,q.y-q.h/2+2,{size:20,align:'center',color:'#1b0f14'});continue;}
@@ -728,9 +982,9 @@ function makeCombat(id,done){const B=BOSSES[id];
     for(let i=1;i<PH.length;i++)rect(W-260+246*(1-i/PH.length),26,2,12,'#000');
     txt(B.course,W-12,40,{size:16,align:'right',color:'#cfc9e8',shadow:'#000'});
     if(S.bannerT>0&&S.st==='fight'){ctx.globalAlpha=clamp(S.bannerT,0,1);const w=tw(S.banner,16,PX)+30;rect(W/2-w/2,72,w,32,'#000');txt(S.banner,W/2,80,{font:PX,size:16,align:'center',color:'#ffd166'});ctx.globalAlpha=1;}
-    if(S.st==='intro'){rect(0,0,W,H,'rgba(0,0,0,.4)');txt(B.name,W/2,112,{font:PX,size:24,align:'center',shadow:'#000'});txt(B.course,W/2,146,{size:24,align:'center',color:'#cfc9e8',shadow:'#000'});
+    if(S.st==='intro'){rect(0,0,W,H,'rgba(0,0,0,.4)');txt(B.name,W/2,112,{font:PX,size:tw(B.name,24,PX)>600?16:24,align:'center',shadow:'#000'});txt(B.course,W/2,146,{size:24,align:'center',color:'#cfc9e8',shadow:'#000'});
       txt(S.stT<1.4?'READY?':'GO!',W/2,186,{font:PX,size:32,align:'center',color:S.stT<1.4?'#ffd166':'#9be564',shadow:'#000'});
-      txt('hold X shoot · Z jump · Z in the air on pink = parry · C dash',W/2,236,{size:18,align:'center',color:'#fff',shadow:'#000'});}
+      txt('X shoot · Z jump · Z on pink = parry · C dash',W/2,236,{size:18,align:'center',color:'#fff',shadow:'#000'});}
     if(S.st==='win')txt(B.exam?'BESTANDEN!':'PASSED!',W/2,140,{font:PX,size:32,align:'center',color:'#9be564',shadow:'#000'});
     if(S.st==='lose')txt('NICHT BESTANDEN',W/2,140,{font:PX,size:24,align:'center',color:'#ff5d5d',shadow:'#000'});
     if(S.paused){rect(0,0,W,H,'rgba(0,0,0,.65)');txt('PAUSED',W/2,130,{font:PX,size:24,align:'center'});txt('Z / Esc: resume · Q: give up and leave the lecture hall',W/2,172,{size:20,align:'center',color:'#cfc9e8'});}};
