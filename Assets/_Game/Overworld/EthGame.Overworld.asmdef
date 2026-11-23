@@ -1,0 +1,14 @@
+{
+    "name": "EthGame.Overworld",
+    "rootNamespace": "EthGame.Overworld",
+    "references": ["EthGame.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

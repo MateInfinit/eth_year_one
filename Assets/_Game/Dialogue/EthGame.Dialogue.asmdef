@@ -1,0 +1,14 @@
+{
+    "name": "EthGame.Dialogue",
+    "rootNamespace": "EthGame.Dialogue",
+    "references": ["EthGame.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

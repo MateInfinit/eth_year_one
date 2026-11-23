@@ -1,0 +1,36 @@
+# Project: ETH: Year One
+Undertale-style top-down RPG (overworld) + Cuphead-style side-view boss fights.
+Unity 6 LTS, URP 2D, C#. Pixel art at 16 pixels per unit.
+Theme: first year of Computer Science at ETH Zürich, full of inside jokes.
+
+## Read first
+- README.md (who owns what), docs/ARCHITECTURE.md, and the brief for the workflow in your task
+  (docs/workflows/W*.md).
+
+## Hard rules
+- Only create or edit files inside the module folder(s) of the workflow named in the task.
+  If the task needs a change in another module, STOP and explain what is needed instead.
+- Never modify Assets/_Game/Core/Contracts/ unless the task explicitly says "contract change".
+- Never edit .unity, .prefab, .asset or .meta files by hand. Write C# and ScriptableObject classes;
+  humans wire scenes and create assets in the Editor. Tell the human exactly what to wire.
+- Never invent GameObject names, tags, layers or scene names. Use the lists in
+  Assets/_Game/Core/Docs/Conventions.md, or ask.
+- Modules communicate ONLY via Core contracts: interfaces, GameEvents, ScriptableObjects.
+  Never reference a class from another module (except EthGame.Core).
+- Do not add packages or change ProjectSettings. Ask the human.
+
+## Code style
+- Namespace: EthGame.<Module>  (EthGame.Core, EthGame.Overworld, EthGame.Combat, ...).
+- One public class per file; file name == class name (required for MonoBehaviours/ScriptableObjects).
+- [SerializeField] private fields, no public mutable fields.
+- Tunable data (bosses, items, dialogue, XP tables, attack patterns) lives in ScriptableObjects.
+- No singletons except GameManager. No Find*/GetComponent calls inside Update.
+- Subscribe to GameEvents in OnEnable, unsubscribe in OnDisable.
+- Use the new Input System, not UnityEngine.Input.
+- Pure logic goes in plain C# classes with EditMode tests in <Module>/Tests/.
+
+## Working style
+- Start in Plan mode: list the files you will create or change and why.
+- Keep each change small: one feature per branch.
+- At the end, write a short summary: files changed, what the human must do in the Editor,
+  and how to test it.

@@ -1,0 +1,14 @@
+{
+    "name": "EthGame.Progression",
+    "rootNamespace": "EthGame.Progression",
+    "references": ["EthGame.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

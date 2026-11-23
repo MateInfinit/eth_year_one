@@ -1,0 +1,19 @@
+{
+    "name": "EthGame.Combat.Tests",
+    "rootNamespace": "EthGame.Combat.Tests",
+    "references": [
+        "EthGame.Combat",
+        "EthGame.Core",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
