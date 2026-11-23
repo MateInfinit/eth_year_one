@@ -11,6 +11,10 @@ Click the game first so it gets your keyboard.
 - **Universitätstrasse & CAB:** the old 1886 chemistry building, tram stop "ETH/Universitätsspital" with a blue-and-white tram, bikes, a poster column.
 - **Inside CAB:** the yellow Cray X-MP/28 you can sit on, the VIS office with the Prüfungssammlung (old exams: +1 HP in a Basisprüfung block), food&lab, the CABinett and the beer vending machine.
 - **HG Haupthalle:** columns, lecture hall HG F 1, ETH-Bibliothek (study for XP), the exam room.
+  Easter eggs set into the floor: **GOAT** in gold and **IOI** in blue (talk to them while standing on them).
+- **HG F 6:** side door on the left of the Haupthalle. Curved birch-wood tiers, glossy dark-red floor, long blackboard over wooden cabinets,
+  white lecturer desk, TV screen. Sit in on a lecture (1 AP, you might fall asleep), or challenge a professor at the desk:
+  the fight then takes place in a side view of HG F 6.
 - **Mensa Polyterrasse:** "natürlich vegi" and "LOCAL" lines, panorama windows, the Hilfsassistent job board.
 - **The real Basisjahr:** weeks 1–7 Herbstsemester, weeks 8–14 Frühjahrssemester, 8 courses × 7 KP = 56 KP,
   then **Basisprüfung Block 1** (HS courses) and **Block 2** (FS courses).

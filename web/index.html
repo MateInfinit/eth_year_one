@@ -167,6 +167,23 @@ function drawDlg(){const d=dlg,x=20,y=244,w=600,h=108;ubox(x,y,w,h);
   if(d.shown>=d.len){if(d.choices){const cw=Math.max(...d.choices.map(c=>tw(c,20)))+56,chh=d.choices.length*26+18,cx=W-20-cw,cy=y-chh-4;
       ubox(cx,cy,cw,chh);d.choices.forEach((c,i)=>{txt(c,cx+36,cy+9+i*26,{size:20,color:i===d.sel?'#ffd166':'#fff'});if(i===d.sel)drawHeart(cx+13,cy+14+i*26,2);});}
     else if(Math.floor(performance.now()/300)%2)txt('▼',x+w-26,y+h-26,{size:18,color:'#ffd166'});}}
+/* ---------------- HG F 6 layout + big floor letters ---------------- */
+function buildF6(){const rows=[];
+  for(let r=0;r<10;r++){let s='';
+    for(let c=0;c<20;c++){let ch;
+      if(r===0)ch=c===1?'D':(c>=4&&c<=15)?'Q':c===17?'X':'#';
+      else if(r===9||c===0||c===19)ch='#';
+      else if(r<=2)ch=(r===2&&c>=3&&c<=5)?'w':'.';
+      else ch=(c===1||c===18||c===9||c===10)?'.':'k';
+      s+=ch;}
+    rows.push(s);}
+  return rows;}
+const FONT5={G:[".###.","#...#","#....","#.###","#...#","#...#",".###."],O:[".###.","#...#","#...#","#...#","#...#","#...#",".###."],
+  A:[".###.","#...#","#...#","#####","#...#","#...#","#...#"],T:["#####","..#..","..#..","..#..","..#..","..#..","..#.."],I:[".###.","..#..","..#..","..#..","..#..","..#..",".###."]};
+function hgPillar(x,y){rect(x+6,y+24,20,6,'#cdbf9f');rect(x+9,y-26,14,50,'#f1e9d6');rect(x+19,y-26,4,50,'#d8cbb0');rect(x+6,y-30,20,6,'#d9ccb0');rect(x+7,y-33,18,3,'#e6dbc2');}
+function bigWord(word,cx,y,s,col,edge){let x=cx-(word.length*6*s-s)/2;
+  for(const ch of word){const g=FONT5[ch];if(g){for(const [colr,dx] of [[edge,2],[col,0]])g.forEach((row,r)=>{for(let c=0;c<5;c++)if(row[c]==='#')rect(x+c*s+dx,y+r*s+dx,s,s,colr);});}x+=6*s;}}
+
 /* ---------------- maps ---------------- */
 const DR=(m,c,r,dir)=>[m,c,r,dir];
 const MAPS={
@@ -179,9 +196,11 @@ const MAPS={
     doors:{'9,2':DR('cab',9,8,'up'),'10,2':DR('cab',10,8,'up'),'19,4':DR('campus',1,4,'right')},
     signs:[[19,3,'POLYTERRASSE →']]},
   hg:{name:'HG · Haupthalle',music:'indoor',
-    rows:["####E####N##L##E####","#..................#","#..................#","#...O...O..O...O...#","#p................p#","#..................#","#...O...O..O...O...#","#..................#","#B................B#","#########DD#########"],
-    doors:{'9,9':DR('campus',9,3,'down'),'10,9':DR('campus',10,3,'down')},
-    signs:[[4,0,'HG F 1'],[12,0,'BIBLIOTHEK'],[15,0,'PRÜFUNG']]},
+    rows:["####E####N##L##E####","#..................#","#..................#","#...O...O..O...O...#","#p................p#","D..................#","#...O...O..O...O...#","#..................#","#B................B#","#########DD#########"],
+    doors:{'9,9':DR('campus',9,3,'down'),'10,9':DR('campus',10,3,'down'),'0,5':DR('f6',1,1,'down')},
+    signs:[[4,0,'HG F 1'],[12,0,'BIBLIOTHEK'],[15,0,'PRÜFUNG'],[0,4,'HG F 6']]},
+  f6:{name:'HG F 6',music:'indoor',rows:buildF6(),
+    doors:{'1,0':DR('hg',1,5,'right')},signs:[[1,0,'EXIT']]},
   cab:{name:'CAB · Departement Informatik',music:'indoor',
     rows:["###E###v####G###KK##","#..................#","#V.................#","#..tt....YY....tt..#","#.......YYYY.......#","#..................#","#..tt..........tt..#","#..................#","#p..LL............p#","#########DD#########"],
     doors:{'9,9':DR('uni',9,3,'down'),'10,9':DR('uni',10,3,'down')},
@@ -190,8 +209,8 @@ const MAPS={
     rows:["#RRRRRRRWWWWWWWWWWW#","#MMMMMMM..........J#","#..................#","#..tttt....tttt....#","#..................#","D..tttt....tttt....#","#..................#","#..tttt....tttt....#","#p................p#","####################"],
     doors:{'0,5':DR('campus',18,4,'left')},signs:[]}
 };
-const SOLID=new Set('#FSh^~TlBPObEFNLVKvGYtpMRWJAZg'.split(''));
-const INTERACT=new Set('BPT^~FShlZAbRgENLOpvGKVYtMWJ'.split(''));
+const SOLID=new Set('#FSh^~TlBPObEFNLVKvGYtpMRWJAZgQXwk'.split(''));
+const INTERACT=new Set('BPT^~FShlZAbRgENLOpvGKVYtMWJQXwk'.split(''));
 const NPCS=[
   {id:'anouk',map:'campus',c:6,r:5,name:'Anouk (exchange student)',pal:mkPal('#d9b13b','#2e8b57'),dir:'down',lines:[
     ["Salut! I came from Lyon for one semester.","Three weeks in and I still can't find my lecture hall. Is everything here in the basement?"],
@@ -217,6 +236,9 @@ const NPCS=[
   {id:'brunner',map:'hg',c:2,r:7,name:'Herr Brunner (Hauswart)',pal:mkPal('#9a9a9a','#34495e','#34495e'),dir:'right',lines:[
     ["Grüezi. Please don't run in the Haupthalle.","Semper would be turning in his grave."],
     ["I've seen thousands of first-years come through here.","The ones who sleep and eat properly do best. Just saying."]]},
+  {id:'nico',map:'f6',c:14,r:2,name:'Nico (TA)',pal:mkPal('#3b2a1e','#7f8c8d'),dir:'left',lines:[
+    ["Welcome to HG F 6. Best seats in the whole HG.","Birch wood, fold-down desks, and a floor so shiny you can see your own panic."],
+    ["The professors sometimes lecture in here.","Talk to them at the white desk, if you're brave."]]},
   {id:'laura',map:'cab',c:4,r:1,name:'Laura (TA)',pal:mkPal('#c0392b','#f39c12'),dir:'down',lines:[
     ["Hi! I'm your TA. The Übungsraum is right here.","This week's Serie is easy. It says so on the sheet."],
     ["If you don't understand something, just ask!","(Nobody has ever asked.)"],
@@ -297,13 +319,13 @@ const TILE={
     switch(ch){
       case '.':fl();break;
       case '#':wall();if(r===0){ctx.fillStyle='#b59f76';ctx.beginPath();ctx.arc(x+16,y+14,9,Math.PI,0);ctx.fill();rect(x+7,y+14,18,12,'#b59f76');}else if(c===0||c===19)rect(x+12,y,8,TS,'#bda983');break;
-      case 'O':fl();rect(x+6,y+24,20,6,'#cdbf9f');rect(x+9,y-26,14,50,'#f1e9d6');rect(x+19,y-26,4,50,'#d8cbb0');rect(x+6,y-30,20,6,'#d9ccb0');rect(x+7,y-33,18,3,'#e6dbc2');break;
+      case 'O':fl();hgPillar(x,y);break;
       case 'E':wall();rect(x+2,y+2,28,30,'#3a2618');rect(x+4,y+6,11,26,'#6b4428');rect(x+17,y+6,11,26,'#6b4428');rect(x+12,y+18,2,3,'#e0c068');rect(x+18,y+18,2,3,'#e0c068');break;
       case 'L':wall();rect(x+2,y+2,28,30,'#3a2618');rect(x+4,y+6,11,26,'#8fb0c8');rect(x+17,y+6,11,26,'#8fb0c8');rect(x+15,y+6,2,26,'#3a2618');break;
       case 'N':wall();rect(x+2,y+4,28,22,'#7a5232');rect(x+4,y+6,24,18,'#b07b46');rect(x+6,y+8,8,7,'#fff');rect(x+16,y+9,9,10,'#ffe08a');rect(x+8,y+16,7,6,'#f8b4c4');break;
       case 'p':fl();plant(x,y);break;
       case 'B':fl();drawBench(x,y);break;
-      case 'D':fl();rect(x+2,y+18,28,12,'#7a2e2e');break;
+      case 'D':if(c===0){wall();rect(x+14,y+2,16,30,'#3a2618');rect(x+16,y+4,12,28,'#b98d55');rect(x+18,y+8,8,10,'#bfe0ef');}else{fl();rect(x+2,y+18,28,12,'#7a2e2e');}break;
       default:fl();}},
   cab(ch,c,r,x,y){
     const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#cfccc4':'#c7c3ba');rect(x,y,TS,1,'#b3afa5');rect(x,y,1,TS,'#b3afa5');};
@@ -324,6 +346,21 @@ const TILE={
       case 'p':fl();plant(x,y);break;
       case 'D':fl();rect(x+2,y+18,28,12,'#2c3e50');break;
       default:fl();}},
+  f6(ch,c,r,x,y){
+    const floor=()=>{rect(x,y,TS,TS,'#6e2f28');rect(x+((c*7+r*3)%18)+3,y+7+((c+r)%3)*6,12,2,'#86413a');};
+    const wall=()=>{rect(x,y,TS,TS,'#e9e8e3');rect(x,y+TS-5,TS,5,'#c9c6bd');};
+    const off=r>=3?Math.round(Math.pow(c+0.5-10,2)*0.1):0;
+    switch(ch){
+      case '.':if(r>=3){rect(x,y,TS,TS,'#c49a5c');for(let i=0;i<4;i++){rect(x,y+i*8,TS,6,'#d9b47a');rect(x,y+i*8+6,TS,2,'#9a7442');}
+          if(c===1)rect(x+TS-3,y,3,TS,'#9aa0a6');if(c===18)rect(x,y,3,TS,'#9aa0a6');}else floor();break;
+      case 'D':wall();rect(x+3,y+2,26,30,'#9c7444');rect(x+5,y+4,22,28,'#d9b47a');rect(x+9,y+7,14,10,'#bfe0ef');rect(x+22,y+19,3,3,'#555');break;
+      case '#':wall();if(r===9&&c>1&&c<18)rect(x,y,TS,TS-5,'#8f6a3c');break;
+      case 'Q':wall();rect(x,y+3,TS,18,'#2f3833');rect(x,y+21,TS,3,'#8e8f8a');rect(x,y+24,TS,8,'#d6b07a');rect(x+(c%2?0:TS-1),y+24,1,8,'#a8844a');break;
+      case 'X':wall();rect(x+2,y+5,28,17,'#111');rect(x+4,y+7,24,13,(Math.floor(performance.now()/700)%2)?'#24416b':'#2a4a78');break;
+      case 'w':floor();rect(x,y+6,TS,22,'#f4f4f2');rect(x,y+26,TS,3,'#c9c9c4');if(c===4){rect(x+8,y,16,11,'#222');rect(x+10,y+2,12,7,'#5c7fa6');}if(c===3)rect(x+6,y-6,14,10,'#2c3e50');break;
+      case 'k':rect(x,y,TS,TS,'#8f6a3c');{const yy=y-off;rect(x,yy+2,TS,9,'#e3c58e');rect(x,yy+11,TS,3,'#a37a45');rect(x,yy+16,TS,10,'#d9b47a');rect(x,yy+26,TS,6,'#8f6a3c');
+          for(let i=2;i<TS;i+=8)rect(x+i,yy+16,1,10,'#c29e64');}break;
+      default:floor();}},
   mensa(ch,c,r,x,y){
     const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#e3d8c4':'#ddd1bb');rect(x,y,TS,1,'#cdbfa5');};
     switch(ch){
@@ -375,7 +412,15 @@ const PAINT={
     const ry=y0+7*TS;rect(0,ry,W,64,'#55585e');for(const k of [14,22,42,50])rect(0,ry+k,W,2,'#8e9196');rect(0,ry-1,W,1,'#33363b');
     drawTram(((t*70)%1500)-520,ry+10);
     const gy=y0+9*TS;rect(0,gy,W,32,'#a9a9a9');for(let x=0;x<W;x+=80){rect(x+6,gy+8,68,24,'#d9cfb8');rect(x+16,gy+14,12,10,'#3f5164');rect(x+48,gy+14,12,10,'#3f5164');}},
-  hg(){ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
+  f6(t){const y0=HUD;
+    txt('HG F 6',4*TS+8,y0+5,{size:14,color:'rgba(230,240,230,.75)'});txt('∫ Lernphase dt = ∞',7*TS,y0+5,{size:14,color:'rgba(230,240,230,.75)'});txt('goat',15*TS+6,y0+10,{size:12,color:'rgba(230,240,230,.45)'});
+    for(let r=3;r<=8;r++)for(let c=2;c<18;c++){if(c===9||c===10||(c*7+r*3)%5!==0)continue;const off=Math.round(Math.pow(c+0.5-10,2)*0.1),x=c*TS,y=y0+r*TS-off;
+      rect(x+10,y+4,12,10,['#3b2a1e','#d9b13b','#1c1c1c','#8a5a2b','#c0392b'][(c+r)%5]);rect(x+8,y+12,16,6,['#2e8b57','#1f5fa8','#8e44ad','#e67e22','#34495e'][(c*3+r)%5]);}
+    ctx.globalAlpha=0.08;for(let i=0;i<5;i++)rect(40+i*120,y0+32,70,2,'#ffffff');ctx.globalAlpha=1;},
+  hg(){bigWord('GOAT',320,HUD+4*TS+4,8,'#d4af37','#8a6d1f');bigWord('IOI',320,HUD+7*TS+4,8,'#2f5aa8','#16305e');
+    MAPS.hg.rows.forEach((row,r)=>{if(r>=4)[...row].forEach((ch,c)=>{if(ch==='O')hgPillar(c*TS,HUD+r*TS);});});
+    if(Math.floor(performance.now()/180)%9===0)rect(236+((Math.floor(performance.now()/180)*37)%170),HUD+4*TS+10,4,4,'#fff7c2');
+    ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
   cab(){drawCray(320,HUD+4*TS+6);},
   mensa(){const y0=HUD;rect(32,y0,224,32,'#5b3a26');
     const board=(x,title,price,col)=>{rect(x,y0+3,104,26,'#1d1d1f');rect(x,y0+3,104,10,col);txt(title,x+52,y0+2,{size:12,align:'center'});txt(price,x+52,y0+13,{size:16,align:'center',color:'#ffd166'});};
@@ -408,7 +453,9 @@ const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,t:
     if(back()){flow(menu);return;}
     if(hit('ok')){const v=DIRV[G.dir],c=Math.floor((G.x+v[0]*22)/TS),r=Math.floor((G.y-8+v[1]*24)/TS);
       const n=npcAt(G.map,c,r);if(n){flow(()=>talkNPC(n));return;}
-      const ch=tileAt(G.map,c,r);if(ch&&INTERACT.has(ch)){flow(()=>interact(ch,c,r));return;}}
+      const ch=tileAt(G.map,c,r);if(ch&&INTERACT.has(ch)){flow(()=>interact(ch,c,r));return;}
+      const fx=G.x+v[0]*22,fy=G.y-8+v[1]*24,inR=(e,x,y)=>x>=e.x0&&x<=e.x1&&y>=e.y0&&y<=e.y1;
+      const egg=EGGS.find(e=>e.map===G.map&&(inR(e,fx,fy)||inR(e,G.x,G.y-8)));if(egg){flow(egg.fn);return;}}
     const dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);
     if(dx||dy){
       if(dy&&!dx)G.dir=dy<0?'up':'down';else if(dx&&!dy)G.dir=dx<0?'left':'right';
@@ -455,7 +502,7 @@ const available=id=>BOSSES[id].sem==='HS'||G.week>=8;
 const mark=id=>G.beaten[id]?'✓':!available(id)?'(FS)':G.level<BOSSES[id].lvl?`(LV ${BOSSES[id].lvl})`:'·';
 async function gainXP(n){const old=G.level,oldHp=hpFor(old);G.xp+=n;G.level=levelFor(G.xp);const lines=[`* +${n} XP.`];
   if(G.level>old){SFX.level();lines.push(`* LEVEL UP! You are now LV ${G.level}.`);if(hpFor(G.level)>oldHp)lines.push(`* Your max HP in fights is now ${hpFor(G.level)}.`);
-    const un=BOSS_ORDER.filter(id=>available(id)&&BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>BOSSES[id].short);if(un.length)lines.push(`* Unlocked in HG F 1: ${un.join(', ')}.`);}
+    const un=BOSS_ORDER.filter(id=>available(id)&&BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>BOSSES[id].short);if(un.length)lines.push(`* Unlocked in HG F 1 and HG F 6: ${un.join(', ')}.`);}
   await say(lines);}
 async function spendAP(){if(G.ap<=0){SFX.bad();await say(["* You're exhausted. No energy left this week.","* Sit on a bench at the Polyterrasse to go home and sleep."]);return false;}G.ap--;return true;}
 async function afterAction(){
@@ -466,7 +513,7 @@ async function nextWeek(burnout){
   if(G.week>14)return endGame(false);
   const left=15-G.week,lines=[`* ${semester()} · WEEK ${G.week} of 14.`,'* Your parents sent 20.00 CHF. "Eat something proper!"'];
   if(G.week===8)lines.push('* The Herbstsemester is over. Winter break, Raclette, and then the Prüfungssession in February.',
-    '* FRÜHJAHRSSEMESTER! New professors in HG F 1: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
+    '* FRÜHJAHRSSEMESTER! New professors in HG F 1 and HG F 6: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
   if(G.week>=11){const miss=[];if(!G.beaten.block1)miss.push('Block 1');if(!G.beaten.block2)miss.push('Block 2');
     if(miss.length)lines.push(`* ${left} week${left>1?'s':''} left. Still to pass: ${miss.join(' and ')} of the Basisprüfung.`);}
   if(G.week===14)lines.push('* FINAL WEEK. Pass both Basisprüfung blocks this week, or repeat the Basisjahr!');
@@ -493,7 +540,7 @@ async function interact(ch,c,r){const m=G.map;
     if(ch==='B')return say(['* A bench in front of CAB. Prime spot for complaining about Serien.']);
     if(ch==='F')return say(['* CAB: the old chemistry building, here since 1886. A plaque calls it a "Chemical Landmark".','* Today it is the home of the computer science department. The chemicals have been replaced by caffeine.']);}
   if(m==='hg'){
-    if(ch==='E'&&c===4)return lectureHall();if(ch==='E'&&c===15)return examRoom();
+    if(ch==='E'&&c===4)return lectureHall('HG F 1');if(ch==='E'&&c===15)return examRoom();
     if(ch==='N')return say([pick(FLYERS)]);if(ch==='L')return library();
     if(ch==='O')return say(['* A massive stone column. It has held up the HG for over a century.','* You can barely hold up your sleep schedule.']);
     if(ch==='B')return say(['* A wooden bench in the Haupthalle. Someone carved "BP 2x" into it. Respect.']);
@@ -504,6 +551,10 @@ async function interact(ch,c,r){const m=G.map;
     if(ch==='t')return say([pick(['* A laptop with 47 tabs open. One of them is Code Expert. The rest are not.','* Someone left this week\'s Serie here. Exercise 3 just says "obviously".'])]);
     if(ch==='L')return say(['* Textbooks. One is open at "Chapter 1: Introduction". The bookmark has not moved since September.']);
     if(ch==='p')return say(['* A plant. The only thing in CAB getting enough light.']);}
+  if(m==='f6'){
+    if(ch==='w')return lectureHall('HG F 6');if(ch==='k')return attendLecture();
+    if(ch==='Q')return say(['* The long blackboard still shows yesterday\'s proof.','* In the bottom corner, very small, someone wrote: "goat".']);
+    if(ch==='X')return say(['* A screen shows the lecture livestream. 37 people are watching it from bed.']);}
   if(m==='mensa'){
     if(ch==='M')return mensaFood();if(ch==='J')return jobBoard();
     if(ch==='R')return say(['* Two menu lines today: "natürlich vegi" and "LOCAL".','* The prices are written in a font size designed to cause emotional damage.']);
@@ -565,21 +616,35 @@ async function uebungRoom(){
   G.sanity=Math.max(0,G.sanity-10);G.stats.ubungen++;
   await say([`* Übung done. Score: ${Math.round(score*100)}%.`,score>=0.8?pick(['Laura: "Wow. Someone actually did the Serie."','Laura: "Perfect! Please explain it to the others."']):score>=0.4?'Laura: "Not bad! Partial credit is still credit."':'Laura: "...we will go over this again next week."']);
   await gainXP(Math.round(20+score*50));await afterAction();}
-async function lectureHall(){
+async function lectureHall(hall='HG F 1'){G.hall=hall;
   let list=HS;
-  if(G.week>=8){const s=await ask('* HG F 1. Which semester\'s lecture?',['Herbstsemester (HS)','Frühjahrssemester (FS)','Leave']);if(s<0||s>1)return;list=s===0?HS:FS;}
+  if(G.week>=8){const s=await ask(`* ${hall}. Which semester's lecture?`,['Herbstsemester (HS)','Frühjahrssemester (FS)','Leave']);if(s<0||s>1)return;list=s===0?HS:FS;}
   const opts=list.map(id=>{const b=BOSSES[id],mk=mark(id);return `${b.short} · ${b.courseShort}${mk==='·'?'':' '+mk}`;});opts.push('Leave');
-  const c=await ask(`* HG F 1. ${list===HS?'Herbstsemester':'Frühjahrssemester'}: who do you challenge? (1 AP)`,opts);if(c<0||c>=list.length)return;
+  const c=await ask(`* ${hall}. ${list===HS?'Herbstsemester':'Frühjahrssemester'}: who do you challenge? (1 AP)`,opts);if(c<0||c>=list.length)return;
   const id=list[c],b=BOSSES[id];
   if(G.level<b.lvl)return say([`* ${b.short} looks at you over their glasses.`,`* "Come back at LV ${b.lvl}. The Übungen exist for a reason."`]);
   if(G.beaten[id]){const r=await ask(`* You already passed ${b.course}. Rematch for fun? (1 AP, small XP)`,['Rematch','Leave']);if(r!==0)return;}
   if(!await spendAP())return;await fight(id);}
+async function attendLecture(){
+  const c=await ask('* A seat in HG F 6. Birch wood, fold-down desk, surprisingly comfy. Sit in on a lecture? (1 AP)',['Attend the lecture','Leave']);if(c!==0)return;
+  if(!await spendAP())return;
+  if(Math.random()<0.3){G.sanity=Math.min(100,G.sanity+10);await say(['* The room is warm. The voice is calm. You fall asleep in minute 12.','* You wake up refreshed and slightly confused. +10 Sanity.']);await gainXP(5);}
+  else{G.sanity=Math.max(0,G.sanity-5);await say(['* You follow the whole lecture. You even understand the last slide.','* (−5 Sanity)']);await gainXP(25);}
+  await afterAction();}
+const EGGS=[
+  {map:'hg',x0:224,y0:128,x1:416,y1:192,fn:async()=>{
+    await say(['* Huge golden letters are set into the marble floor of the Haupthalle: G O A T.','* Legend says they appeared overnight after someone passed the Basisprüfung with a 6.0 in every exam.']);
+    if(!G.eggGoat){G.eggGoat=true;G.sanity=Math.min(100,G.sanity+5);SFX.level();await say(['* You stand on them for a moment. You feel like the GOAT. +5 Sanity.']);}}},
+  {map:'hg',x0:248,y0:224,x1:392,y1:288,fn:async()=>{
+    await say(['* Blue letters in the floor: I O I.','* The International Olympiad in Informatics. Some of your classmates were there.','* They solve the Serie in twenty minutes. You try not to think about it.']);
+    if(!G.eggIoi){G.eggIoi=true;SFX.coin();await gainXP(10);}}}
+];
 async function examRoom(){const b1=beatenOf(HS),b2=beatenOf(FS);
   const st=(id,n,sem)=>G.beaten[id]?' ✓':n<4?` (${n}/4 ${sem} profs)`:'';
   const c=await ask('* PRÜFUNGSRAUM. The Basisprüfung comes in two blocks. Three hours each. No cheat sheet.',[`Block 1 · HS courses${st('block1',b1,'HS')}`,`Block 2 · FS courses${st('block2',b2,'FS')}`,'Leave']);
   if(c<0||c>1)return;const id=c===0?'block1':'block2',n=c===0?b1:b2;
   if(G.beaten[id])return say(['* You already passed this block. The exam office sends a polite email: "Please stop."']);
-  if(n<4)return say([`* Sealed. Admission to Block ${c+1} requires defeating all four ${c===0?'HS':'FS'} professors in HG F 1. (${n}/4)`]);
+  if(n<4)return say([`* Sealed. Admission to Block ${c+1} requires defeating all four ${c===0?'HS':'FS'} professors in HG F 1 or HG F 6. (${n}/4)`]);
   if(!await spendAP())return;await fight(id);}
 async function fight(id){const b=BOSSES[id];
   await say(b.intro,b.name);
@@ -642,7 +707,7 @@ function makeTitle(){const hasSave=!!loadSave(),opts=hasSave?['Continue','New ga
   return S;}
 async function intro(){await say(['* September. You got into Computer Science at ETH Zürich. Welcome to the Basisjahr.',
   '* Weeks 1–7 are the Herbstsemester (HS), weeks 8–14 the Frühjahrssemester (FS).',
-  '* Beat the four professors of each semester in HG F 1, then pass Basisprüfung Block 1 and Block 2 in the HG exam room.',
+  '* Beat the four professors of each semester in HG F 1 or HG F 6, then pass Basisprüfung Block 1 and Block 2 in the HG exam room.',
   '* Übungen in CAB give XP. Levels unlock professors and give you more HP in fights.',
   '* You have 3 AP (energy) per week. Sit on a Polyterrasse bench to sleep and start a new week.',
   '* Also: there is a beer vending machine in CAB. Just saying.']);saveGame();}
@@ -880,10 +945,24 @@ const BOSSES={
 };
 
 /* ---------------- boss fight ---------------- */
-function drawLecture(B,t,rest){rect(0,0,W,H,'#2b2438');for(let x=0;x<W;x+=64)rect(x,0,2,FLOOR,'#30293f');
+function drawF6Side(B){
+  rect(0,0,W,60,'#f1f0ec');for(let i=0;i<7;i++){ctx.save();ctx.translate(70+i*92,12+i*5);ctx.rotate(-0.18);ctx.fillStyle='#ffffff';ctx.fillRect(-44,0,88,4);ctx.restore();}
+  rect(0,58,W,3,'#d8d6cf');rect(0,61,W,FLOOR-61,'#e6e4de');
+  rect(10,100,176,96,'#2f3833');ctx.save();ctx.beginPath();ctx.rect(14,104,168,88);ctx.clip();B.chalk.slice(0,3).forEach((l,i)=>txt(l,20,110+i*26,{size:16,color:'rgba(230,240,230,.8)'}));ctx.restore();
+  rect(10,196,176,4,'#8e8f8a');rect(10,226,196,FLOOR-226,'#d6b07a');for(let x=10;x<206;x+=49)rect(x,226,2,FLOOR-226,'#a8844a');
+  rect(214,150,40,FLOOR-150,'#c9a66b');rect(221,160,26,40,'#bfe0ef');
+  for(let i=10;i>=0;i--){const x0=270+i*34,y0=FLOOR-24-i*20;rect(x0,y0,W-x0,24,'#d9b47a');rect(x0,y0,W-x0,5,'#ecd09c');rect(x0,y0+17,W-x0,7,'#a37a45');for(let x=x0+6;x<W;x+=14)rect(x,y0+5,2,12,'#c29e64');}
+  for(let i=0;i<11;i++)rect(270+i*34,FLOOR-24-i*20,2,24,'#9aa0a6');
+  rect(562,70,60,34,'#111');rect(565,73,54,28,'#2a4a78');
+  rect(130,FLOOR-44,120,44,'#f4f4f2');rect(130,FLOOR-44,120,4,'#ffffff');rect(176,FLOOR-64,30,20,'#222');rect(178,FLOOR-62,26,15,'#5c7fa6');
+  rect(0,FLOOR,W,H-FLOOR,'#6e2f28');for(let x=0;x<W;x+=60)rect(x+((x*7)%23),FLOOR+12,40,2,'#8a3d33');rect(0,FLOOR,W,3,'#4f201b');
+  rect(0,0,W,H,'rgba(18,12,30,0.34)');}
+function drawLecture(B,t,rest,hall=B.hall){
+  if(hall==='HG F 6'){drawF6Side(B);const pw=tw(hall,14)+12;rect(10,84,pw,14,'#1d2633');txt(hall,10+pw/2,84,{size:14,align:'center',color:'#fff'});return;}
+  rect(0,0,W,H,'#2b2438');for(let x=0;x<W;x+=64)rect(x,0,2,FLOOR,'#30293f');
   rect(118,64,404,146,'#5a3d26');rect(124,70,392,132,B.exam?'#24242c':'#1f3b2d');
   B.chalk.forEach((s,i)=>txt(s,140,78+i*30,{size:22,color:'rgba(230,240,230,.78)'}));rect(124,202,392,6,'#7a5232');
-  const pw=tw(B.hall,14)+12;rect(124,50,pw,14,'#1d2633');txt(B.hall,124+pw/2,50,{size:14,align:'center',color:'#fff'});
+  const pw=tw(hall,14)+12;rect(124,50,pw,14,'#1d2633');txt(hall,124+pw/2,50,{size:14,align:'center',color:'#fff'});
   if(rest)txt(`Restzeit ${rest}`,160+tw(B.chalk[3],22),168,{size:22,color:'#ff6b6b'});
   rect(0,FLOOR,W,H-FLOOR,'#4b3527');for(let x=0;x<W;x+=48)rect(x,FLOOR,2,H-FLOOR,'#3c2a1f');rect(0,FLOOR,W,3,'#6b4c38');
   rect(572,FLOOR-58,50,58,'#6b4a2b');rect(568,FLOOR-62,58,8,'#8a6238');}
@@ -897,7 +976,7 @@ function makeCombat(id,done){const B=BOSSES[id];
   const S={music:id==='basis'?'final':'boss',t:0,st:'intro',stT:0,paused:false,hitstop:0,shake:0,banner:'',bannerT:0,beam:0,wob:G.buff,ended:false,hits:0,
     boss:{hp:B.hp,max:B.hp,ph:-1,x:530,flash:0,atkT:1,ai:0},
     p:{x:90,y:FLOOR,vx:0,vy:0,ground:true,hp:maxHp,max:maxHp,inv:0,dash:0,dashCd:0,cool:0,sup:0,dir:1,anim:0,parry:0},
-    shots:[],projs:[],lasers:[],ev:[],parts:[],phStart:0,taunt:null,tauntT:3,notes:B.id==='block1'&&!!G.notes};
+    hall:B.exam?B.hall:(G.hall||B.hall),shots:[],projs:[],lasers:[],ev:[],parts:[],phStart:0,taunt:null,tauntT:3,notes:B.id==='block1'&&!!G.notes};
   G.buff=false;if(B.exam)G.prep=false;if(B.id==='block1')G.notes=false;
   const mouth=()=>({x:S.boss.x-34,y:FLOOR-78}),pc=()=>({x:S.p.x,y:S.p.y-14});
   const later=(d,f)=>S.ev.push({t:d,f});
@@ -975,7 +1054,7 @@ function makeCombat(id,done){const B=BOSSES[id];
     if(S.shake>0)ctx.translate(rnd(-4,4),rnd(-3,3));
     if(S.wob&&S.st==='fight')ctx.translate(Math.sin(S.t*1.7)*4,Math.sin(S.t*1.3)*2);
     const rest=B.exam?(()=>{const dur=(B.durations||[])[Math.max(0,b.ph)]||180,left=Math.max(0,dur-(S.t-S.phStart)*2);return `${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;})():null;
-    drawLecture(B,S.t,rest);
+    drawLecture(B,S.t,rest,S.hall);
     for(const l of S.lasers){const warn=l.t<l.warn,blink=Math.floor(l.t*12)%2?'rgba(255,80,80,.9)':'rgba(255,80,80,.35)';
       if(l.v){if(warn){rect(l.pos-1,40,2,FLOOR-40,blink);rect(l.pos-l.th/2,40,l.th,FLOOR-40,'rgba(255,80,80,.10)');}else{rect(l.pos-l.th/2,40,l.th,FLOOR-40,'#ff4d6d');rect(l.pos-l.th/4,40,l.th/2,FLOOR-40,'#fff');}}
       else{if(warn){rect(0,l.pos-1,W,2,blink);rect(0,l.pos-l.th/2,W,l.th,'rgba(255,80,80,.10)');}else{rect(0,l.pos-l.th/2,W,l.th,'#ff4d6d');rect(0,l.pos-l.th/4,W,l.th/2,'#fff');}}}

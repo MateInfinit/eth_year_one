@@ -1,3 +1,20 @@
+/* ---------------- HG F 6 layout + big floor letters ---------------- */
+function buildF6(){const rows=[];
+  for(let r=0;r<10;r++){let s='';
+    for(let c=0;c<20;c++){let ch;
+      if(r===0)ch=c===1?'D':(c>=4&&c<=15)?'Q':c===17?'X':'#';
+      else if(r===9||c===0||c===19)ch='#';
+      else if(r<=2)ch=(r===2&&c>=3&&c<=5)?'w':'.';
+      else ch=(c===1||c===18||c===9||c===10)?'.':'k';
+      s+=ch;}
+    rows.push(s);}
+  return rows;}
+const FONT5={G:[".###.","#...#","#....","#.###","#...#","#...#",".###."],O:[".###.","#...#","#...#","#...#","#...#","#...#",".###."],
+  A:[".###.","#...#","#...#","#####","#...#","#...#","#...#"],T:["#####","..#..","..#..","..#..","..#..","..#..","..#.."],I:[".###.","..#..","..#..","..#..","..#..","..#..",".###."]};
+function hgPillar(x,y){rect(x+6,y+24,20,6,'#cdbf9f');rect(x+9,y-26,14,50,'#f1e9d6');rect(x+19,y-26,4,50,'#d8cbb0');rect(x+6,y-30,20,6,'#d9ccb0');rect(x+7,y-33,18,3,'#e6dbc2');}
+function bigWord(word,cx,y,s,col,edge){let x=cx-(word.length*6*s-s)/2;
+  for(const ch of word){const g=FONT5[ch];if(g){for(const [colr,dx] of [[edge,2],[col,0]])g.forEach((row,r)=>{for(let c=0;c<5;c++)if(row[c]==='#')rect(x+c*s+dx,y+r*s+dx,s,s,colr);});}x+=6*s;}}
+
 /* ---------------- maps ---------------- */
 const DR=(m,c,r,dir)=>[m,c,r,dir];
 const MAPS={
@@ -10,9 +27,11 @@ const MAPS={
     doors:{'9,2':DR('cab',9,8,'up'),'10,2':DR('cab',10,8,'up'),'19,4':DR('campus',1,4,'right')},
     signs:[[19,3,'POLYTERRASSE →']]},
   hg:{name:'HG · Haupthalle',music:'indoor',
-    rows:["####E####N##L##E####","#..................#","#..................#","#...O...O..O...O...#","#p................p#","#..................#","#...O...O..O...O...#","#..................#","#B................B#","#########DD#########"],
-    doors:{'9,9':DR('campus',9,3,'down'),'10,9':DR('campus',10,3,'down')},
-    signs:[[4,0,'HG F 1'],[12,0,'BIBLIOTHEK'],[15,0,'PRÜFUNG']]},
+    rows:["####E####N##L##E####","#..................#","#..................#","#...O...O..O...O...#","#p................p#","D..................#","#...O...O..O...O...#","#..................#","#B................B#","#########DD#########"],
+    doors:{'9,9':DR('campus',9,3,'down'),'10,9':DR('campus',10,3,'down'),'0,5':DR('f6',1,1,'down')},
+    signs:[[4,0,'HG F 1'],[12,0,'BIBLIOTHEK'],[15,0,'PRÜFUNG'],[0,4,'HG F 6']]},
+  f6:{name:'HG F 6',music:'indoor',rows:buildF6(),
+    doors:{'1,0':DR('hg',1,5,'right')},signs:[[1,0,'EXIT']]},
   cab:{name:'CAB · Departement Informatik',music:'indoor',
     rows:["###E###v####G###KK##","#..................#","#V.................#","#..tt....YY....tt..#","#.......YYYY.......#","#..................#","#..tt..........tt..#","#..................#","#p..LL............p#","#########DD#########"],
     doors:{'9,9':DR('uni',9,3,'down'),'10,9':DR('uni',10,3,'down')},
@@ -21,8 +40,8 @@ const MAPS={
     rows:["#RRRRRRRWWWWWWWWWWW#","#MMMMMMM..........J#","#..................#","#..tttt....tttt....#","#..................#","D..tttt....tttt....#","#..................#","#..tttt....tttt....#","#p................p#","####################"],
     doors:{'0,5':DR('campus',18,4,'left')},signs:[]}
 };
-const SOLID=new Set('#FSh^~TlBPObEFNLVKvGYtpMRWJAZg'.split(''));
-const INTERACT=new Set('BPT^~FShlZAbRgENLOpvGKVYtMWJ'.split(''));
+const SOLID=new Set('#FSh^~TlBPObEFNLVKvGYtpMRWJAZgQXwk'.split(''));
+const INTERACT=new Set('BPT^~FShlZAbRgENLOpvGKVYtMWJQXwk'.split(''));
 const NPCS=[
   {id:'anouk',map:'campus',c:6,r:5,name:'Anouk (exchange student)',pal:mkPal('#d9b13b','#2e8b57'),dir:'down',lines:[
     ["Salut! I came from Lyon for one semester.","Three weeks in and I still can't find my lecture hall. Is everything here in the basement?"],
@@ -48,6 +67,9 @@ const NPCS=[
   {id:'brunner',map:'hg',c:2,r:7,name:'Herr Brunner (Hauswart)',pal:mkPal('#9a9a9a','#34495e','#34495e'),dir:'right',lines:[
     ["Grüezi. Please don't run in the Haupthalle.","Semper would be turning in his grave."],
     ["I've seen thousands of first-years come through here.","The ones who sleep and eat properly do best. Just saying."]]},
+  {id:'nico',map:'f6',c:14,r:2,name:'Nico (TA)',pal:mkPal('#3b2a1e','#7f8c8d'),dir:'left',lines:[
+    ["Welcome to HG F 6. Best seats in the whole HG.","Birch wood, fold-down desks, and a floor so shiny you can see your own panic."],
+    ["The professors sometimes lecture in here.","Talk to them at the white desk, if you're brave."]]},
   {id:'laura',map:'cab',c:4,r:1,name:'Laura (TA)',pal:mkPal('#c0392b','#f39c12'),dir:'down',lines:[
     ["Hi! I'm your TA. The Übungsraum is right here.","This week's Serie is easy. It says so on the sheet."],
     ["If you don't understand something, just ask!","(Nobody has ever asked.)"],
@@ -128,13 +150,13 @@ const TILE={
     switch(ch){
       case '.':fl();break;
       case '#':wall();if(r===0){ctx.fillStyle='#b59f76';ctx.beginPath();ctx.arc(x+16,y+14,9,Math.PI,0);ctx.fill();rect(x+7,y+14,18,12,'#b59f76');}else if(c===0||c===19)rect(x+12,y,8,TS,'#bda983');break;
-      case 'O':fl();rect(x+6,y+24,20,6,'#cdbf9f');rect(x+9,y-26,14,50,'#f1e9d6');rect(x+19,y-26,4,50,'#d8cbb0');rect(x+6,y-30,20,6,'#d9ccb0');rect(x+7,y-33,18,3,'#e6dbc2');break;
+      case 'O':fl();hgPillar(x,y);break;
       case 'E':wall();rect(x+2,y+2,28,30,'#3a2618');rect(x+4,y+6,11,26,'#6b4428');rect(x+17,y+6,11,26,'#6b4428');rect(x+12,y+18,2,3,'#e0c068');rect(x+18,y+18,2,3,'#e0c068');break;
       case 'L':wall();rect(x+2,y+2,28,30,'#3a2618');rect(x+4,y+6,11,26,'#8fb0c8');rect(x+17,y+6,11,26,'#8fb0c8');rect(x+15,y+6,2,26,'#3a2618');break;
       case 'N':wall();rect(x+2,y+4,28,22,'#7a5232');rect(x+4,y+6,24,18,'#b07b46');rect(x+6,y+8,8,7,'#fff');rect(x+16,y+9,9,10,'#ffe08a');rect(x+8,y+16,7,6,'#f8b4c4');break;
       case 'p':fl();plant(x,y);break;
       case 'B':fl();drawBench(x,y);break;
-      case 'D':fl();rect(x+2,y+18,28,12,'#7a2e2e');break;
+      case 'D':if(c===0){wall();rect(x+14,y+2,16,30,'#3a2618');rect(x+16,y+4,12,28,'#b98d55');rect(x+18,y+8,8,10,'#bfe0ef');}else{fl();rect(x+2,y+18,28,12,'#7a2e2e');}break;
       default:fl();}},
   cab(ch,c,r,x,y){
     const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#cfccc4':'#c7c3ba');rect(x,y,TS,1,'#b3afa5');rect(x,y,1,TS,'#b3afa5');};
@@ -155,6 +177,21 @@ const TILE={
       case 'p':fl();plant(x,y);break;
       case 'D':fl();rect(x+2,y+18,28,12,'#2c3e50');break;
       default:fl();}},
+  f6(ch,c,r,x,y){
+    const floor=()=>{rect(x,y,TS,TS,'#6e2f28');rect(x+((c*7+r*3)%18)+3,y+7+((c+r)%3)*6,12,2,'#86413a');};
+    const wall=()=>{rect(x,y,TS,TS,'#e9e8e3');rect(x,y+TS-5,TS,5,'#c9c6bd');};
+    const off=r>=3?Math.round(Math.pow(c+0.5-10,2)*0.1):0;
+    switch(ch){
+      case '.':if(r>=3){rect(x,y,TS,TS,'#c49a5c');for(let i=0;i<4;i++){rect(x,y+i*8,TS,6,'#d9b47a');rect(x,y+i*8+6,TS,2,'#9a7442');}
+          if(c===1)rect(x+TS-3,y,3,TS,'#9aa0a6');if(c===18)rect(x,y,3,TS,'#9aa0a6');}else floor();break;
+      case 'D':wall();rect(x+3,y+2,26,30,'#9c7444');rect(x+5,y+4,22,28,'#d9b47a');rect(x+9,y+7,14,10,'#bfe0ef');rect(x+22,y+19,3,3,'#555');break;
+      case '#':wall();if(r===9&&c>1&&c<18)rect(x,y,TS,TS-5,'#8f6a3c');break;
+      case 'Q':wall();rect(x,y+3,TS,18,'#2f3833');rect(x,y+21,TS,3,'#8e8f8a');rect(x,y+24,TS,8,'#d6b07a');rect(x+(c%2?0:TS-1),y+24,1,8,'#a8844a');break;
+      case 'X':wall();rect(x+2,y+5,28,17,'#111');rect(x+4,y+7,24,13,(Math.floor(performance.now()/700)%2)?'#24416b':'#2a4a78');break;
+      case 'w':floor();rect(x,y+6,TS,22,'#f4f4f2');rect(x,y+26,TS,3,'#c9c9c4');if(c===4){rect(x+8,y,16,11,'#222');rect(x+10,y+2,12,7,'#5c7fa6');}if(c===3)rect(x+6,y-6,14,10,'#2c3e50');break;
+      case 'k':rect(x,y,TS,TS,'#8f6a3c');{const yy=y-off;rect(x,yy+2,TS,9,'#e3c58e');rect(x,yy+11,TS,3,'#a37a45');rect(x,yy+16,TS,10,'#d9b47a');rect(x,yy+26,TS,6,'#8f6a3c');
+          for(let i=2;i<TS;i+=8)rect(x+i,yy+16,1,10,'#c29e64');}break;
+      default:floor();}},
   mensa(ch,c,r,x,y){
     const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#e3d8c4':'#ddd1bb');rect(x,y,TS,1,'#cdbfa5');};
     switch(ch){
@@ -206,7 +243,15 @@ const PAINT={
     const ry=y0+7*TS;rect(0,ry,W,64,'#55585e');for(const k of [14,22,42,50])rect(0,ry+k,W,2,'#8e9196');rect(0,ry-1,W,1,'#33363b');
     drawTram(((t*70)%1500)-520,ry+10);
     const gy=y0+9*TS;rect(0,gy,W,32,'#a9a9a9');for(let x=0;x<W;x+=80){rect(x+6,gy+8,68,24,'#d9cfb8');rect(x+16,gy+14,12,10,'#3f5164');rect(x+48,gy+14,12,10,'#3f5164');}},
-  hg(){ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
+  f6(t){const y0=HUD;
+    txt('HG F 6',4*TS+8,y0+5,{size:14,color:'rgba(230,240,230,.75)'});txt('∫ Lernphase dt = ∞',7*TS,y0+5,{size:14,color:'rgba(230,240,230,.75)'});txt('goat',15*TS+6,y0+10,{size:12,color:'rgba(230,240,230,.45)'});
+    for(let r=3;r<=8;r++)for(let c=2;c<18;c++){if(c===9||c===10||(c*7+r*3)%5!==0)continue;const off=Math.round(Math.pow(c+0.5-10,2)*0.1),x=c*TS,y=y0+r*TS-off;
+      rect(x+10,y+4,12,10,['#3b2a1e','#d9b13b','#1c1c1c','#8a5a2b','#c0392b'][(c+r)%5]);rect(x+8,y+12,16,6,['#2e8b57','#1f5fa8','#8e44ad','#e67e22','#34495e'][(c*3+r)%5]);}
+    ctx.globalAlpha=0.08;for(let i=0;i<5;i++)rect(40+i*120,y0+32,70,2,'#ffffff');ctx.globalAlpha=1;},
+  hg(){bigWord('GOAT',320,HUD+4*TS+4,8,'#d4af37','#8a6d1f');bigWord('IOI',320,HUD+7*TS+4,8,'#2f5aa8','#16305e');
+    MAPS.hg.rows.forEach((row,r)=>{if(r>=4)[...row].forEach((ch,c)=>{if(ch==='O')hgPillar(c*TS,HUD+r*TS);});});
+    if(Math.floor(performance.now()/180)%9===0)rect(236+((Math.floor(performance.now()/180)*37)%170),HUD+4*TS+10,4,4,'#fff7c2');
+    ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
   cab(){drawCray(320,HUD+4*TS+6);},
   mensa(){const y0=HUD;rect(32,y0,224,32,'#5b3a26');
     const board=(x,title,price,col)=>{rect(x,y0+3,104,26,'#1d1d1f');rect(x,y0+3,104,10,col);txt(title,x+52,y0+2,{size:12,align:'center'});txt(price,x+52,y0+13,{size:16,align:'center',color:'#ffd166'});};
@@ -239,7 +284,9 @@ const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,t:
     if(back()){flow(menu);return;}
     if(hit('ok')){const v=DIRV[G.dir],c=Math.floor((G.x+v[0]*22)/TS),r=Math.floor((G.y-8+v[1]*24)/TS);
       const n=npcAt(G.map,c,r);if(n){flow(()=>talkNPC(n));return;}
-      const ch=tileAt(G.map,c,r);if(ch&&INTERACT.has(ch)){flow(()=>interact(ch,c,r));return;}}
+      const ch=tileAt(G.map,c,r);if(ch&&INTERACT.has(ch)){flow(()=>interact(ch,c,r));return;}
+      const fx=G.x+v[0]*22,fy=G.y-8+v[1]*24,inR=(e,x,y)=>x>=e.x0&&x<=e.x1&&y>=e.y0&&y<=e.y1;
+      const egg=EGGS.find(e=>e.map===G.map&&(inR(e,fx,fy)||inR(e,G.x,G.y-8)));if(egg){flow(egg.fn);return;}}
     const dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);
     if(dx||dy){
       if(dy&&!dx)G.dir=dy<0?'up':'down';else if(dx&&!dy)G.dir=dx<0?'left':'right';

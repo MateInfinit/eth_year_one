@@ -27,7 +27,7 @@ const available=id=>BOSSES[id].sem==='HS'||G.week>=8;
 const mark=id=>G.beaten[id]?'✓':!available(id)?'(FS)':G.level<BOSSES[id].lvl?`(LV ${BOSSES[id].lvl})`:'·';
 async function gainXP(n){const old=G.level,oldHp=hpFor(old);G.xp+=n;G.level=levelFor(G.xp);const lines=[`* +${n} XP.`];
   if(G.level>old){SFX.level();lines.push(`* LEVEL UP! You are now LV ${G.level}.`);if(hpFor(G.level)>oldHp)lines.push(`* Your max HP in fights is now ${hpFor(G.level)}.`);
-    const un=BOSS_ORDER.filter(id=>available(id)&&BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>BOSSES[id].short);if(un.length)lines.push(`* Unlocked in HG F 1: ${un.join(', ')}.`);}
+    const un=BOSS_ORDER.filter(id=>available(id)&&BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>BOSSES[id].short);if(un.length)lines.push(`* Unlocked in HG F 1 and HG F 6: ${un.join(', ')}.`);}
   await say(lines);}
 async function spendAP(){if(G.ap<=0){SFX.bad();await say(["* You're exhausted. No energy left this week.","* Sit on a bench at the Polyterrasse to go home and sleep."]);return false;}G.ap--;return true;}
 async function afterAction(){
@@ -38,7 +38,7 @@ async function nextWeek(burnout){
   if(G.week>14)return endGame(false);
   const left=15-G.week,lines=[`* ${semester()} · WEEK ${G.week} of 14.`,'* Your parents sent 20.00 CHF. "Eat something proper!"'];
   if(G.week===8)lines.push('* The Herbstsemester is over. Winter break, Raclette, and then the Prüfungssession in February.',
-    '* FRÜHJAHRSSEMESTER! New professors in HG F 1: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
+    '* FRÜHJAHRSSEMESTER! New professors in HG F 1 and HG F 6: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
   if(G.week>=11){const miss=[];if(!G.beaten.block1)miss.push('Block 1');if(!G.beaten.block2)miss.push('Block 2');
     if(miss.length)lines.push(`* ${left} week${left>1?'s':''} left. Still to pass: ${miss.join(' and ')} of the Basisprüfung.`);}
   if(G.week===14)lines.push('* FINAL WEEK. Pass both Basisprüfung blocks this week, or repeat the Basisjahr!');
@@ -65,7 +65,7 @@ async function interact(ch,c,r){const m=G.map;
     if(ch==='B')return say(['* A bench in front of CAB. Prime spot for complaining about Serien.']);
     if(ch==='F')return say(['* CAB: the old chemistry building, here since 1886. A plaque calls it a "Chemical Landmark".','* Today it is the home of the computer science department. The chemicals have been replaced by caffeine.']);}
   if(m==='hg'){
-    if(ch==='E'&&c===4)return lectureHall();if(ch==='E'&&c===15)return examRoom();
+    if(ch==='E'&&c===4)return lectureHall('HG F 1');if(ch==='E'&&c===15)return examRoom();
     if(ch==='N')return say([pick(FLYERS)]);if(ch==='L')return library();
     if(ch==='O')return say(['* A massive stone column. It has held up the HG for over a century.','* You can barely hold up your sleep schedule.']);
     if(ch==='B')return say(['* A wooden bench in the Haupthalle. Someone carved "BP 2x" into it. Respect.']);
@@ -76,6 +76,10 @@ async function interact(ch,c,r){const m=G.map;
     if(ch==='t')return say([pick(['* A laptop with 47 tabs open. One of them is Code Expert. The rest are not.','* Someone left this week\'s Serie here. Exercise 3 just says "obviously".'])]);
     if(ch==='L')return say(['* Textbooks. One is open at "Chapter 1: Introduction". The bookmark has not moved since September.']);
     if(ch==='p')return say(['* A plant. The only thing in CAB getting enough light.']);}
+  if(m==='f6'){
+    if(ch==='w')return lectureHall('HG F 6');if(ch==='k')return attendLecture();
+    if(ch==='Q')return say(['* The long blackboard still shows yesterday\'s proof.','* In the bottom corner, very small, someone wrote: "goat".']);
+    if(ch==='X')return say(['* A screen shows the lecture livestream. 37 people are watching it from bed.']);}
   if(m==='mensa'){
     if(ch==='M')return mensaFood();if(ch==='J')return jobBoard();
     if(ch==='R')return say(['* Two menu lines today: "natürlich vegi" and "LOCAL".','* The prices are written in a font size designed to cause emotional damage.']);
@@ -137,21 +141,35 @@ async function uebungRoom(){
   G.sanity=Math.max(0,G.sanity-10);G.stats.ubungen++;
   await say([`* Übung done. Score: ${Math.round(score*100)}%.`,score>=0.8?pick(['Laura: "Wow. Someone actually did the Serie."','Laura: "Perfect! Please explain it to the others."']):score>=0.4?'Laura: "Not bad! Partial credit is still credit."':'Laura: "...we will go over this again next week."']);
   await gainXP(Math.round(20+score*50));await afterAction();}
-async function lectureHall(){
+async function lectureHall(hall='HG F 1'){G.hall=hall;
   let list=HS;
-  if(G.week>=8){const s=await ask('* HG F 1. Which semester\'s lecture?',['Herbstsemester (HS)','Frühjahrssemester (FS)','Leave']);if(s<0||s>1)return;list=s===0?HS:FS;}
+  if(G.week>=8){const s=await ask(`* ${hall}. Which semester's lecture?`,['Herbstsemester (HS)','Frühjahrssemester (FS)','Leave']);if(s<0||s>1)return;list=s===0?HS:FS;}
   const opts=list.map(id=>{const b=BOSSES[id],mk=mark(id);return `${b.short} · ${b.courseShort}${mk==='·'?'':' '+mk}`;});opts.push('Leave');
-  const c=await ask(`* HG F 1. ${list===HS?'Herbstsemester':'Frühjahrssemester'}: who do you challenge? (1 AP)`,opts);if(c<0||c>=list.length)return;
+  const c=await ask(`* ${hall}. ${list===HS?'Herbstsemester':'Frühjahrssemester'}: who do you challenge? (1 AP)`,opts);if(c<0||c>=list.length)return;
   const id=list[c],b=BOSSES[id];
   if(G.level<b.lvl)return say([`* ${b.short} looks at you over their glasses.`,`* "Come back at LV ${b.lvl}. The Übungen exist for a reason."`]);
   if(G.beaten[id]){const r=await ask(`* You already passed ${b.course}. Rematch for fun? (1 AP, small XP)`,['Rematch','Leave']);if(r!==0)return;}
   if(!await spendAP())return;await fight(id);}
+async function attendLecture(){
+  const c=await ask('* A seat in HG F 6. Birch wood, fold-down desk, surprisingly comfy. Sit in on a lecture? (1 AP)',['Attend the lecture','Leave']);if(c!==0)return;
+  if(!await spendAP())return;
+  if(Math.random()<0.3){G.sanity=Math.min(100,G.sanity+10);await say(['* The room is warm. The voice is calm. You fall asleep in minute 12.','* You wake up refreshed and slightly confused. +10 Sanity.']);await gainXP(5);}
+  else{G.sanity=Math.max(0,G.sanity-5);await say(['* You follow the whole lecture. You even understand the last slide.','* (−5 Sanity)']);await gainXP(25);}
+  await afterAction();}
+const EGGS=[
+  {map:'hg',x0:224,y0:128,x1:416,y1:192,fn:async()=>{
+    await say(['* Huge golden letters are set into the marble floor of the Haupthalle: G O A T.','* Legend says they appeared overnight after someone passed the Basisprüfung with a 6.0 in every exam.']);
+    if(!G.eggGoat){G.eggGoat=true;G.sanity=Math.min(100,G.sanity+5);SFX.level();await say(['* You stand on them for a moment. You feel like the GOAT. +5 Sanity.']);}}},
+  {map:'hg',x0:248,y0:224,x1:392,y1:288,fn:async()=>{
+    await say(['* Blue letters in the floor: I O I.','* The International Olympiad in Informatics. Some of your classmates were there.','* They solve the Serie in twenty minutes. You try not to think about it.']);
+    if(!G.eggIoi){G.eggIoi=true;SFX.coin();await gainXP(10);}}}
+];
 async function examRoom(){const b1=beatenOf(HS),b2=beatenOf(FS);
   const st=(id,n,sem)=>G.beaten[id]?' ✓':n<4?` (${n}/4 ${sem} profs)`:'';
   const c=await ask('* PRÜFUNGSRAUM. The Basisprüfung comes in two blocks. Three hours each. No cheat sheet.',[`Block 1 · HS courses${st('block1',b1,'HS')}`,`Block 2 · FS courses${st('block2',b2,'FS')}`,'Leave']);
   if(c<0||c>1)return;const id=c===0?'block1':'block2',n=c===0?b1:b2;
   if(G.beaten[id])return say(['* You already passed this block. The exam office sends a polite email: "Please stop."']);
-  if(n<4)return say([`* Sealed. Admission to Block ${c+1} requires defeating all four ${c===0?'HS':'FS'} professors in HG F 1. (${n}/4)`]);
+  if(n<4)return say([`* Sealed. Admission to Block ${c+1} requires defeating all four ${c===0?'HS':'FS'} professors in HG F 1 or HG F 6. (${n}/4)`]);
   if(!await spendAP())return;await fight(id);}
 async function fight(id){const b=BOSSES[id];
   await say(b.intro,b.name);
@@ -214,7 +232,7 @@ function makeTitle(){const hasSave=!!loadSave(),opts=hasSave?['Continue','New ga
   return S;}
 async function intro(){await say(['* September. You got into Computer Science at ETH Zürich. Welcome to the Basisjahr.',
   '* Weeks 1–7 are the Herbstsemester (HS), weeks 8–14 the Frühjahrssemester (FS).',
-  '* Beat the four professors of each semester in HG F 1, then pass Basisprüfung Block 1 and Block 2 in the HG exam room.',
+  '* Beat the four professors of each semester in HG F 1 or HG F 6, then pass Basisprüfung Block 1 and Block 2 in the HG exam room.',
   '* Übungen in CAB give XP. Levels unlock professors and give you more HP in fights.',
   '* You have 3 AP (energy) per week. Sit on a Polyterrasse bench to sleep and start a new week.',
   '* Also: there is a beer vending machine in CAB. Just saying.']);saveGame();}
