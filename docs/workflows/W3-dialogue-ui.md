@@ -1,5 +1,7 @@
 # W3 — Dialogue, UI & writing (the voice of the game)
 
+**Owner:** Ana
+
 **Mission:** everything the player reads. The text box is the soul of an Undertale-like, and most of the jokes live in text.
 
 **Owns:** `Assets/_Game/Dialogue/`, `Assets/_Game/UI/`, scene `MainMenu`, `docs/JOKES.md` (curator).

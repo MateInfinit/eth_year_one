@@ -1,5 +1,7 @@
 # W4 — Boss combat (the Cuphead part)
 
+**Owner:** Costin
+
 **Mission:** professor fights. Side view, run-and-gun, phases, parry. The hardest and most impressive part.
 
 **Owns:** `Assets/_Game/Combat/`, all `Arena_*` scenes, all `BossDefinition` assets.

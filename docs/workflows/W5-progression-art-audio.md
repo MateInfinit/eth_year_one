@@ -1,5 +1,7 @@
 # W5 — Progression, Übungsstunden, art & audio
 
+**Owner:** Stefan
+
 **Mission:** why the player gets stronger (Übungen → XP → levels), and how everything looks and sounds.
 
 **Owns:** `Assets/_Game/Progression/`, `Assets/_Game/Art/`, `Assets/_Game/Audio/`, scenes `Uebung_*`, all `UebungDefinition` assets, the XP table values, the audio clip library.

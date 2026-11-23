@@ -1,5 +1,7 @@
 # W1 — Core & game state
 
+**Owner:** Matei
+
 **Mission:** the foundation everything else plugs into. You go first; others build against your contracts.
 
 **Owns:** `Assets/_Game/Core/`, scene `Boot`, Build Settings, `ProjectSettings/`, `Packages/`, CI.

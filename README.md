@@ -11,21 +11,15 @@ and beat your professors in Cuphead-style boss fights, all the way to the Basisp
 The project is built by **5 people, each with their own AI agent (Cline in VS Code) on their own PC**.
 Every person owns one workflow, one set of folders and one set of scenes.
 
-| # | Workflow | Owns (folders) | Owns (scenes) | Brief |
-|---|----------|----------------|---------------|-------|
-| W1 | Core & game state | `Core/` | `Boot` | [docs/workflows/W1-core.md](docs/workflows/W1-core.md) |
-| W2 | Overworld & campus | `Overworld/` | `Campus_*`, `CAB`, `HG`, `Mensa`, `Polyterrasse` | [docs/workflows/W2-overworld.md](docs/workflows/W2-overworld.md) |
-| W3 | Dialogue, UI & writing | `Dialogue/`, `UI/` | `MainMenu` | [docs/workflows/W3-dialogue-ui.md](docs/workflows/W3-dialogue-ui.md) |
-| W4 | Boss combat | `Combat/` | `Arena_*` | [docs/workflows/W4-combat.md](docs/workflows/W4-combat.md) |
-| W5 | Progression, Übungen, art & audio | `Progression/`, `Art/`, `Audio/` | `Uebung_*` | [docs/workflows/W5-progression-art-audio.md](docs/workflows/W5-progression-art-audio.md) |
+| # | Owner | Workflow | Owns (folders) | Owns (scenes) | Brief |
+|---|-------|----------|----------------|---------------|-------|
+| W1 | **Matei** | Core & game state | `Core/` | `Boot` | [docs/workflows/W1-core.md](docs/workflows/W1-core.md) |
+| W2 | **Tudor** | Overworld & campus | `Overworld/` | `Campus_*`, `CAB`, `HG`, `Mensa`, `Polyterrasse` | [docs/workflows/W2-overworld.md](docs/workflows/W2-overworld.md) |
+| W3 | **Ana** | Dialogue, UI & writing | `Dialogue/`, `UI/` | `MainMenu` | [docs/workflows/W3-dialogue-ui.md](docs/workflows/W3-dialogue-ui.md) |
+| W4 | **Costin** | Boss combat | `Combat/` | `Arena_*` | [docs/workflows/W4-combat.md](docs/workflows/W4-combat.md) |
+| W5 | **Stefan** | Progression, Übungen, art & audio | `Progression/`, `Art/`, `Audio/` | `Uebung_*` | [docs/workflows/W5-progression-art-audio.md](docs/workflows/W5-progression-art-audio.md) |
 
-Assign people here:
-
-- W1: _name_
-- W2: _name_
-- W3: _name_
-- W4: _name_
-- W5: _name_
+GitHub: Matei = @MateInfinit (others: add your usernames here and in `.github/CODEOWNERS`).
 
 ## Start here
 

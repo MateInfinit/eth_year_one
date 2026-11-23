@@ -1,9 +1,10 @@
-# Replace @W1-user etc. with real GitHub usernames, then enable
+# W1 Matei, W2 Tudor, W3 Ana, W4 Costin, W5 Stefan
+# Replace @W2-user ... @W5-user with real GitHub usernames, then enable
 # "Require review from Code Owners" in branch protection for main.
-/Assets/_Game/Core/          @W1-user
-/ProjectSettings/            @W1-user
-/Packages/                   @W1-user
-/.clinerules                 @W1-user @W2-user @W3-user @W4-user @W5-user
+/Assets/_Game/Core/          @MateInfinit
+/ProjectSettings/            @MateInfinit
+/Packages/                   @MateInfinit
+/.clinerules                 @MateInfinit @W2-user @W3-user @W4-user @W5-user
 /Assets/_Game/Overworld/     @W2-user
 /Assets/_Game/Dialogue/      @W3-user
 /Assets/_Game/UI/            @W3-user

@@ -4,11 +4,11 @@
 
 | Scene / folder | Owner | Everyone else |
 |----------------|-------|---------------|
-| `Boot`, Build Settings, `Core/` | W1 | ask W1 |
-| `Campus_*`, `CAB`, `HG`, `Mensa`, `Polyterrasse`, `Overworld/` | W2 | give W2 a prefab |
-| `MainMenu`, `Dialogue/`, `UI/` | W3 | use the dialogue events |
-| `Arena_*`, `Combat/` | W4 | give W4 a `BossDefinition` idea |
-| `Uebung_*`, `Progression/`, `Art/`, `Audio/` | W5 | anyone may **add** art/audio files |
+| `Boot`, Build Settings, `Core/` | W1 (Matei) | ask W1 |
+| `Campus_*`, `CAB`, `HG`, `Mensa`, `Polyterrasse`, `Overworld/` | W2 (Tudor) | give W2 a prefab |
+| `MainMenu`, `Dialogue/`, `UI/` | W3 (Ana) | use the dialogue events |
+| `Arena_*`, `Combat/` | W4 (Costin) | give W4 a `BossDefinition` idea |
+| `Uebung_*`, `Progression/`, `Art/`, `Audio/` | W5 (Stefan) | anyone may **add** art/audio files |
 
 **Never open someone else's scene and save it.** If you need something placed there,
 make a prefab and ask the owner to drop it in.

@@ -1,5 +1,7 @@
 # W2 — Overworld & campus (the Undertale part)
 
+**Owner:** Tudor
+
 **Mission:** the world you walk around in. Top-down, cosy, full of things to press E on.
 
 **Owns:** `Assets/_Game/Overworld/`, scenes `Campus_Zentrum`, `CAB`, `HG`, `Mensa`, `Polyterrasse`.
