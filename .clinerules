@@ -4,8 +4,9 @@ Unity 6000.6.10f1, URP 2D, C#. Pixel art at 16 pixels per unit.
 Theme: first year of Computer Science at ETH Zürich, full of inside jokes.
 
 ## Read first
-- README.md (who owns what), docs/ARCHITECTURE.md, and the brief for the workflow in your task
-  (docs/workflows/W*.md).
+- README.md (who owns what), docs/ARCHITECTURE.md, and the brief for the workflow in your task:
+  docs/workflows/W1-core.md, W2-overworld.md, W3-dialogue-ui.md, W4-combat.md, W5-progression-art-audio.md.
+- Search only Assets/_Game/ and docs/. Never search Library/ or other generated folders.
 
 ## Hard rules
 - Only create or edit files inside the module folder(s) of the workflow named in the task.

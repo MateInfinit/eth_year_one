@@ -1,0 +1,28 @@
+# Unity generated: never read or search these
+Library/
+Temp/
+Logs/
+obj/
+Build/
+Builds/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+# Noise for the agent
+*.meta
+*.csproj
+*.sln
+Packages/packages-lock.json
+
+# Binary assets
+*.png
+*.jpg
+*.psd
+*.aseprite
+*.wav
+*.ogg
+*.mp3
+*.ttf
+*.otf
+*.fbx
