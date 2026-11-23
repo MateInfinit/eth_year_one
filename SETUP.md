@@ -17,8 +17,8 @@
 ## 2. Clone
 
 ```bash
-git clone https://github.com/<OWNER>/eth-year-one.git
-cd eth-year-one
+git clone https://github.com/MateInfinit/eth_year_one.git
+cd eth_year_one
 git lfs pull
 ```
 

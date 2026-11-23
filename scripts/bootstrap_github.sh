@@ -7,12 +7,12 @@
 # Windows: run in Git Bash.
 #
 # Usage:  bash scripts/bootstrap_github.sh [repo-name] [owner] [private|public]
-#   e.g.  bash scripts/bootstrap_github.sh eth-year-one              (your account, private)
-#         bash scripts/bootstrap_github.sh eth-year-one my-org private
+#   e.g.  bash scripts/bootstrap_github.sh eth_year_one              (your account, private)
+#         bash scripts/bootstrap_github.sh eth_year_one my-org private
 
 set -euo pipefail
 
-REPO_NAME="${1:-eth-year-one}"
+REPO_NAME="${1:-eth_year_one}"
 OWNER="${2:-$(gh api user --jq .login)}"
 VISIBILITY="${3:-private}"
 FULL="$OWNER/$REPO_NAME"
