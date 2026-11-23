@@ -23,7 +23,7 @@ GitHub: Matei = @MateInfinit (others: add your usernames here and in `.github/CO
 
 ## Start here
 
-1. **[SETUP.md](SETUP.md)** — install Unity, VS Code, Cline, Git LFS. Do this first.
+1. **[SETUP.md](SETUP.md)** — install Unity, VS Code, Cline, Git. Do this first.
 2. **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — how the modules talk to each other.
 3. **[docs/WORKFLOW.md](docs/WORKFLOW.md)** — branches, PRs, scene ownership, daily rhythm.
 4. Your own brief in [docs/workflows/](docs/workflows/).

@@ -9,17 +9,14 @@
    - **C# Dev Kit** (it will ask you to install the .NET SDK — do it)
    - **Unity** (by Microsoft)
    - **Cline**
-3. **Git** and **Git LFS**, then once per machine:
-   ```bash
-   git lfs install
-   ```
+3. **Git** (Git Bash on Windows). No Git LFS: art/audio is small and lives in normal git.
+   Keep files small: sprites as PNG, music as OGG; nothing over ~20 MB.
 
 ## 2. Clone
 
 ```bash
 git clone https://github.com/MateInfinit/eth_year_one.git
 cd eth_year_one
-git lfs pull
 ```
 
 ## 3. Register Unity SmartMerge (once per machine, optional)
