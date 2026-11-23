@@ -1,0 +1,6 @@
+﻿<Solution>
+  <Project Path="EthGame.Core.csproj" />
+  <Project Path="EthGame.Combat.csproj" />
+  <Project Path="EthGame.Combat.Tests.csproj" />
+  <Project Path="EthGame.Core.Tests.csproj" />
+</Solution>

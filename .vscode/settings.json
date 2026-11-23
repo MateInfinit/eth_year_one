@@ -1,14 +1,15 @@
 {
-  "files.exclude": {
-    "**/*.meta": true,
-    "Library/": true,
-    "Temp/": true,
-    "Logs/": true,
-    "UserSettings/": true
-  },
-  "search.exclude": {
-    "Library/": true,
-    "Temp/": true
-  },
-  "files.eol": "\n"
+    "files.exclude": {
+        "**/*.meta": true,
+        "Library/": true,
+        "Temp/": true,
+        "Logs/": true,
+        "UserSettings/": true
+    },
+    "search.exclude": {
+        "Library/": true,
+        "Temp/": true
+    },
+    "files.eol": "\n",
+    "dotnet.defaultSolution": "eth_year_one.slnx"
 }
