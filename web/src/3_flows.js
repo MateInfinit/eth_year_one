@@ -162,7 +162,14 @@ const EGGS=[
     if(!G.eggGoat){G.eggGoat=true;G.sanity=Math.min(100,G.sanity+5);SFX.level();await say(['* You stand on them for a moment. You feel like the GOAT. +5 Sanity.']);}}},
   {map:'hg',x0:248,y0:224,x1:392,y1:288,fn:async()=>{
     await say(['* Blue letters in the floor: I O I.','* The International Olympiad in Informatics. Some of your classmates were there.','* They solve the Serie in twenty minutes. You try not to think about it.']);
-    if(!G.eggIoi){G.eggIoi=true;SFX.coin();await gainXP(10);}}}
+    if(!G.eggIoi){G.eggIoi=true;SFX.coin();await gainXP(10);}}},
+  {map:'hg',x0:126,y0:32,x1:514,y1:66,fn:async()=>{
+    await say(['* Dark red letters in the floor, right in front of the lecture halls:','* SIND SIE VORBEI?']);
+    const c=await ask('* The floor is asking you. Sind Sie vorbei?',['Ja!','Nein...','Was heisst "vorbei"?']);
+    if(c===0)await say(['* You say "Ja". Like everyone else in the lecture.','* Nobody in the room was vorbei.']);
+    else if(c===1)await say(['* Brave and honest. The lecture moves on anyway.']);
+    else await say(['* Literally: "Are you past it?"','* In a lecture it means: Got it? Can I go on?','* (Prof. Eigenwert asks it about forty times per lecture. The answer is always "Ja".)']);
+    if(!G.eggVorbei){G.eggVorbei=true;SFX.coin();await gainXP(10);}}}
 ];
 async function examRoom(){const b1=beatenOf(HS),b2=beatenOf(FS);
   const st=(id,n,sem)=>G.beaten[id]?' ✓':n<4?` (${n}/4 ${sem} profs)`:'';

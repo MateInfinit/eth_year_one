@@ -10,7 +10,11 @@ function buildF6(){const rows=[];
     rows.push(s);}
   return rows;}
 const FONT5={G:[".###.","#...#","#....","#.###","#...#","#...#",".###."],O:[".###.","#...#","#...#","#...#","#...#","#...#",".###."],
-  A:[".###.","#...#","#...#","#####","#...#","#...#","#...#"],T:["#####","..#..","..#..","..#..","..#..","..#..","..#.."],I:[".###.","..#..","..#..","..#..","..#..","..#..",".###."]};
+  A:[".###.","#...#","#...#","#####","#...#","#...#","#...#"],T:["#####","..#..","..#..","..#..","..#..","..#..","..#.."],I:[".###.","..#..","..#..","..#..","..#..","..#..",".###."],
+  S:[".####","#....","#....",".###.","....#","....#","####."],N:["#...#","#...#","##..#","#.#.#","#..##","#...#","#...#"],
+  D:["####.","#...#","#...#","#...#","#...#","#...#","####."],E:["#####","#....","#....","####.","#....","#....","#####"],
+  V:["#...#","#...#","#...#","#...#","#...#",".#.#.","..#.."],R:["####.","#...#","#...#","####.","#.#..","#..#.","#...#"],
+  B:["####.","#...#","#...#","####.","#...#","#...#","####."],"?":[".###.","#...#","....#","...#.","..#..",".....","..#.."]};
 function hgPillar(x,y){rect(x+6,y+24,20,6,'#cdbf9f');rect(x+9,y-26,14,50,'#f1e9d6');rect(x+19,y-26,4,50,'#d8cbb0');rect(x+6,y-30,20,6,'#d9ccb0');rect(x+7,y-33,18,3,'#e6dbc2');}
 function bigWord(word,cx,y,s,col,edge){let x=cx-(word.length*6*s-s)/2;
   for(const ch of word){const g=FONT5[ch];if(g){for(const [colr,dx] of [[edge,2],[col,0]])g.forEach((row,r)=>{for(let c=0;c<5;c++)if(row[c]==='#')rect(x+c*s+dx,y+r*s+dx,s,s,colr);});}x+=6*s;}}
@@ -248,8 +252,8 @@ const PAINT={
     for(let r=3;r<=8;r++)for(let c=2;c<18;c++){if(c===9||c===10||(c*7+r*3)%5!==0)continue;const off=Math.round(Math.pow(c+0.5-10,2)*0.1),x=c*TS,y=y0+r*TS-off;
       rect(x+10,y+4,12,10,['#3b2a1e','#d9b13b','#1c1c1c','#8a5a2b','#c0392b'][(c+r)%5]);rect(x+8,y+12,16,6,['#2e8b57','#1f5fa8','#8e44ad','#e67e22','#34495e'][(c*3+r)%5]);}
     ctx.globalAlpha=0.08;for(let i=0;i<5;i++)rect(40+i*120,y0+32,70,2,'#ffffff');ctx.globalAlpha=1;},
-  hg(){bigWord('GOAT',320,HUD+4*TS+4,8,'#d4af37','#8a6d1f');bigWord('IOI',320,HUD+7*TS+4,8,'#2f5aa8','#16305e');
-    MAPS.hg.rows.forEach((row,r)=>{if(r>=4)[...row].forEach((ch,c)=>{if(ch==='O')hgPillar(c*TS,HUD+r*TS);});});
+  hg(){bigWord('SIND SIE VORBEI?',320,HUD+TS+2,4,'#a8322b','#5c1611');bigWord('GOAT',320,HUD+4*TS+4,8,'#d4af37','#8a6d1f');bigWord('IOI',320,HUD+7*TS+4,8,'#2f5aa8','#16305e');
+    MAPS.hg.rows.forEach((row,r)=>[...row].forEach((ch,c)=>{if(ch==='O')hgPillar(c*TS,HUD+r*TS);}));
     if(Math.floor(performance.now()/180)%9===0)rect(236+((Math.floor(performance.now()/180)*37)%170),HUD+4*TS+10,4,4,'#fff7c2');
     ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
   cab(){drawCray(320,HUD+4*TS+6);},
