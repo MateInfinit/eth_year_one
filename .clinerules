@@ -19,6 +19,8 @@ Theme: first year of Computer Science at ETH Zürich, full of inside jokes.
 - Modules communicate ONLY via Core contracts: interfaces, GameEvents, ScriptableObjects.
   Never reference a class from another module (except EthGame.Core).
 - Do not add packages or change ProjectSettings. Ask the human.
+- Never launch Unity from the terminal (batch mode fails while the Editor is open). The human runs
+  tests in the Test Runner window and pastes failures back to you.
 
 ## Code style
 - Namespace: EthGame.<Module>  (EthGame.Core, EthGame.Overworld, EthGame.Combat, ...).
