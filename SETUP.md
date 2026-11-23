@@ -22,20 +22,37 @@ cd eth_year_one
 git lfs pull
 ```
 
-## 3. Register Unity SmartMerge (once per machine)
+## 3. Register Unity SmartMerge (once per machine, optional)
 
-Lets git merge scenes/prefabs much more cleanly. Adjust the path to your Unity version.
+Lets git merge scenes/prefabs much more cleanly. Needs Unity installed first; skip it until then.
 
 **Windows (Git Bash):**
 ```bash
-git config merge.unityyamlmerge.name "Unity SmartMerge"
-git config merge.unityyamlmerge.driver "'C:/Program Files/Unity/Hub/Editor/<VERSION>/Editor/Data/Tools/UnityYAMLMerge.exe' merge -p %O %B %A %A"
+# 1. find your Unity version folder (e.g. 6000.0.62f1)
+ls "/c/Program Files/Unity/Hub/Editor/"
+#    not there? Unity Hub -> Installs -> gear icon -> Show in Explorer
+
+# 2. set it and check the tool exists
+UNITY_VER=6000.0.62f1
+ls "/c/Program Files/Unity/Hub/Editor/$UNITY_VER/Editor/Data/Tools/UnityYAMLMerge.exe"
+
+# 3. register globally (same Git Bash window, so $UNITY_VER is still set)
+git config --global merge.unityyamlmerge.name "Unity SmartMerge"
+git config --global merge.unityyamlmerge.driver "\"C:/Program Files/Unity/Hub/Editor/$UNITY_VER/Editor/Data/Tools/UnityYAMLMerge.exe\" merge -p %O %B %A %A"
+git config --global merge.unityyamlmerge.recursive binary
+
+# 4. check: must show the real version, not $UNITY_VER
+git config --global --get merge.unityyamlmerge.driver
 ```
 
 **macOS:**
 ```bash
-git config merge.unityyamlmerge.name "Unity SmartMerge"
-git config merge.unityyamlmerge.driver "'/Applications/Unity/Hub/Editor/<VERSION>/Unity.app/Contents/Tools/UnityYAMLMerge' merge -p %O %B %A %A"
+ls /Applications/Unity/Hub/Editor/
+UNITY_VER=6000.0.62f1
+git config --global merge.unityyamlmerge.name "Unity SmartMerge"
+git config --global merge.unityyamlmerge.driver "\"/Applications/Unity/Hub/Editor/$UNITY_VER/Unity.app/Contents/Tools/UnityYAMLMerge\" merge -p %O %B %A %A"
+git config --global merge.unityyamlmerge.recursive binary
+git config --global --get merge.unityyamlmerge.driver
 ```
 
 ## 4. Open in Unity, connect VS Code
