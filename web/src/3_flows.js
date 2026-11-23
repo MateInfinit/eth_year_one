@@ -37,7 +37,7 @@ async function nextWeek(burnout){
   await new Promise(r=>fadeTo(()=>{G.week++;G.ap=3;G.sanity=burnout?40:Math.min(100,G.sanity+30);G.money+=2000;G.map='campus';G.x=4*TS+16;G.y=6*TS+28;G.dir='down';playSong('campus');r();}));
   if(G.week>14)return endGame(false);
   const left=15-G.week,lines=[`* ${semester()} · WEEK ${G.week} of 14.`,'* Your parents sent 20.00 CHF. "Eat something proper!"'];
-  if(G.week===8)lines.push('* The Herbstsemester is over. You spent the winter break with old exams and Raclette.',
+  if(G.week===8)lines.push('* The Herbstsemester is over. Winter break, Raclette, and then the Prüfungssession in February.',
     '* FRÜHJAHRSSEMESTER! New professors in HG F 1: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
   if(G.week>=11){const miss=[];if(!G.beaten.block1)miss.push('Block 1');if(!G.beaten.block2)miss.push('Block 2');
     if(miss.length)lines.push(`* ${left} week${left>1?'s':''} left. Still to pass: ${miss.join(' and ')} of the Basisprüfung.`);}
@@ -102,7 +102,10 @@ async function visOffice(){
   if(c!==0)return;if(!await spendAP())return;G.sanity=Math.max(0,G.sanity-10);G.prep=true;
   await say(['* You work through three old exams. Patterns emerge. The exam writers are only human.','* Altprüfungen bonus: +1 HP in your next Basisprüfung block. (−10 Sanity)']);await gainXP(35);await afterAction();}
 async function library(){
-  const c=await ask('* ETH-Bibliothek. So quiet you can hear people panicking about Lernphase.',['Study the script (1 AP)','Leave']);if(c!==0)return;
+  const c=await ask('* ETH-Bibliothek. So quiet you can hear people panicking about Lernphase.',['Study the script (1 AP)','Write your Zusammenfassung (1 AP)','Leave']);if(c<0||c>1)return;
+  if(c===1){if(G.notes)return say(['* Your Zusammenfassung is already done. Six pages, tiny letters, colour-coded.']);
+    if(!await spendAP())return;G.notes=true;G.sanity=Math.max(0,G.sanity-5);
+    await say(['* You write six dense A4 pages by hand. Allowed in the LinAlg and Diskrete Mathe exams of Block 1.','* Block 1 bonus: the LinAlg and Diskrete Mathe parts start with +2 super cards. (−5 Sanity)']);return afterAction();}
   if(!await spendAP())return;G.sanity=Math.max(0,G.sanity-10);
   await say([pick(['* You read the script for three hours. You understood one theorem. It was the one with the picture.','* You find a seat by the window and actually work. A rare, beautiful moment.']),'* (−10 Sanity)']);
   await gainXP(30);await afterAction();}
@@ -154,6 +157,7 @@ async function fight(id){const b=BOSSES[id];
   await say(b.intro,b.name);
   if(G.buff)await say(['* The beer kicks in. +1 HP. The room is... slightly wobbly.']);
   if(b.exam&&G.prep)await say(['* You remember the old exams from VIS. +1 HP.']);
+  if(id==='block1'&&G.notes)await say(['* Your handwritten Zusammenfassung is in your bag. (LinAlg and Diskrete Mathe parts: +2 super cards)']);
   const r=await new Promise(res=>fadeTo(()=>setScene(makeCombat(id,res))));
   if(r.gaveUp){G.sanity=Math.max(0,G.sanity-10);await say(['* You sneak out of the room. Nobody saw. Probably. (−10 Sanity)']);return afterAction();}
   if(r.won){const first=!G.beaten[id];G.beaten[id]=true;G.stats.wins++;G.stats.grades.push(r.grade);G.sanity=Math.max(0,G.sanity-5);
@@ -178,7 +182,7 @@ async function menu(){
     return say(['* You drink a beer. +15 Sanity.','* Liquid courage: +1 HP in your next fight. (Side effects may include wobbling.)']);}
   if(c===1){const sn=id=>`${BOSSES[id].short.replace('Prof. ','')} ${mark(id)}`;
     return say([`* ${semester()} · WEEK ${G.week}/14 · AP ${G.ap}/3 · LV ${G.level} · XP ${G.xp}/${nextXP()} · KP ${G.ects}/56`,
-      `* Sanity ${G.sanity}/100 · ${chf(G.money)} CHF · Beers ${G.beers} · Fight HP ${hpFor(G.level)}${G.buff?' (+1 beer)':''}${G.prep?' (+1 old exams)':''}`,
+      `* Sanity ${G.sanity}/100 · ${chf(G.money)} CHF · Beers ${G.beers} · Fight HP ${hpFor(G.level)}${G.buff?' (+1 beer)':''}${G.prep?' (+1 old exams)':''}${G.notes?' · Zusammenfassung ready':''}`,
       '* HS: '+HS.map(sn).join(', '),'* FS: '+FS.map(sn).join(', '),
       `* Basisprüfung: Block 1 ${G.beaten.block1?'✓':'·'} · Block 2 ${G.beaten.block2?'✓':'·'}`]);}
   if(c===2)return say([saveGame()?'* Progress saved (in this browser).':'* Saving is not available here, sorry.']);

@@ -28,6 +28,9 @@ Click the game first so it gets your keyboard.
 | FS | Algorithmen und Wahrscheinlichkeit | Prof. Dr. Erwin Erwartungswert |
 | FS | Parallele Programmierung | Prof. Dr. Sämi Semaphor |
 
+- Every professor has catchphrase speech bubbles during the fight (Prof. Beweisli: "Hut Hut!", Prof. Eigenwert: "Sind Sie vorbei???").
+- **Block 1** follows the real February exam session: A&D (4:00), EProg (2:40), LinAlg (3:00), Diskrete Mathe (3:00), with a countdown per exam.
+  Write your handwritten Zusammenfassung in the ETH-Bibliothek: allowed in LinAlg and Diskrete Mathe, it gives +2 super cards in those parts.
 - Swiss grades (1–6), levels (more HP), beer buff, Polybahn night out in the Niederdorf, save/continue, two endings.
 - Chiptune music and sound effects generated in code (no asset files).
 
