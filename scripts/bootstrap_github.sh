@@ -18,7 +18,7 @@ VISIBILITY="${3:-private}"
 FULL="$OWNER/$REPO_NAME"
 
 echo "==> Target: $FULL ($VISIBILITY)"
-gh auth status >/dev/null || { echo "Run: gh auth login"; exit 1; }
+gh api user >/dev/null || { echo "Not logged in. Run: gh auth login"; exit 1; }
 git lfs install >/dev/null 2>&1 || echo "!! Git LFS not found. Install it before adding art/audio."
 
 # ---------- 1. Local repo + first commit ----------
