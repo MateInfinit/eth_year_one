@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ETH: Year One</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful, nerdy, a little tired — a first-year student's inside joke.
+   IDEA: a handheld console housing the game, ETH-blue shell.
+   PICTURE: the game canvas itself, full width, first thing you see.
+   COLOUR and TYPE: night purple ground, ETH-ish blue case, pink accent for parry; Press Start 2P + VT323.
+   LAYOUT: one-line title strip, the console, a compact key legend. */
+:root{color-scheme:dark;--bg:#0f0b1a;--ink:#ecebf5;--muted:#a9a6c3;--accent:#ff6ad5}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.4 'VT323','Courier New',monospace;overflow-x:clip}
+main{max-width:1120px;margin:0 auto;padding:14px max(3vw,10px) 28px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:12px}
+h1{font:16px/1.4 'Press Start 2P','Courier New',monospace;margin:0;color:#fff}
+header p{margin:0;color:var(--muted)}
+.case{background:linear-gradient(#26396a,#152245);border-radius:18px;padding:clamp(8px,1.6vw,18px);box-shadow:0 18px 50px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.1)}
+canvas{display:block;width:100%;aspect-ratio:16/9;background:#000;image-rendering:pixelated;image-rendering:crisp-edges;border-radius:6px;outline:none;cursor:pointer}
+canvas:focus-visible{box-shadow:0 0 0 3px var(--accent)}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:6px 24px;margin-top:14px;color:var(--muted)}
+.keys b{color:#fff;font-weight:normal}
+kbd{display:inline-block;min-width:1.5em;padding:0 5px;border:1px solid #4a4766;border-bottom-width:3px;border-radius:5px;color:#fff;text-align:center;font:inherit;background:#1b1630}
+.pink{color:var(--accent)}
+.note{margin:12px 0 0;font-size:17px;color:#807c9e}
+</style>
+</head>
+<body>
+<main>
+<header><h1>ETH: Year One</h1><p>Übungen, beer, five professors, one Basisprüfung.</p></header>
+<div class="case"><canvas id="game" width="640" height="360" tabindex="0" aria-label="ETH: Year One. Click, then play with the keyboard."></canvas></div>
+<div class="keys">
+<div><b>Explore</b> · <kbd>←↑→↓</kbd>/<kbd>WASD</kbd> move · <kbd>Z</kbd> talk / confirm · <kbd>X</kbd> menu · hold <kbd>C</kbd> run</div>
+<div><b>Fight</b> · <kbd>←</kbd><kbd>→</kbd> move · <kbd>Z</kbd> jump, again in the air on <span class="pink">pink</span> = parry · hold <kbd>X</kbd> shoot · <kbd>C</kbd> dash · <kbd>V</kbd> super · <kbd>Esc</kbd> pause</div>
+</div>
+<p class="note">Click the game so it gets your keyboard. <kbd>M</kbd> mutes. Fan-made parody: all professors are fictional. Progress saves in this browser only.</p>
+</main>
+<script>
+(()=>{
+'use strict';
+const W=640,H=360,TS=32,HUD=40,FLOOR=322;
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+const VT="'VT323','Courier New',monospace",PX="'Press Start 2P','Courier New',monospace";
+const rnd=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const chf=c=>(c/100).toFixed(2);
+
+/* ---------------- input ---------------- */
+const keys={},pressed={};
+const KEYMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',
+  KeyZ:'ok',Space:'ok',Enter:'ok',KeyX:'x',KeyJ:'x',KeyC:'c',ShiftLeft:'c',ShiftRight:'c',KeyK:'c',KeyV:'v',KeyL:'v',
+  Escape:'esc',Backspace:'esc',KeyP:'esc',KeyM:'m',KeyQ:'q'};
+addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k)return;e.preventDefault();if(!keys[k])pressed[k]=true;keys[k]=true;audioInit();if(k==='m'&&!e.repeat)toggleMute();});
+addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys[k]=false;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+cv.addEventListener('pointerdown',()=>{cv.focus();audioInit();});
+const hit=k=>!!pressed[k],back=()=>!!(pressed.x||pressed.esc);
+
+/* ---------------- audio ---------------- */
+let AC=null,master=null,muted=false;
+function audioInit(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:0.9;master.connect(AC.destination);music.next=AC.currentTime+0.1;}catch(e){AC=null;}}
+function toggleMute(){muted=!muted;if(master)master.gain.value=muted?0:0.9;}
+function osc(f,t,d,type,vol,slide){if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+d);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+0.03);}
+const tone=(f,d,type='square',vol=0.05,slide=0,delay=0)=>{if(AC)osc(f,AC.currentTime+delay,d,type,vol,slide);};
+const SFX={
+  blip:()=>tone(560+Math.random()*60,0.035,'square',0.025),
+  select:()=>tone(880,0.05,'square',0.03),
+  confirm:()=>{tone(660,0.06,'square',0.04);tone(990,0.08,'square',0.04,0,0.06);},
+  coin:()=>{tone(988,0.06,'square',0.04);tone(1319,0.14,'square',0.04,0,0.06);},
+  bad:()=>tone(180,0.28,'square',0.05,-90),
+  door:()=>tone(260,0.14,'triangle',0.08,220),
+  hit:()=>tone(150,0.22,'sawtooth',0.08,-90),
+  shoot:()=>tone(1400,0.03,'square',0.012,-700),
+  jump:()=>tone(420,0.1,'square',0.03,300),
+  dash:()=>tone(300,0.12,'sawtooth',0.03,-150),
+  parry:()=>{tone(1320,0.08,'triangle',0.09);tone(1760,0.14,'triangle',0.09,0,0.07);},
+  charge:()=>tone(200,0.35,'sawtooth',0.025,260),
+  boom:()=>tone(90,0.4,'sawtooth',0.07,-60),
+  level:()=>[523,659,784,1047].forEach((f,i)=>tone(f,0.14,'square',0.045,0,i*0.09)),
+  win:()=>[523,659,784,1047,784,1047].forEach((f,i)=>tone(f,0.16,'square',0.05,0,i*0.11)),
+  lose:()=>[392,330,262,196].forEach((f,i)=>tone(f,0.25,'triangle',0.07,0,i*0.18)),
+  super:()=>tone(200,0.6,'sawtooth',0.07,900),
+  bosshit:()=>tone(240,0.03,'square',0.015)
+};
+const NOTE={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function nf(s){const m=/^([A-G])(#|b)?(\d)$/.exec(s||'');if(!m)return 0;const midi=(+m[3]+1)*12+NOTE[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0);return 440*Math.pow(2,(midi-69)/12);}
+const song=(bpm,lead,bass)=>({bpm,lead:lead.trim().split(/\s+/).map(nf),bass:bass.trim().split(/\s+/).map(nf)});
+const SONGS={
+  title:song(84,'E5 . G5 . A5 . . G5 E5 . D5 . C5 . . . D5 . E5 . G5 . . E5 D5 . C5 . A4 . . .','C3 . . . G2 . . . A2 . . . F2 . . .'),
+  campus:song(116,'C5 E5 G5 E5 A5 G5 E5 . F5 A5 C6 A5 G5 . E5 . D5 F5 A5 F5 E5 G5 C6 G5 F5 E5 D5 . C5 . . .','C3 . G2 . A2 . E2 . F2 . C3 . G2 . G2 .'),
+  indoor:song(96,'A4 . C5 E5 D5 . C5 . B4 . G4 . A4 . . . F4 . A4 C5 B4 . A4 . G4 . E4 . A4 . . .','A2 . E3 . F2 . C3 . D3 . A2 . E2 . E2 .'),
+  uebung:song(132,'E5 . E5 . G5 . E5 . D5 . C5 . D5 . . . E5 . E5 . G5 . A5 . G5 . E5 . D5 . . .','C3 C3 G2 G2 A2 A2 F2 F2'),
+  boss:song(152,'A4 A4 C5 A4 D5 A4 E5 D5 C5 C5 E5 C5 G5 E5 D5 C5 F5 F5 A5 F5 E5 E5 G5 E5 D5 D5 C5 B4 A4 . E5 .','A2 A3 A2 A3 F2 F3 F2 F3 C3 C4 C3 C4 G2 G3 E2 E3'),
+  final:song(168,'D5 F5 A5 D6 C6 A5 F5 A5 Bb5 A5 G5 F5 E5 F5 G5 E5 D5 F5 A5 D6 C6 A5 C6 E6 D6 . A5 . D5 . . .','D3 D2 D3 D2 Bb2 Bb1 Bb2 Bb1 C3 C2 C3 C2 A2 A1 A2 A1'),
+  ending:song(100,'C5 E5 G5 C6 . G5 . . A5 F5 C6 . G5 . . . F5 D5 B4 G5 . F5 . E5 . D5 . C5 . . . .','C3 . G2 . F2 . C3 . F2 . G2 . C3 . . .')
+};
+const music={cur:null,name:'',step:0,next:0};
+function playSong(n){if(music.name===n)return;music.name=n;music.cur=SONGS[n]||null;music.step=0;if(AC)music.next=AC.currentTime+0.08;}
+function musicTick(){if(!AC||!music.cur)return;const s=music.cur,dt=60/s.bpm/2;if(music.next<AC.currentTime-0.3)music.next=AC.currentTime+0.05;
+  while(music.next<AC.currentTime+0.15){const i=music.step,L=s.lead[i%s.lead.length],B=s.bass[i%s.bass.length];if(L)osc(L,music.next,dt*0.85,'square',0.02,0);if(B)osc(B,music.next,dt*0.9,'triangle',0.06,0);music.step++;music.next+=dt;}}
+
+/* ---------------- drawing ---------------- */
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function txt(s,x,y,o={}){const{size=20,color='#fff',align='left',font=VT,base='top',shadow=null}=o;ctx.font=`${size}px ${font}`;ctx.textAlign=align;ctx.textBaseline=base;
+  if(shadow){ctx.fillStyle=shadow;ctx.fillText(s,Math.round(x)+2,Math.round(y)+2);}ctx.fillStyle=color;ctx.fillText(s,Math.round(x),Math.round(y));}
+function tw(s,size=20,font=VT){ctx.font=`${size}px ${font}`;return ctx.measureText(s).width;}
+function wrap(s,maxW,size=20,font=VT){ctx.font=`${size}px ${font}`;const out=[];for(const para of String(s).split('\n')){let line='';for(const w of para.split(' ')){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){out.push(line);line=w;}else line=t;}out.push(line);}return out;}
+function ubox(x,y,w,h,border='#fff'){rect(x,y,w,h,border);rect(x+3,y+3,w-6,h-6,'#000');}
+function spr(rows,pal,x,y,s=2,flip=false,tint=null){for(let r=0;r<rows.length;r++){const row=rows[r];for(let c=0;c<row.length;c++){const ch=row[c];if(ch==='.')continue;const col=tint||pal[ch];if(!col)continue;ctx.fillStyle=col;const cx=flip?row.length-1-c:c;ctx.fillRect(Math.round(x+cx*s),Math.round(y+r*s),s,s);}}}
+
+/* ---------------- sprites ---------------- */
+const P_FRONT=["....hhhh....","..hhhhhhhh..",".hhhhhhhhhh.",".hhsssssshh.","..ssksskss..","..ssssssss..","...ssmmss...","..bbbbbbbb..",".bbbwbbwbbb.",".sbbwbbwbbs.",".sbbbbbbbbs.","..bbbbbbbb..","..pppppppp.."];
+const P_BACK=["....hhhh....","..hhhhhhhh..",".hhhhhhhhhh.",".hhhhhhhhhh.","..hhhhhhhh..","..hhhhhhhh..","...ssssss...","..bbbbbbbb..",".bbbbbbbbbb.",".sbbbbbbbbs.",".sbbbbbbbbs.","..bbbbbbbb..","..pppppppp.."];
+const P_SIDE=["....hhhh....","...hhhhhhh..","..hhhhhhhhh.","..hhhssssss.","..hhssssks..","..hsssssss..","...sssssm...","...bbbbbb...","..bbbbbbbb..","..bbbsbbbb..","..bbbbbbbb..","...bbbbbb...","...pppppp..."];
+const LEGS_F=[["..ppp..ppp..","..ppp..ppp..","..ooo..ooo.."],["..ppp..ppp..","..ooo..ppp..","........ooo."],["..ppp..ppp..","..ppp..ooo..","..ooo......."]];
+const LEGS_S=[["...ppp.pp...","...ppp.pp...","...ooo.oo..."],["..pp...pp...","..pp...pp...",".ooo...ooo.."]];
+const PROF=["..hhhhhhhh..",".hhhhhhhhhh.","hhhhhhhhhhhh",".hhsssssshh.",".hgggssgggh.","..gkgssgkg..","..ssssssss..","...shhhhs...","..cccttccc..",".ccccttcccc.",".scccttcccs.",".sccccccccs.","..cccccccc..","..pppppppp..","..ppp..ppp..","..ooo..ooo.."];
+const HEART=[".rr.rr.","rrrrrrr","rrrrrrr",".rrrrr.","..rrr..","...r..."];
+const mkPal=(h,b,p='#2b2b38',s='#f2c7a5')=>({h,s,k:'#1a1a1a',m:'#c96a6a',b,w:'#e8e8e8',p,o:'#111'});
+const profPal=(h,c,t,s='#f2c7a5')=>({h,s,g:'#1a1a1a',k:'#1a1a1a',c,t,p:'#2b2b38',o:'#111'});
+const PAL={player:mkPal('#3b2a1e','#1f407a')};
+function drawChar(pal,dir,frame,x,y,s=2){const side=dir==='left'||dir==='right';const body=dir==='up'?P_BACK:dir==='down'?P_FRONT:P_SIDE;const legs=side?LEGS_S[frame%2]:LEGS_F[frame%3];
+  const ox=x-6*s,oy=y-16*s,fl=dir==='left';rect(x-5*s,y-s,10*s,s+1,'rgba(0,0,0,.25)');spr(body,pal,ox,oy,s,fl);spr(legs,pal,ox,oy+13*s,s,fl);}
+function drawHeart(x,y,s=2,c='#ff4d6d'){spr(HEART,{r:c},x,y,s);}
+
+/* ---------------- save ---------------- */
+const SKEY='ethYearOne.v1';
+function saveGame(){try{localStorage.setItem(SKEY,JSON.stringify(G));return true;}catch(e){return false;}}
+function loadSave(){try{const s=localStorage.getItem(SKEY);return s?JSON.parse(s):null;}catch(e){return null;}}
+function clearSave(){try{localStorage.removeItem(SKEY);}catch(e){}}
+
+/* ---------------- game state ---------------- */
+function newGame(){return{week:1,ap:3,level:1,xp:0,ects:0,sanity:80,money:3000,beers:0,buff:false,beaten:{},passed:false,view:0,
+  map:'campus',x:9*TS+16,y:5*TS+28,dir:'down',talk:{},stats:{beers:0,coffees:0,ubungen:0,wins:0,losses:0,shifts:0,grades:[]}};}
+let G=newGame(),scene=null,dlg=null,fade=null,lock=false,last=0;
+const XP_T=[60,150,270,420,600,800,1050,1350];
+const levelFor=xp=>{let l=1;for(const t of XP_T)if(xp>=t)l++;return l;};
+const nextXP=()=>{for(const t of XP_T)if(G.xp<t)return t;return'MAX';};
+const hpFor=l=>3+Math.floor((l-1)/2);
+function setScene(s){scene=s;playSong(s.music||'');}
+function fadeTo(fn){fade={a:fade?fade.a:0,dir:1,fn};}
+function updFade(dt){fade.a+=dt*4.5*fade.dir;if(fade.dir>0&&fade.a>=1){fade.a=1;const f=fade.fn;fade.fn=null;fade.dir=-1;if(f)f();}else if(fade.dir<0&&fade.a<=0){fade=null;}}
+function flow(fn){lock=true;Promise.resolve().then(fn).catch(e=>console.error(e)).finally(()=>{lock=false;});}
+
+/* ---------------- dialogue ---------------- */
+function setLine(d,s){d.lines=wrap(s,560,21);d.full=d.lines.join(' ');d.len=d.full.length;d.shown=0;}
+function say(lines,speaker=null){if(!Array.isArray(lines))lines=[lines];lines=lines.filter(Boolean);if(!lines.length)return Promise.resolve();
+  return new Promise(res=>{dlg={queue:lines.slice(1),speaker,res,choices:null,sel:0};setLine(dlg,lines[0]);});}
+function ask(text,choices,speaker=null){return new Promise(res=>{dlg={queue:[],speaker,res,choices,sel:0};setLine(dlg,text);});}
+function updDlg(dt){const d=dlg;
+  if(d.shown<d.len){const before=Math.floor(d.shown);d.shown=Math.min(d.len,d.shown+dt*(keys.c?140:50));const now=Math.floor(d.shown);
+    if(now!==before&&before%2===0&&d.full[before]!==' ')SFX.blip();if(hit('ok')||(back()&&!d.choices))d.shown=d.len;return;}
+  if(d.choices){const n=d.choices.length;if(hit('up')){d.sel=(d.sel+n-1)%n;SFX.select();}if(hit('down')){d.sel=(d.sel+1)%n;SFX.select();}
+    if(hit('ok')){SFX.confirm();const r=d.res,s=d.sel;dlg=null;r(s);}else if(back()){SFX.select();const r=d.res;dlg=null;r(n-1);}return;}
+  if(hit('ok')||back()){if(d.queue.length)setLine(d,d.queue.shift());else{const r=d.res;dlg=null;r();}}}
+function drawDlg(){const d=dlg,x=20,y=244,w=600,h=108;ubox(x,y,w,h);
+  if(d.speaker){const sw=tw(d.speaker,20)+22;ubox(x+10,y-27,sw,29);txt(d.speaker,x+21,y-23,{size:20,color:'#ffd166'});}
+  let left=Math.floor(d.shown);d.lines.forEach((ln,i)=>{if(left<=0)return;txt(ln.slice(0,left),x+18,y+12+i*23,{size:21});left-=ln.length+1;});
+  if(d.shown>=d.len){if(d.choices){const cw=Math.max(...d.choices.map(c=>tw(c,20)))+56,chh=d.choices.length*26+18,cx=W-20-cw,cy=y-chh-4;
+      ubox(cx,cy,cw,chh);d.choices.forEach((c,i)=>{txt(c,cx+36,cy+9+i*26,{size:20,color:i===d.sel?'#ffd166':'#fff'});if(i===d.sel)drawHeart(cx+13,cy+14+i*26,2);});}
+    else if(Math.floor(performance.now()/300)%2)txt('▼',x+w-26,y+h-26,{size:18,color:'#ffd166'});}}
+/* ---------------- maps ---------------- */
+const MAPS={
+  campus:{name:'ETH Zentrum · Polyterrasse',music:'campus',outdoor:true,pano:true,theme:{},
+    rows:["FFFFFFFFFDFFFFFFFFFF","F,,T,,,,,=,,,,,,T,,F","D==================D","F,,,,,,,,=,,,,,,,,,F","F,T,,,,,,=,,,,,,,T,F","F,,,,,,,,=,,,,,,,,,F","F==================F","F===B========B=====F","^^^^^^^^^^^^^^^^^^^^","~~~~~~~~~~~~~~~~~~~~"],
+    doors:{'9,0':['hg',9,8,'up'],'0,2':['cab',18,5,'left'],'19,2':['mensa',1,5,'right']},
+    signs:[[9,0,'HG'],[0,1,'CAB'],[19,1,'MENSA']]},
+  hg:{name:'HG · Hauptgebäude',music:'indoor',theme:{f1:'#e6dfd2',f2:'#d9d1c2',wall:'#a39276',trim:'#7d6f59',hi:'#b8a88c',table:'#8b5a2b'},
+    rows:["####E####N####E#####","#L................L#","#..p............p..#","#..................#","#..................#","#..................#","#..................#","#p................p#","#..................#","#########D##########"],
+    doors:{'9,9':['campus',9,1,'down']},signs:[[4,0,'HG F1'],[14,0,'EXAM']]},
+  cab:{name:'CAB · Computer Science',music:'indoor',theme:{f1:'#cfd5dc',f2:'#c3cad2',wall:'#34465c',trim:'#243243',hi:'#46607d',table:'#eceff1'},
+    rows:["#####E######E#######","#..................#","#.SS.........V.....#","#..................#","#..tt..........tt..#","#..................D","#..tt..........tt..#","#..................#","#p......L..L......p#","####################"],
+    doors:{'19,5':['campus',1,2,'right']},signs:[[5,0,'ÜBUNG'],[12,0,'LECTURE']]},
+  mensa:{name:'Polymensa',music:'indoor',theme:{f1:'#e0cba6',f2:'#d4bd96',wall:'#8a5a3c',trim:'#6b4430',hi:'#a06d4c',table:'#a0703f'},
+    rows:["####################","#MMMMMMMM....C...J.#","#..................#","#..tttt....tttt....#","#..................#","D..................#","#..tttt....tttt....#","#..................#","#p................p#","####################"],
+    doors:{'0,5':['campus',18,2,'left']},signs:[]}
+};
+const SOLID=new Set('#F^~TLpStVMCJNEB'.split(''));
+const INTERACT=new Set('VCMJNBELTSp^~t'.split(''));
+const NPCS=[
+  {id:'exch',map:'campus',c:6,r:3,name:'Exchange student',pal:mkPal('#d9b13b','#2e8b57'),dir:'down',lines:[
+    ["Grüezi! Three weeks here and I still can't find my lecture hall.","Is it in the basement? Everything here is in the basement."],
+    ["My Swiss German so far: 'Merci vilmal' and 'Chuchichäschtli'.","I use the second one for everything. Nobody has corrected me yet."]]},
+  {id:'senior',map:'campus',c:13,r:4,name:'Third-year student',pal:mkPal('#1c1c1c','#7a3b3b'),dir:'left',lines:[
+    ["Basisprüfung? Oh, you'll be fine.","...","(They stare into the distance for ten full seconds.)"],
+    ["Pro tip: Übungen in CAB give XP. Professors only respect levels.","And higher levels give you more HP in fights."],
+    ["Never trust a TA who says 'this one is easy'.","That's how they got me in week 4."]]},
+  {id:'tourist',map:'campus',c:11,r:7,name:'Tourist',pal:mkPal('#a0522d','#e67e22','#3b5b8a'),dir:'down',lines:[
+    ["What a view! The whole city, the lake, the Alps...","This terrace is the only thing at ETH without a deadline."],
+    ["When your week is done, sit on one of the benches here.","Sleeping is a valid strategy. Ask any student."]]},
+  {id:'lost',map:'hg',c:6,r:5,name:'Lost freshman',pal:mkPal('#5a3b22','#16a085'),dir:'down',lines:[
+    ["Which way is lecture hall F1? I've passed this staircase six times.","This building is a maze designed by someone who hated freshmen."],
+    ["I asked a professor for directions.","He said: 'It is left as an exercise.'"]]},
+  {id:'stress',map:'hg',c:13,r:3,name:'Stressed student',pal:mkPal('#2b2b2b','#8e44ad'),dir:'left',lines:[
+    ["I just proved P = NP!","...wait. I proved 1 = 1.","That still counts for partial credit, right?"],
+    ["The big door on the right is the exam room.","It only opens once all five professors are defeated.","Like a boss rush. Because it is one."]]},
+  {id:'ta',map:'cab',c:7,r:1,name:'TA',pal:mkPal('#c0392b','#f39c12'),dir:'down',lines:[
+    ["Hi! I'm your TA. The Übungsraum is the door on the left.","Today's exercise is easy. It says so on the sheet."],
+    ["If you don't understand something, just ask!","(Nobody has ever asked.)"],
+    ["The lecture hall door on the right: Prof. Null and Prof. Gate teach there.","The others are in HG."]]},
+  {id:'sleeper',map:'cab',c:3,r:3,name:'Sleeping student',pal:mkPal('#6b4a2b','#95a5a6'),dir:'down',lines:[
+    ["Zzz... the induction step... holds for n+1... zzz"],
+    ["Zzz... five more minutes... then I'll start the exercise sheet... zzz"]]},
+  {id:'debug',map:'cab',c:17,r:4,name:'Debugging student',pal:mkPal('#111111','#34495e'),dir:'left',lines:[
+    ["It works on my machine.","My machine is the only machine that matters."],
+    ["I've been staring at this NullPointerException since Tuesday.","I think it's staring back."]]},
+  {id:'queue',map:'mensa',c:6,r:2,name:'Student in the queue',pal:mkPal('#8a5a2b','#c0392b'),dir:'up',lines:[
+    ["I've been in this queue since the first lecture.","Time moves differently in the Mensa line."]]},
+  {id:'mathguy',map:'mensa',c:13,r:4,name:'Math student',pal:mkPal('#e0c068','#2c3e50'),dir:'left',lines:[
+    ["Mensa theorem: Menu 1 ∪ Menu 2 = pasta.","Proof: by observation, every single day."],
+    ["The coffee machine eats coins with probability ¼.","I collected data. I have nothing else in my life."]]}
+];
+const npcAt=(m,c,r)=>NPCS.find(n=>n.map===m&&n.c===c&&n.r===r);
+const tileAt=(m,c,r)=>{const rows=MAPS[m].rows;return r>=0&&r<rows.length&&c>=0&&c<rows[r].length?rows[r][c]:null;};
+function solidAt(px,py){const c=Math.floor(px/TS),r=Math.floor(py/TS),ch=tileAt(G.map,c,r);if(ch===null)return true;return SOLID.has(ch)||!!npcAt(G.map,c,r);}
+const blocked=(x,y)=>solidAt(x-7,y-8)||solidAt(x+7,y-8)||solidAt(x-7,y-1)||solidAt(x+7,y-1);
+
+/* ---------------- tiles ---------------- */
+function drawTile(m,ch,c,r){const x=c*TS,y=HUD+r*TS,T=m.theme;
+  const floor=()=>{if(m.outdoor){rect(x,y,TS,TS,'#5b8f3a');rect(x+((c*11+r*5)%26)+2,y+((c*3+r*17)%26)+2,2,2,'#79b24f');rect(x+((c*5+r*13)%26)+3,y+((c*13+r*7)%26)+3,2,2,'#4b7a2f');}else rect(x,y,TS,TS,(c+r)%2?T.f1:T.f2);};
+  const cobble=()=>{rect(x,y,TS,TS,'#bdb5a6');rect(x,y+15,TS,2,'#a8a091');rect(x+(r%2?6:22),y,2,15,'#a8a091');rect(x+(r%2?22:6),y+17,2,15,'#a8a091');};
+  switch(ch){
+    case ',':case '.':floor();break;
+    case '=':cobble();break;
+    case 'T':floor();rect(x+13,y+18,6,13,'#6b4a2b');rect(x+4,y+3,24,17,'#2f6b2a');rect(x+8,y-1,16,24,'#2f6b2a');rect(x+9,y+3,8,6,'#3f8a35');break;
+    case 'F':rect(x,y,TS,TS,'#d9d0bf');rect(x,y+TS-3,TS,3,'#b3a994');rect(x+8,y+6,16,18,'#3e5770');rect(x+8,y+6,16,3,'#2b3e52');rect(x+15,y+6,2,18,'#cfc6b4');break;
+    case 'D':rect(x,y,TS,TS,m.outdoor?'#d9d0bf':T.wall);rect(x+4,y+2,24,30,'#3b2616');rect(x+6,y+4,20,28,'#7a5032');rect(x+15,y+4,2,28,'#5a3a22');rect(x+20,y+18,3,3,'#e0c068');break;
+    case 'E':rect(x,y,TS,TS,T.wall);rect(x+2,y+2,28,30,'#2e1d10');rect(x+4,y+4,11,28,'#5e3b22');rect(x+17,y+4,11,28,'#5e3b22');rect(x+6,y+10,7,8,'#9fc3e0');rect(x+19,y+10,7,8,'#9fc3e0');break;
+    case '#':rect(x,y,TS,TS,T.wall);rect(x,y,TS,3,T.hi);rect(x,y+TS-5,TS,5,T.trim);break;
+    case '^':cobble();rect(x,y+8,TS,3,'#2c2c34');for(let i=2;i<TS;i+=8)rect(x+i,y+8,2,20,'#2c2c34');rect(x,y+26,TS,3,'#2c2c34');break;
+    case '~':break;
+    case 'L':floor();rect(x+2,y+1,28,30,'#5a3b22');for(let i=0;i<3;i++){rect(x+4,y+4+i*9,24,7,'#2e1d10');for(let j=0;j<5;j++)rect(x+5+j*5,y+5+i*9,4,6,['#c0392b','#2980b9','#27ae60','#f1c40f','#8e44ad'][(j+i+c)%5]);}break;
+    case 'p':floor();rect(x+10,y+20,12,10,'#a0522d');rect(x+8,y+6,16,15,'#3f8a35');rect(x+12,y+2,8,8,'#4fa043');break;
+    case 'S':floor();rect(x,y+8,TS,20,'#8e3434');rect(x,y+4,TS,10,'#a84444');rect(x+2,y+14,TS-4,8,'#b85454');break;
+    case 't':floor();rect(x+2,y+8,30,18,'rgba(0,0,0,.18)');rect(x,y+4,TS,18,T.table);rect(x+2,y+22,3,8,'#555');rect(x+27,y+22,3,8,'#555');break;
+    case 'V':floor();rect(x+3,y-10,26,40,'#7a1f1f');rect(x+4,y-9,24,38,'#c0392b');rect(x+7,y-6,13,24,'#1d2b38');
+      for(let i=0;i<3;i++)for(let j=0;j<2;j++)rect(x+9+j*6,y-4+i*8,3,6,'#f1c40f');rect(x+22,y-4,4,10,'#ecf0f1');rect(x+7,y+21,18,5,'#111');
+      rect(x+4,y-9,24,2,(Math.floor(performance.now()/500)%2)?'#ff8a8a':'#c0392b');break;
+    case 'M':floor();rect(x,y+4,TS,24,'#7f8a93');rect(x,y+2,TS,6,'#c8d0d6');if(c%2)rect(x+6,y+10,20,10,'#e6e1d3');break;
+    case 'C':floor();rect(x+6,y-4,20,32,'#2d2d33');rect(x+9,y,14,8,'#5d6d7e');rect(x+20,y+12,3,3,(Math.floor(performance.now()/400)%2)?'#ff4d4d':'#5a1a1a');rect(x+12,y+18,8,8,'#ecf0f1');break;
+    case 'J':floor();rect(x+14,y+16,4,14,'#5a3b22');rect(x+2,y,28,20,'#b07b46');rect(x+5,y+3,9,7,'#fff');rect(x+17,y+5,9,9,'#ffe08a');rect(x+7,y+12,8,6,'#cde');break;
+    case 'N':rect(x,y,TS,TS,T.wall);rect(x+2,y+4,28,22,'#7a5232');rect(x+4,y+6,24,18,'#b07b46');rect(x+6,y+8,8,7,'#fff');rect(x+16,y+9,9,10,'#ffe08a');rect(x+8,y+16,7,6,'#f8b4c4');break;
+    case 'B':cobble();rect(x+2,y+12,28,6,'#8b5a2b');rect(x+2,y+6,28,4,'#a0703f');rect(x+4,y+18,3,8,'#333');rect(x+25,y+18,3,8,'#333');break;
+    default:floor();
+  }}
+function drawPano(){const y=HUD+9*TS;rect(0,y,W,TS,'#9cc3e4');ctx.fillStyle='#eef3f8';ctx.beginPath();ctx.moveTo(0,y+16);
+  for(let i=0;i<=16;i++){ctx.lineTo(i*40+20,y+3+(i%3)*3);ctx.lineTo(i*40+40,y+16);}ctx.lineTo(W,y+32);ctx.lineTo(0,y+32);ctx.closePath();ctx.fill();
+  rect(0,y+16,W,7,'#4f7fb0');for(let x=0;x<W;x+=18){const hh=4+(x*7)%9;rect(x,y+32-hh,14,hh,'#6b7c93');rect(x+3,y+32-hh-3,8,3,'#8a5a4a');}}
+function drawSign(c,r,s){const w=tw(s,14)+8,cx=clamp(c*TS+16,w/2+2,W-w/2-2),y=HUD+r*TS+1;rect(cx-w/2,y,w,13,'#1d2633');txt(s,cx,y,{size:14,align:'center',color:'#fff'});}
+
+/* ---------------- HUD ---------------- */
+function drawHUD(){rect(0,0,W,HUD,'#0c0a16');rect(0,HUD-2,W,2,'#2a2445');
+  let x=10;const item=(s,c,y)=>{txt(s,x,y,{size:18,color:c});x+=tw(s,18)+14;};
+  item(`WEEK ${G.week}/14`,'#ffd166',3);item(`AP ${'●'.repeat(G.ap)}${'○'.repeat(3-G.ap)}`,'#7fdbff',3);item(`LV ${G.level}`,'#fff',3);item(`XP ${G.xp}/${nextXP()}`,'#fff',3);item(`ECTS ${G.ects}/60`,'#9be564',3);
+  x=10;item(`SANITY ${G.sanity}`,G.sanity<25?'#ff5d5d':'#fff',20);item(`${chf(G.money)} CHF`,'#fff',20);item(`BEER ${G.beers}`,'#f1c40f',20);if(G.buff)item('(buzzed)','#ff6ad5',20);
+  txt(MAPS[G.map].name,W-10,20,{size:18,align:'right',color:'#8f89b0'});}
+
+/* ---------------- overworld scene ---------------- */
+const DIRV={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,
+  update(dt){this.banner-=dt;if(lock)return;
+    if(back()){flow(menu);return;}
+    if(hit('ok')){const v=DIRV[G.dir],c=Math.floor((G.x+v[0]*22)/TS),r=Math.floor((G.y-8+v[1]*24)/TS);
+      const n=npcAt(G.map,c,r);if(n){flow(()=>talkNPC(n));return;}
+      const ch=tileAt(G.map,c,r);if(ch&&INTERACT.has(ch)){flow(()=>interact(ch,c,r));return;}}
+    const dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);
+    if(dx||dy){
+      if(dy&&!dx)G.dir=dy<0?'up':'down';else if(dx&&!dy)G.dir=dx<0?'left':'right';
+      else if(!((G.dir==='left'&&dx<0)||(G.dir==='right'&&dx>0)||(G.dir==='up'&&dy<0)||(G.dir==='down'&&dy>0)))G.dir=dx<0?'left':'right';
+      const sp=(keys.c?175:115)*(dx&&dy?0.7071:1),nx=G.x+dx*sp*dt;if(!blocked(nx,G.y))G.x=nx;const ny=G.y+dy*sp*dt;if(!blocked(G.x,ny))G.y=ny;
+      this.anim+=dt*(keys.c?12:8);this.moving=true;}else this.moving=false;
+    const d=MAPS[G.map].doors[Math.floor(G.x/TS)+','+Math.floor((G.y-6)/TS)];
+    if(d){lock=true;this.moving=false;SFX.door();fadeTo(()=>{G.map=d[0];G.x=d[1]*TS+16;G.y=d[2]*TS+28;G.dir=d[3];playSong(MAPS[G.map].music);this.banner=2.2;lock=false;});}},
+  draw(){const m=MAPS[G.map];rect(0,0,W,H,'#000');
+    m.rows.forEach((row,r)=>{for(let c=0;c<row.length;c++)drawTile(m,row[c],c,r);});
+    if(m.pano)drawPano();m.signs.forEach(s=>drawSign(...s));
+    const side=G.dir==='left'||G.dir==='right',f=this.moving?(side?Math.floor(this.anim)%2:1+Math.floor(this.anim)%2):0;
+    const ents=NPCS.filter(n=>n.map===G.map).map(n=>({y:n.r*TS+30,d:()=>drawChar(n.pal,n.face||n.dir,0,n.c*TS+16,HUD+n.r*TS+30)}));
+    ents.push({y:G.y,d:()=>drawChar(PAL.player,G.dir,f,G.x,HUD+G.y)});ents.sort((a,b)=>a.y-b.y).forEach(e=>e.d());
+    drawHUD();
+    if(this.banner>0){ctx.globalAlpha=clamp(this.banner,0,1);const s=m.name,w=tw(s,22)+30;rect(W/2-w/2,52,w,30,'rgba(0,0,0,.75)');txt(s,W/2,56,{size:22,align:'center',color:'#ffd166'});ctx.globalAlpha=1;}}
+};
+/* ---------------- content ---------------- */
+const FLYERS=['* LOST: motivation. Last seen in week 2. Reward: 5 CHF.',
+  '* SELLING: Analysis script. Slightly tear-stained. Price negotiable.',
+  '* ROOM FOR RENT in Zurich: 1 m², 1200 CHF/month, shared bathroom. Call now!',
+  '* STUDY GROUP seeks one member who actually did the exercises.',
+  '* FREE: 200 pages of notes. Written in a font only the author can read.',
+  '* PARTY on Friday! Theme: "Things I should be studying instead."'];
+const DISHES=['Pasta, but different','Vegi curry (the brave choice)','Schnitzel with fries','Mystery bowl','Älplermagronen','Pasta, again'];
+const TA_INTRO=[["Today: find the bug. It's only one line. It's always only one line."],
+  ["Quick quiz! Don't worry, it's not graded. (It is a little bit graded.)"],
+  ["Okay, I'll explain the solution now. ...Any questions?"]];
+const CONTROLS=['* EXPLORE: arrows/WASD move · Z talk & confirm · X menu · hold C to run.',
+  '* FIGHT: ←→ move · Z jump · Z again in the air while touching something PINK = parry (fills your super).',
+  '* Hold X to shoot · C dash · V fires the super when all 5 cards are full · Esc pauses.',
+  '* M mutes the sound. Have fun, and drink responsibly (in-game too).'];
+
+/* ---------------- helpers ---------------- */
+const BOSS_ORDER=['diskret','eprog','linalg','analysis','ddca'];
+const beatenCount=()=>BOSS_ORDER.filter(id=>G.beaten[id]).length;
+const allBeaten=()=>beatenCount()===5;
+async function gainXP(n){const old=G.level,oldHp=hpFor(old);G.xp+=n;G.level=levelFor(G.xp);const lines=[`* +${n} XP.`];
+  if(G.level>old){SFX.level();lines.push(`* LEVEL UP! You are now LV ${G.level}.`);if(hpFor(G.level)>oldHp)lines.push(`* Your max HP in fights is now ${hpFor(G.level)}.`);
+    const un=BOSS_ORDER.filter(id=>BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>`${BOSSES[id].name} (${BOSSES[id].where})`);if(un.length)lines.push(`* Unlocked: ${un.join(', ')}.`);}
+  await say(lines);}
+async function spendAP(){if(G.ap<=0){SFX.bad();await say(["* You're exhausted. No energy left this week.","* Sit on a bench at the Polyterrasse to go home and sleep."]);return false;}G.ap--;return true;}
+async function afterAction(){
+  if(G.sanity<=0){SFX.bad();await say(['* Your sanity hits zero.','* BURNOUT. You spend the rest of the week in bed, watching lecture recordings at 2× speed.']);return nextWeek(true);}
+  if(G.ap===0)await say(["* You're out of energy for this week.","* Head to the Polyterrasse and sit on a bench to sleep."]);saveGame();}
+async function nextWeek(burnout){
+  await new Promise(r=>fadeTo(()=>{G.week++;G.ap=3;G.sanity=burnout?40:Math.min(100,G.sanity+30);G.money+=2000;G.map='campus';G.x=4*TS+16;G.y=6*TS+28;G.dir='down';playSong('campus');r();}));
+  if(G.week>14)return endGame(false);
+  const left=15-G.week,lines=[`* WEEK ${G.week} of 14.`,'* Your parents sent 20.00 CHF. "Eat something proper!"'];
+  if(G.week===8)lines.push('* Halfway through the semester. The Mensa queue is now part of your identity.');
+  if(G.week>=11&&!allBeaten())lines.push(`* ${left} week${left>1?'s':''} left. You still need to beat ${5-beatenCount()} professor${5-beatenCount()>1?'s':''} before the Basisprüfung.`);
+  if(G.week===14)lines.push('* FINAL WEEK. Pass the Basisprüfung this week, or repeat the year!');
+  await say(lines);saveGame();}
+function endGame(passed){return new Promise(r=>fadeTo(()=>{setScene(makeEnding(passed));r();}));}
+async function talkNPC(n){const i=G.talk[n.id]||0;G.talk[n.id]=i+1;n.face={up:'down',down:'up',left:'right',right:'left'}[G.dir];await say(n.lines[i%n.lines.length],n.name);n.face=null;}
+
+/* ---------------- interactions ---------------- */
+async function interact(ch,c,r){const m=G.map;
+  if(ch==='V')return vending();if(ch==='C')return coffee();if(ch==='M')return mensaFood();if(ch==='J')return jobBoard();
+  if(ch==='N')return say([pick(FLYERS)]);if(ch==='B')return bench();
+  if(ch==='E'){if(m==='cab'&&c===5)return uebungRoom();if(m==='cab'&&c===12)return lectureHall(['eprog','ddca']);
+    if(m==='hg'&&c===4)return lectureHall(['diskret','linalg','analysis']);if(m==='hg'&&c===14)return examRoom();}
+  if(ch==='L')return say([pick(["* A shelf of scripts. One is titled 'Analysis, 2nd edition (now with more errors)'.","* Books on algorithms, sorted. You check: it's bubble sort order.","* Old exams. They look... suspiciously familiar."])]);
+  if(ch==='T')return say(['* A tree. It has no exercise sheet. Lucky tree.']);
+  if(ch==='S')return say(['* A sofa. It has absorbed the souls of countless all-nighters.']);
+  if(ch==='p')return say(['* A plant. It is thriving. Unlike you.']);
+  if(ch==='t')return say([pick(['* Someone left an exercise sheet here. Question 3 just says "obviously".','* A table. Sticky. Mensa-adjacent.','* A table with a laptop sticker: "I paused my game to be here."'])]);
+  if(ch==='^'||ch==='~')return say(['* The view over Zurich. The lake glitters. The Alps pretend not to see you.']);}
+async function vending(){
+  const c=await ask('* A humming vending machine. The most reliable machine in CAB. Cold beer: 2.50 CHF.',['Buy a beer','Leave']);if(c!==0)return;
+  if(G.money<250){SFX.bad();return say(['* INSUFFICIENT FUNDS.',G.ects<30?'* ...like your ECTS.':'* The machine judges you silently.']);}
+  G.money-=250;G.beers++;SFX.coin();await say(['* Clunk. A cold beer drops.','* (Drink it from the menu with X: +15 Sanity and +1 HP in your next fight.)']);}
+async function coffee(){
+  const c=await ask('* Coffee machine, 1.50 CHF. A sticker says "WORKS (mostly)".',['Buy a coffee','Leave']);if(c!==0)return;
+  if(G.money<150){SFX.bad();return say(['* Not enough money. Not even for coffee.']);}
+  G.money-=150;if(Math.random()<0.25){SFX.bad();return say(['* The machine eats your coins and makes a satisfied noise.','* No coffee. Classic.']);}
+  G.stats.coffees++;G.sanity=Math.min(100,G.sanity+10);SFX.coin();await say(['* You get a coffee. It tastes like debugging. +10 Sanity.']);}
+async function mensaFood(){const d=DISHES[(G.week*3+G.ap)%DISHES.length];
+  const c=await ask(`* Polymensa. Today: "${d}". 7.00 CHF.`,['Eat (7.00 CHF)','Leave']);if(c!==0)return;
+  if(G.money<700){SFX.bad();return say(['* Not enough money. You stare at the menu until the queue pushes you out.']);}
+  G.money-=700;G.sanity=Math.min(100,G.sanity+20);SFX.coin();await say([`* You eat "${d}". It is... food. +20 Sanity.`]);}
+async function jobBoard(){
+  const c=await ask('* JOB BOARD: "Hilfsassistent wanted to correct exercise sheets." +30 CHF, −15 Sanity, 1 AP.',['Work a shift','Leave']);if(c!==0)return;
+  if(!await spendAP())return;G.money+=3000;G.sanity=Math.max(0,G.sanity-15);G.stats.shifts++;SFX.coin();
+  await say([`* You correct ${30+Math.floor(Math.random()*40)} exercise sheets.`,pick(['* Most of them prove that 1 = 1. One proves that 1 = 2.','* One student wrote "see attached" and attached nothing.','* Someone drew a very detailed cat instead of a proof. Partial credit.']),'* +30.00 CHF, −15 Sanity.']);
+  await afterAction();}
+async function bench(){
+  const c=await ask('* A bench on the Polyterrasse. Zurich glitters below.',['Go home & sleep (next week)','Enjoy the view','Leave']);
+  if(c===0){if(G.ap>0){const s=await ask(`* You still have ${G.ap} AP this week. Sleep anyway?`,['Sleep','Stay']);if(s!==0)return;}return nextWeek(false);}
+  if(c===1){if(G.view===G.week)return say(['* You already stared at the lake this week. The lake is starting to stare back.']);
+    G.view=G.week;G.sanity=Math.min(100,G.sanity+5);await say(['* You watch the lake and the Alps for a while.','* +5 Sanity. Free therapy.']);}}
+async function uebungRoom(){
+  const c=await ask('* Übungsraum. Which Übung? (1 AP, −10 Sanity)',['Programming: find the bug','Math & Logic: quiz','Q&A: survive "Any questions?"','Leave']);
+  if(c<0||c>2)return;if(!await spendAP())return;
+  await say(pick(TA_INTRO[c]),'TA');
+  const score=await new Promise(res=>fadeTo(()=>setScene([makeBug,makeQuiz,makeDodge][c](res))));
+  G.sanity=Math.max(0,G.sanity-10);G.stats.ubungen++;
+  const xp=Math.round(20+score*50);
+  await say([`* Übung done. Score: ${Math.round(score*100)}%.`,score>=0.8?pick(['TA: "Wow. Someone actually did the exercises."','TA: "Perfect! Please explain it to the others."']):score>=0.4?'TA: "Not bad! Partial credit is still credit."':'TA: "...we will go over this again next week."']);
+  await gainXP(xp);await afterAction();}
+async function lectureHall(list){
+  const opts=list.map(id=>{const b=BOSSES[id];return `${b.name} · ${b.course}`+(G.beaten[id]?' ✓':G.level<b.lvl?` (LV ${b.lvl})`:'');});opts.push('Leave');
+  const c=await ask('* Lecture hall. Who do you challenge? (1 AP)',opts);if(c<0||c>=list.length)return;
+  const id=list[c],b=BOSSES[id];
+  if(G.level<b.lvl)return say([`* ${b.name} looks at you over their glasses.`,`* "Come back at LV ${b.lvl}. The Übungen exist for a reason."`]);
+  if(G.beaten[id]){const r=await ask(`* You already passed ${b.course}. Rematch for fun? (1 AP, small XP)`,['Rematch','Leave']);if(r!==0)return;}
+  if(!await spendAP())return;await fight(id);}
+async function examRoom(){const n=beatenCount();
+  if(n<5)return say(['* PRÜFUNGSRAUM. The door is sealed.',`* A sign: "Basisprüfung — admission only after defeating all 5 professors." (${n}/5)`]);
+  const c=await ask('* The Basisprüfung waits behind this door. Three hours. No cheat sheet. Enter? (1 AP)',['Enter','Not yet']);if(c!==0)return;
+  if(!await spendAP())return;await fight('basis');}
+async function fight(id){const b=BOSSES[id];
+  await say(b.intro,b.name);
+  if(G.buff)await say(['* The beer kicks in. +1 HP. The room is... slightly wobbly.']);
+  const r=await new Promise(res=>fadeTo(()=>setScene(makeCombat(id,res))));
+  if(r.gaveUp){G.sanity=Math.max(0,G.sanity-10);await say(['* You sneak out of the lecture hall. Nobody saw. Probably. (−10 Sanity)']);return afterAction();}
+  if(r.won){const first=!G.beaten[id];G.beaten[id]=true;G.stats.wins++;G.stats.grades.push(r.grade);G.sanity=Math.max(0,G.sanity-5);
+    await say(b.win,b.name);
+    if(id==='basis'){G.passed=true;G.ects+=b.ects;return endGame(true);}
+    if(first){G.ects+=b.ects;await say([`* PASSED with grade ${r.grade.toFixed(2)}! +${b.ects} ECTS.`]);await gainXP(40);
+      if(allBeaten())await say(['* All five professors defeated!','* The exam room in HG is open now. The Basisprüfung awaits.']);}
+    else{await say([`* Rematch won with grade ${r.grade.toFixed(2)}. Your ego grows.`]);await gainXP(10);}}
+  else{G.stats.losses++;G.sanity=Math.max(0,G.sanity-20);await say(b.lose,b.name);
+    await say([`* Grade ${r.grade.toFixed(2)}. Not passed. (−20 Sanity)`,'* Tip: higher levels give more HP, and a beer gives +1 HP. Pink things can be parried!']);}
+  await afterAction();}
+
+/* ---------------- menu ---------------- */
+async function menu(){
+  const c=await ask('* MENU',['Items','Stats','Save','Controls','Quit to title','Close']);
+  if(c===0){const i=await ask('* ITEMS',[`Beer ×${G.beers}`,'Back']);if(i!==0)return;
+    if(G.beers<=0)return say(['* You have no beer. The vending machine in CAB can fix that.']);
+    G.beers--;G.stats.beers++;G.sanity=Math.min(100,G.sanity+15);G.buff=true;SFX.coin();
+    return say(['* You drink a beer. +15 Sanity.','* Liquid courage: +1 HP in your next fight. (Side effects may include wobbling.)']);}
+  if(c===1)return say([`* WEEK ${G.week}/14 · AP ${G.ap}/3 · LV ${G.level} · XP ${G.xp}/${nextXP()} · ECTS ${G.ects}/60`,
+    `* Sanity ${G.sanity}/100 · ${chf(G.money)} CHF · Beers ${G.beers} · Fight HP ${hpFor(G.level)}${G.buff?' (+1 beer)':''}`,
+    '* Professors: '+BOSS_ORDER.map(id=>`${BOSSES[id].name} ${G.beaten[id]?'✓':G.level<BOSSES[id].lvl?'(LV '+BOSSES[id].lvl+')':'·'}`).join(', ')]);
+  if(c===2)return say([saveGame()?'* Progress saved (in this browser).':'* Saving is not available here, sorry.']);
+  if(c===3)return say(CONTROLS);
+  if(c===4){const q=await ask('* Quit to the title screen? Unsaved progress is lost.',['Quit','Cancel']);if(q===0)fadeTo(()=>setScene(makeTitle()));}}
+
+/* ---------------- title / intro / ending ---------------- */
+function makeTitle(){const hasSave=!!loadSave(),opts=hasSave?['Continue','New game','Controls']:['New game','Controls'];
+  const stars=Array.from({length:70},()=>({x:rnd(0,W),y:rnd(0,230),s:Math.random()<0.2?2:1,p:rnd(0,6)}));
+  const S={music:'title',sel:0,t:0};
+  S.update=dt=>{S.t+=dt;if(lock)return;const n=opts.length;
+    if(hit('up')){S.sel=(S.sel+n-1)%n;SFX.select();}if(hit('down')){S.sel=(S.sel+1)%n;SFX.select();}
+    if(hit('ok')){const o=opts[S.sel];SFX.confirm();
+      if(o==='New game'){G=newGame();lock=true;fadeTo(()=>{setScene(OW);lock=false;flow(intro);});}
+      else if(o==='Continue'){G=Object.assign(newGame(),loadSave()||{});lock=true;fadeTo(()=>{setScene(OW);OW.banner=2.2;lock=false;});}
+      else flow(()=>say(CONTROLS));}};
+  S.draw=()=>{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0d0a24');g.addColorStop(1,'#2b1f4a');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    for(const s of stars){ctx.globalAlpha=0.45+0.55*Math.abs(Math.sin(S.t*1.3+s.p));rect(s.x,s.y,s.s,s.s,'#fff');}ctx.globalAlpha=1;
+    ctx.fillStyle='#161032';ctx.beginPath();ctx.arc(320,306,50,Math.PI,0);ctx.fill();rect(313,248,14,10,'#161032');rect(90,306,460,54,'#161032');
+    for(let i=0;i<12;i++){const lit=((i*7+3)%5)<2;rect(108+i*36,316,14,18,lit?'#ffd16688':'#2a2152');}
+    rect(0,338,W,3,'#0a0718');for(let x=4;x<W;x+=12)rect(x,338,2,22,'#0a0718');
+    txt('ETH:',W/2,34,{font:PX,size:24,align:'center',color:'#ffd166',shadow:'#000'});
+    txt('YEAR ONE',W/2,68,{font:PX,size:32,align:'center',color:'#fff',shadow:'#ff6ad5'});
+    txt('survive your first year of Computer Science',W/2,112,{size:20,align:'center',color:'#cfc9e8'});
+    opts.forEach((o,i)=>{const y=150+i*30;txt(o,W/2,y,{font:PX,size:16,align:'center',color:i===S.sel?'#ffd166':'#8f89b0'});if(i===S.sel)drawHeart(W/2-tw(o,16,PX)/2-26,y+1,2);});
+    txt('↑↓ choose · Z select',W/2,228,{size:16,align:'center',color:'#6f6990'});};
+  return S;}
+async function intro(){await say(['* September. You got into Computer Science at ETH Zürich.','* In 14 weeks: the BASISPRÜFUNG.',
+  '* To be allowed in, you must defeat all five professors in their lecture halls (HG and CAB).',
+  '* Übungen in CAB give XP. Levels unlock professors and give you more HP in fights.',
+  '* You have 3 AP (energy) per week. Sit on a Polyterrasse bench to sleep and start a new week.',
+  '* Also, there is a beer vending machine in CAB. Just saying.']);saveGame();}
+function makeEnding(passed){clearSave();const gr=G.stats.grades,avg=gr.length?gr.reduce((a,b)=>a+b,0)/gr.length:0;
+  const conf=Array.from({length:60},()=>({x:rnd(0,W),y:rnd(-H,0),v:rnd(30,90),c:pick(['#ffd166','#ff6ad5','#9be564','#7fdbff'])}));
+  const S={music:passed?'ending':'title',t:0};
+  S.update=dt=>{S.t+=dt;for(const c of conf){c.y+=c.v*dt;if(c.y>H)c.y=-10;}if(S.t>1.5&&hit('ok'))fadeTo(()=>setScene(makeTitle()));};
+  S.draw=()=>{rect(0,0,W,H,passed?'#0f2a1d':'#2a0f16');if(passed)for(const c of conf)rect(c.x,c.y,4,6,c.c);
+    txt(passed?'BASISPRÜFUNG':'NOT PASSED',W/2,40,{font:PX,size:24,align:'center',color:passed?'#9be564':'#ff5d5d',shadow:'#000'});
+    txt(passed?'BESTANDEN!':'See you next year.',W/2,78,{font:PX,size:16,align:'center',color:'#fff',shadow:'#000'});
+    const lines=passed?[`You survived year one in ${G.week} week${G.week>1?'s':''}.`,`ECTS ${G.ects}/60 · Level ${G.level} · Average grade ${avg?avg.toFixed(2):'–'}`,
+      `Beers ${G.stats.beers} · Coffees ${G.stats.coffees} · Übungen ${G.stats.ubungen} · Shifts ${G.stats.shifts}`,`Fights lost along the way: ${G.stats.losses}`,'Year two awaits. (Not in this game. Yet.)']
+      :['The semester ended before you passed the Basisprüfung.',`ECTS ${G.ects}/60 · Level ${G.level} · Professors defeated ${beatenCount()}/5`,
+      'Repeating the first year is a classic. Many legends did.','Tip: Übungen early, beer before fights, parry the pink.'];
+    lines.forEach((l,i)=>txt(l,W/2,130+i*30,{size:22,align:'center',color:'#fff'}));
+    if(S.t>1.5)txt('Press Z to return to the title screen',W/2,320,{size:18,align:'center',color:'#cfc9e8'});};
+  return S;}
+/* ---------------- shared minigame bits ---------------- */
+const COURSE={diskret:'Discrete Mathematics',linalg:'Linear Algebra',analysis:'Analysis',eprog:'Intro to Programming',ddca:'Digital Design',life:'Student Life'};
+function introCard(t,sub){rect(0,0,W,H,'rgba(0,0,0,.84)');txt(t,W/2,140,{font:PX,size:16,align:'center',color:'#ffd166'});txt(sub,W/2,176,{size:22,align:'center',color:'#fff'});txt('GET READY...',W/2,214,{size:20,align:'center',color:'#8f89b0'});}
+function bgGrid(c){rect(0,0,W,H,c);for(let x=0;x<W;x+=32)rect(x,0,1,H,'#17152c');for(let y=0;y<H;y+=32)rect(0,y,W,1,'#17152c');}
+function endMini(S,done,score){if(S.ended)return;S.ended=true;fadeTo(()=>{setScene(OW);done(score);});}
+
+/* ---------------- Übung: quiz ---------------- */
+const QUIZ=[
+  {k:'diskret',q:'What is the negation of "∀x: P(x)"?',o:['∃x: ¬P(x)','∀x: ¬P(x)','∃x: P(x)','¬∀x: ¬P(x)']},
+  {k:'diskret',q:'How many subsets does a set with 4 elements have?',o:['16','8','4','24']},
+  {k:'diskret',q:'gcd(12, 18) = ?',o:['6','3','36','2']},
+  {k:'diskret',q:'Which of these is a real proof technique?',o:['Induction','Proof by vibes','Proof by "trust me"','Proof by majority vote']},
+  {k:'diskret',q:'"A → B" is false exactly when...',o:['A is true and B is false','A is false and B is true','both are false','both are true']},
+  {k:'linalg',q:'What is the determinant of the 3×3 identity matrix?',o:['1','0','3','9']},
+  {k:'linalg',q:'A square matrix is invertible exactly when its determinant is...',o:['not 0','0','1','positive']},
+  {k:'linalg',q:'An eigenvector of A is a vector that A only...',o:['scales','rotates by 90°','deletes','forwards to the TA']},
+  {k:'linalg',q:'What is the dimension of ℝ³?',o:['3','1','9','∞']},
+  {k:'analysis',q:'d/dx eˣ = ?',o:['eˣ','x · eˣ⁻¹','1','ln x']},
+  {k:'analysis',q:'lim 1/n for n → ∞ = ?',o:['0','1','∞','does not exist']},
+  {k:'analysis',q:'∫ 2x dx = ?',o:['x² + C','2x² + C','x + C','2 + C']},
+  {k:'analysis',q:'Which sequence converges?',o:['1/n','n','(−1)ⁿ','n²']},
+  {k:'eprog',q:'In Java, how do you compare the contents of two Strings a and b?',o:['a.equals(b)','a == b','a = b','a.same(b)']},
+  {k:'eprog',q:'The index of the first element of a Java array is...',o:['0','1','−1','depends on the mood']},
+  {k:'eprog',q:'Binary search on a sorted array takes...',o:['O(log n)','O(n)','O(n²)','O(1)']},
+  {k:'eprog',q:'Which of these loops never ends?',o:['while (true) {}','for (int i = 0; i < 3; i++) {}','do {} while (false);','if (true) {}']},
+  {k:'ddca',q:'NAND with inputs 1 and 1 gives...',o:['0','1','X','2']},
+  {k:'ddca',q:'How many different values can 8 bits represent?',o:['256','255','8','512']},
+  {k:'ddca',q:'Binary 1011 in decimal is...',o:['11','13','9','1011']},
+  {k:'ddca',q:'Which gate outputs 1 exactly when its two inputs differ?',o:['XOR','AND','NOR','NAND']},
+  {k:'life',q:'The most reliable machine in CAB is the...',o:['beer vending machine','coffee machine','printer','submission server']},
+  {k:'life',q:'A TA says "this exercise is easy". This means...',o:['it is not easy','it is easy','there is no exercise','free points for everyone']},
+  {k:'life',q:'Best strategy for the week before the Basisprüfung?',o:['Sleep, eat, review old exams','Learn everything from scratch at 3am','Become one with the Mensa queue','Panic, but efficiently']}
+];
+function makeQuiz(done){
+  const acad=shuffle(QUIZ.filter(q=>q.k!=='life')).slice(0,4),life=shuffle(QUIZ.filter(q=>q.k==='life')).slice(0,1);
+  const qs=shuffle(acad.concat(life)).map(q=>({q:q.q,k:q.k,opts:shuffle(q.o.map((t,i)=>({t,ok:i===0})))}));
+  const S={music:'uebung',i:0,sel:0,t:12,fb:null,score:0,intro:1.5,ended:false};
+  S.update=dt=>{if(S.intro>0){S.intro-=dt;return;}if(S.ended)return;
+    if(S.fb){S.fb.t-=dt;if(S.fb.t<=0||(S.fb.t<1.4&&hit('ok'))){S.fb=null;S.i++;S.sel=0;S.t=12;if(S.i>=qs.length)endMini(S,done,S.score/qs.length);}return;}
+    S.t-=dt;if(hit('up')){S.sel=(S.sel+3)%4;SFX.select();}if(hit('down')){S.sel=(S.sel+1)%4;SFX.select();}
+    if(hit('ok')||S.t<=0){const q=qs[S.i],ok=S.t>0&&q.opts[S.sel].ok;if(ok){S.score++;SFX.coin();}else SFX.bad();S.fb={ok,t:2,timeout:S.t<=0};}};
+  S.draw=()=>{bgGrid('#0b0b16');const q=qs[Math.min(S.i,qs.length-1)];
+    txt('ÜBUNG · MATH & LOGIC',24,14,{font:PX,size:16,color:'#ffd166'});
+    txt(`Question ${Math.min(S.i+1,qs.length)}/${qs.length} · score ${S.score}`,W-24,12,{size:20,align:'right',color:'#cfc9e8'});
+    ubox(30,44,580,292);txt(COURSE[q.k],50,56,{size:18,color:'#8f89b0'});
+    wrap(q.q,540,24).forEach((l,i)=>txt(l,50,78+i*24,{size:24}));
+    q.opts.forEach((o,i)=>{const y=140+i*34,sel=i===S.sel;let col=sel?'#ffd166':'#fff';if(S.fb){col=o.ok?'#9be564':sel?'#ff5d5d':'#77738f';}
+      txt(o.t,90,y,{size:24,color:col});if(sel&&!S.fb)drawHeart(60,y+5,2);});
+    if(S.fb)txt(S.fb.ok?'RICHTIG!':S.fb.timeout?'TIME UP!':'FALSCH!',W/2,280,{font:PX,size:16,align:'center',color:S.fb.ok?'#9be564':'#ff5d5d'});
+    rect(50,306,540,10,'#2a2445');rect(50,306,540*clamp(S.t/12,0,1),10,S.t<4?'#ff5d5d':'#7fdbff');
+    if(S.intro>0)introCard('MATH & LOGIC QUIZ','↑↓ choose · Z answer · 12 seconds per question');};
+  return S;}
+
+/* ---------------- Übung: find the bug ---------------- */
+const BUGS=[
+  {code:['int[] a = {3, 1, 4};','int sum = 0;','for (int i = 0; i <= a.length; i++) {','    sum += a[i];','}'],bug:2,why:'i <= a.length goes one step too far: ArrayIndexOutOfBoundsException. Use i < a.length.'},
+  {code:['String pw = readInput();','if (pw == "hunter2") {','    login();','}'],bug:1,why:'== compares references, not contents. Use pw.equals("hunter2").'},
+  {code:['int i = 0;','while (i < 10) {','    System.out.println(i);','    i--;','}'],bug:3,why:'i-- moves away from 10, so the loop never ends. You wanted i++.'},
+  {code:['int a = 7, b = 2;','double avg = a / b;','System.out.println(avg); // want 3.5'],bug:1,why:'a / b is integer division and gives 3. Write (double) a / b.'},
+  {code:['static int max(int x, int y) {','    if (x > y) return x;','    return x;','}'],bug:2,why:'The last return should be y. Right now max(1, 5) returns 1.'},
+  {code:['String s = null;','if (s.length() > 0) {','    print(s);','}'],bug:1,why:'s is null, so s.length() throws a NullPointerException. Prof. Null sends regards.'},
+  {code:['int count = 0;','for (int i = 0; i < 10; i++);','{','    count++;','}'],bug:1,why:'The ; after the for loop is an empty loop body. count++ runs only once.'}
+];
+function makeBug(done){const rounds=shuffle(BUGS).slice(0,3);
+  const S={music:'uebung',i:0,sel:0,t:20,fb:null,score:0,intro:1.5,ended:false};
+  S.update=dt=>{if(S.intro>0){S.intro-=dt;return;}if(S.ended)return;
+    if(S.fb){S.fb.t-=dt;if(S.fb.t<=0||(S.fb.t<2.8&&hit('ok'))){S.fb=null;S.i++;S.sel=0;S.t=20;if(S.i>=rounds.length)endMini(S,done,S.score/rounds.length);}return;}
+    S.t-=dt;const R=rounds[S.i],n=R.code.length;if(hit('up')){S.sel=(S.sel+n-1)%n;SFX.select();}if(hit('down')){S.sel=(S.sel+1)%n;SFX.select();}
+    if(hit('ok')||S.t<=0){const ok=S.t>0&&S.sel===R.bug;if(ok){S.score++;SFX.coin();}else SFX.bad();S.fb={ok,t:3.6,timeout:S.t<=0};}};
+  S.draw=()=>{bgGrid('#0b0b16');const R=rounds[Math.min(S.i,rounds.length-1)];
+    txt('ÜBUNG · PROGRAMMING',24,14,{font:PX,size:16,color:'#ffd166'});
+    txt(`Round ${Math.min(S.i+1,rounds.length)}/${rounds.length} · score ${S.score}`,W-24,12,{size:20,align:'right',color:'#cfc9e8'});
+    txt('Which line has the bug?',30,42,{size:22});ubox(30,68,580,172,'#7fdbff');
+    R.code.forEach((l,i)=>{const y=84+i*28,sel=i===S.sel;
+      if(S.fb&&i===R.bug)rect(36,y-3,568,26,'#1f4d2b');else if(sel)rect(36,y-3,568,26,S.fb?'#4d1f26':'#24304a');
+      txt(String(i+1),56,y,{size:22,align:'right',color:'#6f6990'});txt(l,74,y,{size:22,color:sel?'#ffd166':'#e8e8f0'});});
+    rect(30,248,580,10,'#2a2445');rect(30,248,580*clamp(S.t/20,0,1),10,S.t<6?'#ff5d5d':'#7fdbff');
+    if(S.fb){ubox(30,264,580,86,S.fb.ok?'#9be564':'#ff5d5d');txt(S.fb.ok?'RICHTIG!':S.fb.timeout?'TIME UP!':'FALSCH!',46,274,{font:PX,size:16,color:S.fb.ok?'#9be564':'#ff5d5d'});
+      wrap(R.why,548,20).slice(0,2).forEach((l,i)=>txt(l,46,298+i*21,{size:20}));}
+    else txt('↑↓ choose a line · Z select',W/2,286,{size:20,align:'center',color:'#8f89b0'});
+    if(S.intro>0)introCard('FIND THE BUG','Exactly one line is wrong. 20 seconds per round.');};
+  return S;}
+
+/* ---------------- Übung: "Any questions?" ---------------- */
+function makeDodge(done){const bx=220,by=170,bw=200,bh=130;
+  const QS=['Any questions?','...anyone?','No questions? Great, so everyone understood.','The solution is trivial, so...','...','Questions? Last chance!'];
+  const S={music:'uebung',t:0,dur:16,intro:1.6,hx:bx+bw/2,hy:by+bh-20,hits:0,inv:0,bul:[],spawn:0.4,q:0,qT:2.5,ended:false};
+  S.update=dt=>{if(S.intro>0){S.intro-=dt;return;}if(S.ended)return;
+    S.t+=dt;S.inv-=dt;S.qT-=dt;if(S.qT<=0){S.q=(S.q+1)%QS.length;S.qT=2.6;}
+    const dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);
+    S.hx=clamp(S.hx+dx*150*dt,bx+10,bx+bw-10);S.hy=clamp(S.hy+dy*150*dt,by+10,by+bh-10);
+    S.spawn-=dt;if(S.spawn<=0){const ph=S.t<5?0:S.t<10?1:2;
+      if(ph===0){S.bul.push({x:rnd(bx+8,bx+bw-8),y:by-8,vx:0,vy:rnd(90,140)});S.spawn=0.2;}
+      else if(ph===1){const l=Math.random()<0.5;S.bul.push({x:l?bx-8:bx+bw+8,y:rnd(by+8,by+bh-8),vx:l?150:-150,vy:0});S.spawn=0.26;}
+      else{const a=Math.atan2(S.hy-(by-20),S.hx-W/2);S.bul.push({x:W/2,y:by-20,vx:Math.cos(a)*170,vy:Math.sin(a)*170});if(Math.random()<0.6)S.bul.push({x:rnd(bx+8,bx+bw-8),y:by-8,vx:0,vy:120});S.spawn=0.34;}}
+    for(const b of S.bul){b.x+=b.vx*dt;b.y+=b.vy*dt;if(S.inv<=0&&Math.hypot(b.x-S.hx,b.y-S.hy)<9){S.hits++;S.inv=0.9;SFX.hit();b.dead=true;}}
+    S.bul=S.bul.filter(b=>!b.dead&&b.y<by+bh+20&&b.y>by-40&&b.x>bx-30&&b.x<bx+bw+30);
+    if(S.t>=S.dur)endMini(S,done,clamp(1-S.hits*0.12,0,1));};
+  S.draw=()=>{rect(0,0,W,H,'#000');
+    txt('ÜBUNG · Q&A SESSION',24,14,{font:PX,size:16,color:'#ffd166'});txt(`Awkward moments: ${S.hits}`,W-24,12,{size:20,align:'right',color:'#cfc9e8'});
+    spr(PROF,profPal('#c0392b','#f39c12','#2c3e50'),W/2-24,42,4);
+    const q=QS[S.q],qw=tw(q,20)+24;ubox(W/2-qw/2,114,qw,32);txt(q,W/2,120,{size:20,align:'center'});
+    ubox(bx-3,by-3,bw+6,bh+6);ctx.save();ctx.beginPath();ctx.rect(bx,by,bw,bh);ctx.clip();
+    for(const b of S.bul)txt('?',b.x,b.y,{size:22,align:'center',base:'middle',color:'#ffd166'});ctx.restore();
+    if(!(S.inv>0&&Math.floor(S.inv*16)%2))drawHeart(S.hx-7,S.hy-6,2);
+    rect(bx,by+bh+10,bw,8,'#2a2445');rect(bx,by+bh+10,bw*clamp(1-S.t/S.dur,0,1),8,'#7fdbff');
+    txt('Survive the silence until the bar runs out. Arrows move.',W/2,by+bh+24,{size:18,align:'center',color:'#8f89b0'});
+    if(S.intro>0)introCard('"ANY QUESTIONS?"','Dodge the question marks. Never make eye contact.');};
+  return S;}
+
+/* ---------------- professors ---------------- */
+const CY='#ffd166',CR='#ff6b6b',CG='#9be564',CB='#7fdbff',CO='#ffa94d',CV='#c3a6ff';
+const BOSSES={
+  diskret:{id:'diskret',name:'Prof. Diskret',course:'Discrete Mathematics',lvl:1,ects:7,where:'HG',hp:220,pal:profPal('#dddddd','#6b4b8a','#e0c068'),
+    chalk:['∀x ∃y: P(x, y)','¬(A ∧ B) ≡ ¬A ∨ ¬B','|P(S)| = 2^|S|','Proof: trivial. ∎'],
+    intro:['Ah. A new student. Let us begin with a simple lemma:','For all students x, there exists an exam y such that x fails y.','Prove me wrong.'],
+    win:['...impossible. Your proof is... correct.','I shall write "trivial" next to it, out of respect.'],
+    lose:['As expected. The proof is left as an exercise to the reader.','The reader is you. Try again.'],
+    phases:A=>[
+      {name:'Lemma 1: Quantifiers',rate:1.35,atk:[()=>A.aimed({n:3,g:'∀',c:CY}),()=>A.aimed({n:3,g:'∃',c:CY,spread:0.35}),()=>A.aimed({g:'∎',pink:true,speed:220})]},
+      {name:'Proof by Induction',rate:1.5,atk:[()=>A.bounce({n:3,g:['n','n+1'],c:CG}),()=>A.aimed({n:5,spread:0.3,g:'∀',c:CY,speed:280}),()=>A.bounce({n:3,g:'∎',c:CG,pink:true})]},
+      {name:'Proof by Contradiction',rate:1.35,atk:[()=>A.ring({n:12,g:'¬',c:CR,pinkEvery:4}),()=>A.aimed({n:3,g:'⊥',c:CR,speed:340,spread:0.18}),()=>A.rain({n:9,g:['∃','∀','¬'],c:CY,pinkEvery:5})]}]},
+  eprog:{id:'eprog',name:'Prof. Null',course:'Intro to Programming',lvl:2,ects:7,where:'CAB',hp:250,pal:profPal('#2b2b2b','#3b6e3b','#e8e8e8'),
+    chalk:['public static void main(...)','int x = null; // ?!','while (true) { cry(); }','O(n log n)'],
+    intro:['public static void main(String[] args) {','    student.pass(); // TODO','}','...let me compile you. Expect errors.'],
+    win:['BUILD SUCCESSFUL.','Fine. You may pass. I am still deducting points for code style.'],
+    lose:['Exception in thread "main": StudentNotPreparedException','    at Life.firstYear(ETH.java:1)'],
+    phases:A=>[
+      {name:'Syntax Error',rate:1.3,atk:[()=>A.rain({n:12,g:';',c:CG,pinkEvery:6}),()=>A.aimed({n:2,g:'{ }',c:CG,spread:0.2,speed:290})]},
+      {name:'NullPointerException',rate:1.5,atk:[()=>A.bar({text:'NPE!',speed:320}),()=>{A.aimed({g:'null',c:CR,speed:300});A.later(0.45,()=>A.aimed({g:'null',pink:true,speed:210}));},()=>A.bar({text:'null',speed:360})]},
+      {name:'while (true)',rate:2.1,atk:[()=>A.spiral({arms:3,steps:14,g:'()',c:CG,pinkEvery:5}),()=>A.bar({text:'STACK!',speed:340})]}]},
+  linalg:{id:'linalg',name:'Prof. Eigen',course:'Linear Algebra',lvl:3,ects:7,where:'HG',hp:270,pal:profPal('#8a5a2b','#2c5d8f','#c0392b'),
+    chalk:['Av = λv','det(A − λI) = 0','rank A + dim ker A = n','A⁻¹ exists ⇔ det A ≠ 0'],
+    intro:['Welcome. Today, we transform you.','You are a vector. I am the matrix.','Let us see whether you are an eigenvector... or just noise.'],
+    win:['You kept your direction under transformation.','A true eigenvector. λ = impressive.'],
+    lose:['det(you) = 0.','Not invertible. Come back with full rank.'],
+    phases:A=>[
+      {name:'Vectors',rate:1.3,atk:[()=>A.aimed({n:4,spread:0.22,g:'→',c:CB,speed:300}),()=>A.aimed({g:'I',pink:true,speed:230}),()=>A.ring({n:8,g:'λ',c:CB})]},
+      {name:'Matrix Multiplication',rate:1.9,atk:[()=>A.vlas({xs:[40,160,280,400]}),()=>A.vlas({xs:[100,220,340]}),()=>A.aimed({n:3,g:'λ',c:CB,pink:'mid'})]},
+      {name:'Determinant = 0',rate:1.8,atk:[()=>{A.hlas({y:FLOOR-12});A.later(1.5,()=>A.hlas({y:FLOOR-70}));},()=>A.atPlayer({count:2}),()=>A.ring({n:10,g:'det',c:CB,pinkEvery:5})]}]},
+  analysis:{id:'analysis',name:'Prof. Epsilon',course:'Analysis',lvl:4,ects:8,where:'HG',hp:290,pal:profPal('#eeeeee','#8f5a2c','#2c3e50'),
+    chalk:['∀ε > 0 ∃δ > 0','lim 1/n = 0','f′(x) = lim (f(x+h) − f(x)) / h','∫ eˣ dx = eˣ + C'],
+    intro:['For every ε > 0 there exists a δ > 0...','...such that you will not dodge my attacks.','Let ε be your hope. Let it tend to zero.'],
+    win:['Your performance... converges.','Absolutely, even. Well done.'],
+    lose:['lim (your HP) = 0.','The sequence diverges. Revisit the definitions.'],
+    phases:A=>[
+      {name:'Let ε > 0',rate:1.7,atk:[()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.42}),()=>A.sine({n:6,g:'ε',c:CO,ys:[FLOOR-130],amp:25,gap:0.25}),()=>A.aimed({g:'dx',pink:true,speed:220})]},
+      {name:'Choose δ',rate:1.8,atk:[()=>A.homing({n:3,g:'δ',c:CO,pink:true}),()=>A.sine({n:5,g:'ε',c:CO,ys:[FLOOR-45],amp:40,gap:0.4})]},
+      {name:'lim x → you',rate:1.9,atk:[()=>A.atPlayer({count:3}),()=>{A.sine({n:4,g:'∞',c:CO,ys:[FLOOR-45],amp:40,gap:0.45});A.homing({n:2,g:'δ',c:CO});}]}]},
+  ddca:{id:'ddca',name:'Prof. Gate',course:'Digital Design',lvl:5,ects:7,where:'CAB',hp:300,pal:profPal('#c96a3a','#555c66','#f1c40f'),
+    chalk:['A NAND B = ¬(A ∧ B)','0b1011 = 11','f = 1 / T','Y = A ⊕ B'],
+    intro:['Every computer is just billions of tiny gates.','Today, I am the gate.','And you... are a 0.'],
+    win:['Signal received: 1.','You switched states. Respect.'],
+    lose:['Timing violation detected.','You missed the clock edge. Again.'],
+    phases:A=>[
+      {name:'Bits',rate:1.3,atk:[()=>A.bounce({n:4,g:['0','1'],c:CV}),()=>A.aimed({n:3,g:'1',c:CV,spread:0.3,pink:'mid'})]},
+      {name:'Clock Signal',rate:1.2,atk:[()=>A.bar({text:'CLK',speed:300,c:CV}),()=>A.bar({text:'CLK',speed:300,high:true,c:CV}),()=>A.aimed({g:'1',pink:true,speed:220})]},
+      {name:'Logic Gates',rate:1.6,atk:[()=>A.ring({n:9,g:['AND','OR','XOR','NOT'],c:CV,pinkEvery:3}),()=>A.vlas({xs:[60,200,340]}),()=>A.bounce({n:4,g:['0','1'],c:CV})]}]},
+  basis:{id:'basis',name:'THE BASISPRÜFUNG',course:'All of it. 3 hours.',lvl:1,ects:24,where:'HG',hp:520,exam:true,
+    chalk:['Aufgabe 1 (12 Punkte)','Aufgabe 2 (18 Punkte)','Aufgabe 3 (30 Punkte)','Viel Erfolg!'],
+    intro:['...','I am every exercise you skipped.','Every lecture you watched at 2× speed.','I am the BASISPRÜFUNG. Three hours. No cheat sheet.'],
+    win:['...','...you passed.','(The exam quietly turns into a "Bestanden" email.)'],
+    lose:['NOT PASSED.','You may try again... while the semester lasts.'],
+    phases:A=>[BOSSES.diskret.phases(A)[2],BOSSES.eprog.phases(A)[1],BOSSES.linalg.phases(A)[1],BOSSES.analysis.phases(A)[2],BOSSES.ddca.phases(A)[2]]
+      .map((p,i)=>({name:`Part ${i+1}: ${p.name}`,rate:p.rate*0.9,atk:p.atk}))}
+};
+
+/* ---------------- boss fight ---------------- */
+function drawLecture(B){rect(0,0,W,H,'#2b2438');for(let x=0;x<W;x+=64)rect(x,0,2,FLOOR,'#30293f');
+  rect(118,64,404,146,'#5a3d26');rect(124,70,392,132,B.exam?'#24242c':'#1f3b2d');
+  B.chalk.forEach((s,i)=>txt(s,140,78+i*30,{size:22,color:'rgba(230,240,230,.78)'}));rect(124,202,392,6,'#7a5232');
+  rect(0,FLOOR,W,H-FLOOR,'#4b3527');for(let x=0;x<W;x+=48)rect(x,FLOOR,2,H-FLOOR,'#3c2a1f');rect(0,FLOOR,W,3,'#6b4c38');
+  rect(572,FLOOR-58,50,58,'#6b4a2b');rect(568,FLOOR-62,58,8,'#8a6238');}
+function drawExam(x,y,flash,t){const w=112,h=132;ctx.save();ctx.translate(x,y+h/2);ctx.rotate(Math.sin(t*1.5)*0.05);ctx.translate(-w/2,-h/2);
+  rect(5,5,w,h,'rgba(0,0,0,.35)');rect(0,0,w,h,flash?'#fff':'#f4f1e8');rect(0,0,w,20,flash?'#fff':'#c0392b');txt('BASISPRÜFUNG',w/2,2,{size:16,align:'center',color:'#fff'});
+  rect(18,28,30,3,'#1a1a1a');rect(64,28,30,3,'#1a1a1a');rect(22,34,22,9,'#1a1a1a');rect(68,34,22,9,'#1a1a1a');rect(27,36,6,5,'#ff4d6d');rect(73,36,6,5,'#ff4d6d');
+  rect(34,54,44,6,'#1a1a1a');for(let i=0;i<6;i++)rect(12,72+i*9,w-24,2,'#c9c2b0');txt('Note: ?',w-12,h-18,{size:16,align:'right',color:'#c0392b'});ctx.restore();}
+
+function makeCombat(id,done){const B=BOSSES[id];
+  const maxHp=hpFor(G.level)+(G.buff?1:0);
+  const S={music:id==='basis'?'final':'boss',t:0,st:'intro',stT:0,paused:false,hitstop:0,shake:0,banner:'',bannerT:0,beam:0,wob:G.buff,ended:false,hits:0,
+    boss:{hp:B.hp,max:B.hp,ph:-1,x:530,flash:0,atkT:1,ai:0},
+    p:{x:90,y:FLOOR,vx:0,vy:0,ground:true,hp:maxHp,max:maxHp,inv:0,dash:0,dashCd:0,cool:0,sup:0,dir:1,anim:0,parry:0},
+    shots:[],projs:[],lasers:[],ev:[],parts:[]};
+  G.buff=false;
+  const mouth=()=>({x:S.boss.x-34,y:FLOOR-78}),pc=()=>({x:S.p.x,y:S.p.y-14});
+  const later=(d,f)=>S.ev.push({t:d,f});
+  const gl=g=>Array.isArray(g)?pick(g):g;
+  const proj=o=>S.projs.push(Object.assign({x:0,y:0,vx:0,vy:0,r:11,g:'•',c:'#fff',pink:false,ay:0,life:8,t:0},o));
+  const A={later,
+    aimed({n=1,spread=0.25,speed=260,g='•',c=CY,pink=false}={}){const m=mouth(),t=pc(),base=Math.atan2(t.y-m.y,t.x-m.x);
+      for(let i=0;i<n;i++){const a=base+(i-(n-1)/2)*spread;proj({x:m.x,y:m.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,g:gl(g),c,pink:pink===true||(pink==='mid'&&i===(n-1)/2)});}},
+    ring({n=10,speed=200,g='•',c='#fff',pinkEvery=0,off=0}={}){const m=mouth();
+      for(let i=0;i<n;i++){const a=off+i/n*Math.PI*2;proj({x:m.x,y:m.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,g:gl(g),c,pink:pinkEvery>0&&i%pinkEvery===0});}},
+    rain({n=10,g='•',c='#fff',dur=1.6,smin=170,smax=250,pinkEvery=0}={}){for(let i=0;i<n;i++)later(i*dur/n,()=>proj({x:rnd(20,440),y:-10,vy:rnd(smin,smax),g:gl(g),c,pink:pinkEvery>0&&i%pinkEvery===pinkEvery-1}));},
+    bounce({n=3,g='•',c='#fff',pink=false}={}){for(let i=0;i<n;i++)later(i*0.28,()=>{const m=mouth();proj({x:m.x,y:m.y,vx:-rnd(170,330),vy:-rnd(250,420),ay:900,bounce:true,life:7,g:gl(g),c,pink:pink&&i===n-1});});},
+    bar({text='ERR',speed=300,high=false,c=CR}={}){const w=Math.max(56,tw(text,20)+18);proj({x:W+40,y:high?FLOOR-62:FLOOR-12,vx:-speed,rect:true,w,h:24,g:text,c,life:6});},
+    vlas({xs=[],warn=0.8,dur=0.45,th=26}={}){for(const x of xs)S.lasers.push({v:true,pos:x,th,warn,dur,t:0});SFX.charge();},
+    hlas({y=FLOOR-12,warn=0.8,dur=0.45,th=22}={}){S.lasers.push({v:false,pos:y,th,warn,dur,t:0});SFX.charge();},
+    sine({n=6,g='~',c=CB,amp=40,freq=4,speed=200,gap=0.25,ys=null}={}){for(let i=0;i<n;i++)later(i*gap,()=>{const m=mouth(),by=ys?ys[i%ys.length]:m.y;proj({x:m.x,y:by,by,vx:-speed,sine:true,amp,freq,g:gl(g),c});});},
+    homing({n=3,g='δ',c=CO,speed=130,dur=2.6,pink=false}={}){for(let i=0;i<n;i++)later(i*0.35,()=>{const m=mouth();proj({x:m.x,y:m.y-20+i*20,vx:-speed,vy:0,homing:dur,speed,g:gl(g),c,pink:pink&&i===n-1,life:7});});},
+    atPlayer({count=3,gap=0.7,th=30}={}){for(let i=0;i<count;i++)later(i*gap,()=>A.vlas({xs:[clamp(S.p.x,20,440)],th,warn:0.65,dur:0.35}));},
+    spiral({arms=4,steps=12,speed=170,g='•',c='#fff',dt=0.13,pinkEvery=0}={}){for(let k=0;k<steps;k++)later(k*dt,()=>A.ring({n:arms,speed,g,c,off:k*0.33,pinkEvery:pinkEvery&&k%pinkEvery===0?arms:0}));}
+  };
+  const PH=B.phases(A);
+  function burst(x,y,c,n=8,sp=160){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=rnd(40,sp);S.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rnd(0.3,0.7),c,s:rnd(2,4)});}}
+  function clearField(){S.projs.length=0;S.lasers.length=0;S.ev.length=0;}
+  function hurt(){const p=S.p;if(p.inv>0||S.st!=='fight')return;p.hp--;p.inv=1.3;S.hits++;S.shake=0.3;SFX.hit();burst(p.x,p.y-14,'#ff5d5d',10);
+    if(p.hp<=0){S.st='lose';S.stT=0;clearField();playSong('');SFX.lose();}}
+  function finish(won,gaveUp=false){if(S.ended)return;S.ended=true;
+    let grade=won?clamp(6-S.hits*0.5-Math.max(0,(S.t-75)/60)*0.5,4,6):clamp(1+3*(1-S.boss.hp/S.boss.max),1,3.75);grade=Math.round(grade*4)/4;
+    fadeTo(()=>{setScene(OW);done({won,grade,gaveUp,hits:S.hits,time:S.t});});}
+  S.update=dt=>{const p=S.p,b=S.boss;
+    S.shake=Math.max(0,S.shake-dt);S.bannerT-=dt;b.flash-=dt;
+    for(const q of S.parts){q.x+=q.vx*dt;q.y+=q.vy*dt;if(!q.ghost)q.vy+=300*dt;q.life-=dt;}S.parts=S.parts.filter(q=>q.life>0);
+    if(S.st==='intro'){S.stT+=dt;if(S.stT>=2.2)S.st='fight';return;}
+    if(S.st==='win'||S.st==='lose'){S.stT+=dt;p.vy+=1300*dt;p.y=Math.min(FLOOR,p.y+p.vy*dt);
+      if(S.st==='win'&&Math.random()<0.3){burst(b.x+rnd(-45,45),FLOOR-rnd(20,110),pick(['#ffd166','#ff6ad5','#fff']),6,220);if(Math.random()<0.25)SFX.boom();}
+      if(S.stT>3)finish(S.st==='win');return;}
+    if(S.paused){if(hit('esc')||hit('ok'))S.paused=false;else if(hit('q')){S.paused=false;finish(false,true);}return;}
+    if(hit('esc')){S.paused=true;return;}
+    if(S.hitstop>0){S.hitstop-=dt;return;}
+    S.t+=dt;
+    const dir=(keys.right?1:0)-(keys.left?1:0);if(dir)p.dir=dir;
+    if(hit('c')&&p.dashCd<=0){p.dash=0.16;p.dashCd=0.5;SFX.dash();}
+    if(hit('ok')){if(p.ground){p.vy=-480;p.ground=false;SFX.jump();}else p.parry=0.2;}
+    if(p.dash>0){p.dash-=dt;p.vx=p.dir*540;p.vy=0;S.parts.push({x:p.x,y:p.y-14,vx:0,vy:0,life:0.15,c:'rgba(127,219,255,.5)',s:12,ghost:true});}
+    else{p.vx=dir*215;p.vy+=(p.vy<0&&!keys.ok?2600:1300)*dt;}
+    p.x=clamp(p.x+p.vx*dt,14,445);p.y+=p.vy*dt;if(p.y>=FLOOR){p.y=FLOOR;p.vy=0;p.ground=true;}else p.ground=false;
+    p.dashCd-=dt;p.parry-=dt;p.inv-=dt;p.cool-=dt;if(dir&&p.ground)p.anim+=dt*9;
+    if(keys.x&&p.cool<=0){p.cool=0.11;S.shots.push({x:p.x+14,y:p.y-17+rnd(-2,2)});SFX.shoot();}
+    if(hit('v')&&p.sup>=5){p.sup=0;S.beam=0.9;S.projs.length=0;SFX.super();S.shake=0.4;}
+    for(const s of S.shots){s.x+=660*dt;if(!s.dead&&s.x>b.x-44&&s.y>FLOOR-118){s.dead=true;b.hp-=1;if(b.flash<-0.12)b.flash=0.04;p.sup=Math.min(5,p.sup+0.035);burst(s.x,s.y,'#fff3a0',2,90);if(Math.random()<0.3)SFX.bosshit();}}
+    S.shots=S.shots.filter(s=>!s.dead&&s.x<W+10);
+    if(S.beam>0){S.beam-=dt;b.hp-=40*dt;b.flash=0.05;S.shake=Math.max(S.shake,0.05);}
+    const n=PH.length,ph=Math.min(n-1,Math.floor((1-Math.max(0,b.hp)/b.max)*n));
+    if(ph!==b.ph){b.ph=ph;S.banner=PH[ph].name;S.bannerT=2.2;b.atkT=ph===0?0.6:1.5;b.ai=0;if(ph>0){clearField();SFX.boom();burst(b.x,FLOOR-60,'#fff',20,260);}}
+    b.atkT-=dt;if(b.atkT<=0){const P=PH[ph];P.atk[b.ai%P.atk.length]();b.ai++;b.atkT=P.rate;}
+    for(const e of S.ev){e.t-=dt;if(e.t<=0&&!e.done){e.done=true;e.f();}}S.ev=S.ev.filter(e=>!e.done);
+    const pr=pc();
+    for(const q of S.projs){q.t+=dt;q.life-=dt;
+      if(q.homing&&q.t<q.homing){const a=Math.atan2(pr.y-q.y,pr.x-q.x),cur=Math.atan2(q.vy,q.vx);let d=a-cur;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
+        const na=cur+clamp(d,-2.2*dt,2.2*dt);q.vx=Math.cos(na)*q.speed;q.vy=Math.sin(na)*q.speed;}
+      q.x+=q.vx*dt;if(q.sine)q.y=q.by+Math.sin(q.t*q.freq)*q.amp;else{q.vy+=q.ay*dt;q.y+=q.vy*dt;}
+      if(q.bounce&&q.y>FLOOR-q.r){q.y=FLOOR-q.r;q.vy=-Math.abs(q.vy)*0.82;if(Math.abs(q.vy)<140)q.vy=-320;}
+      if(q.pink&&p.parry>0&&!p.ground&&Math.hypot(q.x-p.x,q.y-(p.y-14))<q.r+26){q.dead=true;p.parry=0;p.vy=-420;p.sup=Math.min(5,p.sup+1);S.hitstop=0.07;SFX.parry();burst(q.x,q.y,'#ff6ad5',14,220);continue;}
+      let touch;if(q.rect)touch=Math.abs(q.x-p.x)<q.w/2+6&&Math.abs(q.y-(p.y-14))<q.h/2+11;
+      else{const cx=clamp(q.x,p.x-7,p.x+7),cy=clamp(q.y,p.y-26,p.y-2);touch=Math.hypot(q.x-cx,q.y-cy)<q.r*0.8;}
+      if(touch){hurt();if(!q.rect)q.dead=true;}}
+    S.projs=S.projs.filter(q=>!q.dead&&q.life>0&&q.x>-200&&q.x<W+300&&q.y<H+60&&q.y>-200);
+    for(const l of S.lasers){l.t+=dt;const act=l.t>l.warn&&l.t<l.warn+l.dur;if(act&&!l.snd){l.snd=true;SFX.boom();S.shake=Math.max(S.shake,0.12);}
+      if(act&&(l.v?Math.abs(p.x-l.pos)<l.th/2+5:(p.y-28<l.pos+l.th/2&&p.y-2>l.pos-l.th/2)))hurt();}
+    S.lasers=S.lasers.filter(l=>l.t<l.warn+l.dur);
+    if(b.hp<=0&&S.st==='fight'){b.hp=0;S.st='win';S.stT=0;clearField();playSong('');SFX.win();}};
+  S.draw=()=>{const p=S.p,b=S.boss;ctx.save();
+    if(S.shake>0)ctx.translate(rnd(-4,4),rnd(-3,3));
+    if(S.wob&&S.st==='fight')ctx.translate(Math.sin(S.t*1.7)*4,Math.sin(S.t*1.3)*2);
+    drawLecture(B);
+    for(const l of S.lasers){const warn=l.t<l.warn,blink=Math.floor(l.t*12)%2?'rgba(255,80,80,.9)':'rgba(255,80,80,.35)';
+      if(l.v){if(warn){rect(l.pos-1,40,2,FLOOR-40,blink);rect(l.pos-l.th/2,40,l.th,FLOOR-40,'rgba(255,80,80,.10)');}else{rect(l.pos-l.th/2,40,l.th,FLOOR-40,'#ff4d6d');rect(l.pos-l.th/4,40,l.th/2,FLOOR-40,'#fff');}}
+      else{if(warn){rect(0,l.pos-1,W,2,blink);rect(0,l.pos-l.th/2,W,l.th,'rgba(255,80,80,.10)');}else{rect(0,l.pos-l.th/2,W,l.th,'#ff4d6d');rect(0,l.pos-l.th/4,W,l.th/2,'#fff');}}}
+    const bob=Math.sin(S.t*2.2)*3;ctx.globalAlpha=S.st==='win'?Math.max(0,1-S.stT/2.6):1;
+    if(B.exam)drawExam(b.x,FLOOR-140+bob,b.flash>0,S.t);else spr(PROF,B.pal,b.x-42,FLOOR-112+bob,7,true,b.flash>0?'#ffffff':null);
+    ctx.globalAlpha=1;
+    for(const s of S.shots){rect(s.x-7,s.y-2,12,4,'#fff3a0');rect(s.x+5,s.y-1,3,2,'#ff9f43');}
+    for(const q of S.projs){if(q.rect){rect(q.x-q.w/2,q.y-q.h/2,q.w,q.h,'#1b0f14');rect(q.x-q.w/2+2,q.y-q.h/2+2,q.w-4,q.h-4,q.c);txt(q.g,q.x,q.y-q.h/2+2,{size:20,align:'center',color:'#1b0f14'});continue;}
+      if(q.pink){ctx.fillStyle='rgba(255,106,213,.35)';ctx.beginPath();ctx.arc(q.x,q.y,q.r+5,0,Math.PI*2);ctx.fill();}
+      txt(q.g,q.x,q.y,{size:q.g.length>2?18:24,color:q.pink?'#ff6ad5':q.c,align:'center',base:'middle',shadow:'#000'});}
+    for(const q of S.parts){ctx.globalAlpha=clamp(q.life*2,0,1);if(q.ghost)rect(q.x-8,q.y-14,16,28,q.c);else rect(q.x,q.y,q.s,q.s,q.c);}ctx.globalAlpha=1;
+    if(!(p.inv>0&&Math.floor(p.inv*20)%2)){const fr=!p.ground?1:(p.vx?Math.floor(p.anim)%2:0);drawChar(PAL.player,'right',fr,p.x,p.y,2);}
+    if(p.parry>0&&!p.ground){ctx.strokeStyle='#ff6ad5';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y-14,22,0,Math.PI*2);ctx.stroke();}
+    if(S.beam>0){const y=p.y-30;rect(p.x+12,y,W,28,'rgba(255,106,213,.85)');rect(p.x+12,y+9,W,10,'#fff');txt('ZUSAMMENFASSUNG!',p.x+40,y+4,{size:20,color:'#7a1f5c'});}
+    ctx.restore();
+    for(let i=0;i<p.max;i++)drawHeart(12+i*26,10,3,i<p.hp?'#ff4d6d':'#3a3350');
+    for(let i=0;i<5;i++){const f=clamp(p.sup-i,0,1);rect(14+i*16,34,12,16,'#2a2445');if(f>0)rect(14+i*16,34+16*(1-f),12,16*f,f>=1?'#ff6ad5':'#a5488f');}
+    if(p.sup>=5)txt('V: SUPER!',100,34,{size:16,color:'#ff6ad5',shadow:'#000'});
+    txt(B.name,W-12,4,{size:20,align:'right',shadow:'#000'});rect(W-262,26,250,12,'#000');rect(W-260,28,246*Math.max(0,b.hp)/b.max,8,'#ff4d6d');
+    for(let i=1;i<PH.length;i++)rect(W-260+246*(1-i/PH.length),26,2,12,'#000');
+    txt(B.course,W-12,40,{size:16,align:'right',color:'#cfc9e8',shadow:'#000'});
+    if(S.bannerT>0&&S.st==='fight'){ctx.globalAlpha=clamp(S.bannerT,0,1);const w=tw(S.banner,16,PX)+30;rect(W/2-w/2,72,w,32,'#000');txt(S.banner,W/2,80,{font:PX,size:16,align:'center',color:'#ffd166'});ctx.globalAlpha=1;}
+    if(S.st==='intro'){rect(0,0,W,H,'rgba(0,0,0,.4)');txt(B.name,W/2,112,{font:PX,size:24,align:'center',shadow:'#000'});txt(B.course,W/2,146,{size:24,align:'center',color:'#cfc9e8',shadow:'#000'});
+      txt(S.stT<1.4?'READY?':'GO!',W/2,186,{font:PX,size:32,align:'center',color:S.stT<1.4?'#ffd166':'#9be564',shadow:'#000'});
+      txt('hold X shoot · Z jump · Z in the air on pink = parry · C dash',W/2,236,{size:18,align:'center',color:'#fff',shadow:'#000'});}
+    if(S.st==='win')txt(B.exam?'BESTANDEN!':'PASSED!',W/2,140,{font:PX,size:32,align:'center',color:'#9be564',shadow:'#000'});
+    if(S.st==='lose')txt('NICHT BESTANDEN',W/2,140,{font:PX,size:24,align:'center',color:'#ff5d5d',shadow:'#000'});
+    if(S.paused){rect(0,0,W,H,'rgba(0,0,0,.65)');txt('PAUSED',W/2,130,{font:PX,size:24,align:'center'});txt('Z / Esc: resume · Q: give up and leave the lecture hall',W/2,172,{size:20,align:'center',color:'#cfc9e8'});}};
+  return S;}
+/* ---------------- main loop ---------------- */
+function frame(now){const dt=Math.min(0.033,Math.max(0,(now-last)/1000));last=now;
+  try{if(fade)updFade(dt);else if(dlg)updDlg(dt);else if(scene)scene.update(dt);}catch(e){console.error(e);}
+  musicTick();
+  ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;
+  try{if(scene)scene.draw();if(dlg)drawDlg();}catch(e){console.error(e);}
+  if(fade){ctx.globalAlpha=1;rect(0,0,W,H,`rgba(0,0,0,${clamp(fade.a,0,1)})`);}
+  for(const k in pressed)delete pressed[k];
+  requestAnimationFrame(frame);}
+async function boot(){
+  try{await Promise.race([Promise.all([document.fonts.load(`20px ${VT}`),document.fonts.load(`16px ${PX}`)]),new Promise(r=>setTimeout(r,1500))]);}catch(e){}
+  setScene(makeTitle());requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame);});}
+window.__eth={get G(){return G;},set G(v){G=v;},get scene(){return scene;},get dlg(){return dlg;},get lock(){return lock;},get fade(){return fade;},
+  setScene,makeCombat,makeQuiz,makeBug,makeDodge,OW,BOSSES,flow,fight,nextWeek,newGame};
+boot();
+})();
+</script>
+</body>
+</html>

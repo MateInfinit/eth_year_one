@@ -21,6 +21,11 @@ Every person owns one workflow, one set of folders and one set of scenes.
 
 GitHub: Matei = @MateInfinit (others: add your usernames here and in `.github/CODEOWNERS`).
 
+## Play the web prototype
+
+A complete playable version runs in the browser: open [`web/index.html`](web/index.html) locally
+(see [web/README.md](web/README.md)). Use it as the design reference for the Unity build.
+
 ## Start here
 
 1. **[SETUP.md](SETUP.md)** — install Unity, VS Code, Cline, Git. Do this first.
