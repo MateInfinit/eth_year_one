@@ -1,6 +1,6 @@
 # Project: ETH: Year One
 Undertale-style top-down RPG (overworld) + Cuphead-style side-view boss fights.
-Unity 6 LTS, URP 2D, C#. Pixel art at 16 pixels per unit.
+Unity 6000.6.10f1, URP 2D, C#. Pixel art at 16 pixels per unit.
 Theme: first year of Computer Science at ETH Zürich, full of inside jokes.
 
 ## Read first

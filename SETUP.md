@@ -2,8 +2,8 @@
 
 ## 1. Install
 
-1. **Unity Hub** → install the Unity version written in `ProjectSettings/ProjectVersion.txt`
-   (once W1 has committed it). Everyone uses **exactly** that version.
+1. **Unity Hub** → install Unity **6000.6.10f1** (the version in `ProjectSettings/ProjectVersion.txt`).
+   Everyone uses **exactly** this version. If Hub doesn't list it, use *Install Editor → Archive*.
    Add the build module for your OS (Windows / Mac Build Support).
 2. **VS Code** + extensions:
    - **C# Dev Kit** (it will ask you to install the .NET SDK — do it)
@@ -25,12 +25,12 @@ Lets git merge scenes/prefabs much more cleanly. Needs Unity installed first; sk
 
 **Windows (Git Bash):**
 ```bash
-# 1. find your Unity version folder (e.g. 6000.0.62f1)
+# 1. check the team version 6000.6.10f1 is installed
 ls "/c/Program Files/Unity/Hub/Editor/"
 #    not there? Unity Hub -> Installs -> gear icon -> Show in Explorer
 
 # 2. set it and check the tool exists
-UNITY_VER=6000.0.62f1
+UNITY_VER=6000.6.10f1
 ls "/c/Program Files/Unity/Hub/Editor/$UNITY_VER/Editor/Data/Tools/UnityYAMLMerge.exe"
 
 # 3. register globally (same Git Bash window, so $UNITY_VER is still set)
@@ -45,7 +45,7 @@ git config --global --get merge.unityyamlmerge.driver
 **macOS:**
 ```bash
 ls /Applications/Unity/Hub/Editor/
-UNITY_VER=6000.0.62f1
+UNITY_VER=6000.6.10f1
 git config --global merge.unityyamlmerge.name "Unity SmartMerge"
 git config --global merge.unityyamlmerge.driver "\"/Applications/Unity/Hub/Editor/$UNITY_VER/Unity.app/Contents/Tools/UnityYAMLMerge\" merge -p %O %B %A %A"
 git config --global merge.unityyamlmerge.recursive binary
