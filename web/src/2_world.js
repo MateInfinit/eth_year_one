@@ -19,11 +19,22 @@ function hgPillar(x,y){rect(x+6,y+24,20,6,'#cdbf9f');rect(x+9,y-26,14,50,'#f1e9d
 function bigWord(word,cx,y,s,col,edge){let x=cx-(word.length*6*s-s)/2;
   for(const ch of word){const g=FONT5[ch];if(g){for(const [colr,dx] of [[edge,2],[col,0]])g.forEach((row,r)=>{for(let c=0;c<5;c++)if(row[c]==='#')rect(x+c*s+dx,y+r*s+dx,s,s,colr);});}x+=6*s;}}
 
+/* ---------------- the HG goat and people taking photos ---------------- */
+const GOAT=["....hh..........","...hh...........",".wwwwe..........","wwkwww..........","nwwwww..........",".bwwwwwwwwwwwww.",".b..wwwwwwwwwwwt","....wwwwwwwwwwwt","....wwwwwwwwwww.","....ggggggggggg.","....l.l....l.l..","....l.l....l.l..","....o.o....o.o.."];
+const GOAT_PAL={h:'#8c7a5b',w:'#f4f1ea',e:'#e8b8a8',k:'#1a1a1a',n:'#d9a9a0',b:'#c9bfae',g:'#d8d0c0',t:'#f4f1ea',l:'#6b6257',o:'#2b2b2b'};
+function drawGoat(x,y,right){const T=performance.now()/1000,talk=T%5<1.2,hop=T%5<0.25?2:0;
+  rect(x-12,y-2,26,3,'rgba(0,0,0,.22)');spr(GOAT,GOAT_PAL,x-16,y-26-hop,2,right);
+  if(talk){const bx=right?x+6:x-38;rect(bx,y-46,32,14,'#fff');rect(bx+(right?4:24),y-32,4,3,'#fff');txt('Mäh!',bx+16,y-47,{size:14,align:'center',color:'#222'});}}
+function drawPhoto(n,x,y,dir){const big=n.cam==='camera',T=performance.now()/1000+(n.seed||0),fl=T%(n.per||3.3)<0.13;
+  const [cx,cy]=dir==='up'?[x,y-38]:dir==='down'?[x,y-22]:dir==='left'?[x-12,y-24]:[x+12,y-24];
+  if(big){rect(cx-5,cy-3,10,7,'#1b1b1f');rect(cx-2,cy-1,4,4,'#4a6b8a');}else{rect(cx-3,cy-4,6,8,'#1b1b1f');rect(cx-2,cy-3,4,5,'#3d5a80');}
+  if(fl){ctx.globalAlpha=0.35;circ(cx,cy,18,'#fffbe0');ctx.globalAlpha=0.9;circ(cx,cy,8,'#ffffff');ctx.globalAlpha=1;rect(cx-14,cy,28,1,'#fff');rect(cx,cy-14,1,28,'#fff');}}
+
 /* ---------------- maps ---------------- */
 const DR=(m,c,r,dir)=>[m,c,r,dir];
 const MAPS={
   campus:{name:'Polyterrasse · ETH Zentrum',music:'campus',
-    rows:["SSSSSSSSSSSSSSSSSSSS","FFFFFFFFFFFFFFFFFFFF","FFFFFFFFFDDFFFFFFFFF","h__________________h","D..................D","h.T..............T.h","h..l...........l.PPh","h..B.....B.....B.PPh","^^^^^^^^^^^^^^^^^^^^","~~~~~~~~~~~~~~~~~~~~"],
+    rows:["SSSSSSSSSSSSSSSSSSSS","FFFFFFFFFFFFFFFFFFFF","FFFFFFFFFDDFFFFFFFFF","h__________________h","D..................D","h.T..............T.h","h..l...........l.PPh","h..B..o..B.....B.PPh","^^^^^^^^^^^^^^^^^^^^","~~~~~~~~~~~~~~~~~~~~"],
     doors:{'9,2':DR('hg',9,8,'up'),'10,2':DR('hg',10,8,'up'),'0,4':DR('uni',18,4,'left'),'19,4':DR('mensa',1,5,'right')},
     signs:[[0,3,'← CAB'],[19,3,'MENSA ↓']]},
   uni:{name:'Universitätstrasse · CAB',music:'campus',
@@ -31,21 +42,30 @@ const MAPS={
     doors:{'9,2':DR('cab',9,8,'up'),'10,2':DR('cab',10,8,'up'),'19,4':DR('campus',1,4,'right')},
     signs:[[19,3,'POLYTERRASSE →']]},
   hg:{name:'HG · Haupthalle',music:'indoor',
-    rows:["####E####N##L##E####","#..................#","#..................#","#...O...O..O...O...#","#p................p#","D..................#","#...O...O..O...O...#","#..................#","#B................B#","#########DD#########"],
-    doors:{'9,9':DR('campus',9,3,'down'),'10,9':DR('campus',10,3,'down'),'0,5':DR('f6',1,1,'down')},
-    signs:[[4,0,'HG F 1'],[12,0,'BIBLIOTHEK'],[15,0,'PRÜFUNG'],[0,4,'HG F 6']]},
+    rows:["####E####N##L##E####","#..................#","#..................D","#...O...O..O...O...#","#p................p#","D..................D","#...O...O..O...O...#","#..................#","#B................B#","#########DD#########"],
+    doors:{'9,9':DR('campus',9,3,'down'),'10,9':DR('campus',10,3,'down'),'0,5':DR('f6',1,1,'down'),'19,5':DR('f7',1,2,'right'),'19,2':DR('einstein',1,2,'right')},
+    signs:[[4,0,'HG F 1'],[12,0,'BIBLIOTHEK'],[15,0,'PRÜFUNG'],[0,4,'HG F 6'],[19,4,'HG F 7'],[19,1,'EINSTEIN']]},
   f6:{name:'HG F 6',music:'indoor',rows:buildF6(),
     doors:{'1,0':DR('hg',1,5,'right')},signs:[[1,0,'EXIT']]},
+  f7:{name:'HG F 7',music:'indoor',
+    rows:["####QQQQQQQQQQQQ####","#..................#","D.......www........#","#.kkkkkkk..kkkkkkk.#","#.kkkkkkk..kkkkkkk.#","#.kkkkkkk..kkkkkkk.#","#.kkkkkkk..kkkkkkk.#","#.kkkkkkk..kkkkkkk.#","#.kkkkkkk..kkkkkkk.#","####################"],
+    doors:{'0,2':DR('hg',18,5,'left')},signs:[[0,1,'EXIT']]},
+  einstein:{name:"HG · Einstein's locker",music:'indoor',
+    rows:["#UUUUUUUUYYUUUUUUUU#","#.......rrrr.......#","D..................#","#..................#","#..................#","#..................#","^^^^^^^^^^^^^^^^^^^^","~~~~~~~~~~~~~~~~~~~~","~~~~~~~~~~~~~~~~~~~~","~~~~~~~~~~~~~~~~~~~~"],
+    doors:{'0,2':DR('hg',18,2,'left')},signs:[[0,1,'HAUPTHALLE']]},
   cab:{name:'CAB · Departement Informatik',music:'indoor',
-    rows:["###E###v####G###KK##","#..................#","#V.................#","#..tt....YY....tt..#","#.......YYYY.......#","#..................#","#..tt..........tt..#","#..................#","#p..LL............p#","#########DD#########"],
-    doors:{'9,9':DR('uni',9,3,'down'),'10,9':DR('uni',10,3,'down')},
-    signs:[[3,0,'ÜBUNG'],[7,0,'VIS'],[12,0,'CABinett'],[16.5,0,'food&lab']]},
+    rows:["###E###v####G###KK##","#..................#","#V.................#","#..tt....YY....tt..#","#.......YYYY.......#","#..................D","#..tt..........tt..#","#..................#","#p..LL............p#","#########DD#########"],
+    doors:{'9,9':DR('uni',9,3,'down'),'10,9':DR('uni',10,3,'down'),'19,5':DR('cabrec',1,5,'right')},
+    signs:[[3,0,'ÜBUNG'],[7,0,'VIS'],[12,0,'CABinett'],[16.5,0,'food&lab'],[19,6,'AUFENTHALTSRAUM']]},
+  cabrec:{name:'CAB · Aufenthaltsraum',music:'indoor',
+    rows:["##KRRRRR#II##MM##V##","#..................#","#.SSS.......tt.....#","#...........tt.....#","#..................#","D...........GG.....#","#.SSS..............#","#..................#","#p................p#","####################"],
+    doors:{'0,5':DR('cab',18,5,'left')},signs:[[0,4,'CAB']]},
   mensa:{name:'Mensa Polyterrasse',music:'indoor',
     rows:["#RRRRRRRWWWWWWWWWWW#","#MMMMMMM..........J#","#..................#","#..tttt....tttt....#","#..................#","D..tttt....tttt....#","#..................#","#..tttt....tttt....#","#p................p#","####################"],
     doors:{'0,5':DR('campus',18,4,'left')},signs:[]}
 };
-const SOLID=new Set('#FSh^~TlBPObEFNLVKvGYtpMRWJAZgQXwk'.split(''));
-const INTERACT=new Set('BPT^~FShlZAbRgENLOpvGKVYtMWJQXwk'.split(''));
+const SOLID=new Set('#FSh^~TlBPObEFNLVKvGYtpMRWJAZgQXwkoUIr'.split(''));
+const INTERACT=new Set('BPT^~FShlZAbRgENLOpvGKVYtMWJQXwkoUIr'.split(''));
 const NPCS=[
   {id:'anouk',map:'campus',c:6,r:5,name:'Anouk (exchange student)',pal:mkPal('#d9b13b','#2e8b57'),dir:'down',lines:[
     ["Salut! I came from Lyon for one semester.","Three weeks in and I still can't find my lecture hall. Is everything here in the basement?"],
@@ -56,7 +76,8 @@ const NPCS=[
     ["Never trust a TA who says 'this one is easy'.","That's how they got me in week 4."]]},
   {id:'tourist',map:'campus',c:12,r:7,name:'Tourist',pal:mkPal('#a0522d','#e67e22','#3b5b8a'),dir:'down',lines:[
     ["What a view! Grossmünster, the lake, the Alps...","This terrace is the only place at ETH without a deadline."],
-    ["I came up with the Polybahn. Two and a half minutes!","Students sleep on these benches, you know. Very relaxing city."]]},
+    ["I came up with the Polybahn. Two and a half minutes!","Students sleep on these benches, you know. Very relaxing city."],
+    ["Have you tried the binocular? A sticker says a professor is hiding somewhere in the city.","I only found pigeons."]]},
   {id:'jonas',map:'uni',c:7,r:4,name:'Jonas (VIS)',pal:mkPal('#6b4a2b','#1f5fa8'),dir:'down',lines:[
     ["Hoi! I'm from VIS, the computer science student association.","Our office in CAB has the Prüfungssammlung: old exams. Pure gold before a Basisprüfung block."],
     ["Erstsemestrigenfest on Friday! Bring friends.","Or bring your Serie. We won't judge. Much."]]},
@@ -70,7 +91,8 @@ const NPCS=[
     ["The door on the right is the exam room.","Block 1 opens once all four HS professors are beaten. Block 2 needs the four FS ones."]]},
   {id:'brunner',map:'hg',c:2,r:7,name:'Herr Brunner (Hauswart)',pal:mkPal('#9a9a9a','#34495e','#34495e'),dir:'right',lines:[
     ["Grüezi. Please don't run in the Haupthalle.","Semper would be turning in his grave."],
-    ["I've seen thousands of first-years come through here.","The ones who sleep and eat properly do best. Just saying."]]},
+    ["I've seen thousands of first-years come through here.","The ones who sleep and eat properly do best. Just saying."],
+    ["There is a goat in the Haupthalle.","I have stopped asking questions."]]},
   {id:'nico',map:'f6',c:14,r:2,name:'Nico (TA)',pal:mkPal('#3b2a1e','#7f8c8d'),dir:'left',lines:[
     ["Welcome to HG F 6. Best seats in the whole HG.","Birch wood, fold-down desks, and a floor so shiny you can see your own panic."],
     ["The professors sometimes lecture in here.","Talk to them at the white desk, if you're brave."]]},
@@ -91,7 +113,41 @@ const NPCS=[
     ["Natürlich vegi is cheaper and the queue is shorter.","Best algorithm I learned this semester."]]},
   {id:'noah',map:'mensa',c:13,r:4,name:'Noah (math student)',pal:mkPal('#e0c068','#2c3e50'),dir:'left',lines:[
     ["Mensa theorem: every menu converges to pasta.","Proof: by observation, every single day."],
-    ["These windows have the best view at ETH.","Second best: the Polybahn. Third: the 'Bestanden' email."]]}
+    ["These windows have the best view at ETH.","Second best: the Polybahn. Third: the 'Bestanden' email."]]},
+  {id:'goat',map:'hg',c:16,r:7,name:'The GOAT',goat:true,dir:'left',lines:[["Määäh."],["Mäh."],["Mäh. Mäh mäh."]],after:[()=>goatMeet()]},
+  {id:'tour_hg1',map:'hg',c:14,r:7,name:'Tourist with a camera',pal:mkPal('#8a5a2b','#e67e22','#3b5b8a','#e8b48f'),dir:'right',photo:true,cam:'camera',seed:0.4,per:2.8,lines:[
+    ["Is this goat part of the university?","*click* *click* It's even posing!"],["Excuse me, is the goat a professor?","...it looks like a professor."]]},
+  {id:'tour_hg2',map:'hg',c:5,r:2,name:'Tourist with a phone',pal:mkPal('#1c1c1c','#16a085','#2b2b38','#c98e62'),dir:'up',photo:true,cam:'phone',seed:1.7,per:3.6,lines:[
+    ["The Haupthalle! Semper! All these columns!","*click* Now one more with the ceiling..."],["Where is Einstein's locker? Everyone says it's on this floor.","The sign on the right says EINSTEIN? Thank you!"]]},
+  {id:'sophie',map:'f6',c:7,r:1,name:'Sophie (photographing the board)',pal:mkPal('#d9b13b','#e84393','#2b2b38','#f5d5bd'),dir:'up',photo:true,cam:'phone',seed:0.9,per:3.1,lines:[
+    ["Shh, don't move. I need the whole board in one shot.","The professor erases faster than I can write. So: photo."],["I have 2,300 photos of blackboards on my phone.","I have looked at none of them. Lernphase-me will be thrilled."]]},
+  {id:'jan',map:'f6',c:12,r:1,name:'Jan (photographing the board)',pal:mkPal('#6b4a2b','#2980b9','#2b2b38','#8d5a3b'),dir:'up',photo:true,cam:'phone',seed:2.3,per:4.1,lines:[
+    ["Can you step aside? You're in my Zusammenfassung."],["Pro tip: photograph the board BEFORE the professor erases it.","Learned that in week 3."]]},
+  {id:'mira',map:'f7',c:14,r:1,name:'Mira (photographing the board)',pal:mkPal('#8a5a2b','#9b59b6','#2b2b38','#e8b48f'),dir:'up',photo:true,cam:'phone',seed:1.1,per:3.4,lines:[
+    ["One photo per board, twelve boards per lecture.","My phone storage is a museum of chalk."],["Have you seen the front-row table? Someone scratched something into it.","Very small. You have to look closely."]]},
+  {id:'tour_e1',map:'einstein',c:8,r:2,name:'Tourist with a selfie stick',pal:mkPal('#c0392b','#f1c40f','#3b5b8a','#f2c7a5'),dir:'up',photo:true,cam:'phone',seed:0.2,per:2.6,lines:[
+    ["Schatz, noch eins! Mit dem Schrank!","...und jetzt alle: Einsteeein!"]],after:['* (German: "Honey, one more! With the locker! ...and now everyone: Einsteeein!")']},
+  {id:'tour_e2',map:'einstein',c:11,r:2,name:'Tourist with a huge camera',pal:mkPal('#9a9a9a','#34495e','#2b2b38','#c98e62'),dir:'up',photo:true,cam:'camera',seed:1.3,per:3.0,lines:[
+    ["The smallest Einstein museum in the world!","I flew nine hours for this locker. Worth it."],["Did you know he studied here? Right here! In this corridor! Probably!"]]},
+  {id:'tour_e3',map:'einstein',c:6,r:3,name:'Turista',pal:mkPal('#1c1c1c','#27ae60','#2b2b38','#e8b48f'),dir:'right',photo:true,cam:'phone',seed:2.0,per:3.3,lines:[
+    ["Ancora una foto, per favore!","Perfetto. Bellissimo. Un'altra?"]],after:['* (Italian: "One more photo, please! ...Perfect. Beautiful. Another one?")']},
+  {id:'tour_e4',map:'einstein',c:13,r:3,name:'Tourist (needs a photographer)',pal:mkPal('#5a3b22','#e74c3c','#2b2b38','#8d5a3b'),dir:'left',photo:true,cam:'phone',seed:0.7,per:3.8,lines:[
+    ["Excuse me! Could you take a photo of us with the locker?"]],after:[()=>photoFavor()]},
+  {id:'emre',map:'cabrec',c:11,r:2,name:'Emre',pal:mkPal('#1c1c1c','#c0392b','#2b2b38','#d9a57b'),dir:'right',lines:[
+    ["Kanka, bu haftaki Serie'yi yaptın mı?","Ben üçüncü soruda takıldım, iki saattir bakıyorum."],
+    ["Kahve makinesi yine bozuk ya.","Sabahtan beri ENTKALKEN yazıyor, kimse bir şey yapmıyor."],
+    ["Akşam Niederdorf'a gidiyoruz, sen de gel!","Yarın sabah Übung var ama olsun."]],
+    after:['* You understood exactly one word: "Serie".','* You understood one word: "ENTKALKEN". That one was German.','* You caught "Niederdorf" and "Übung". The rest stays a mystery.']},
+  {id:'elif',map:'cabrec',c:14,r:3,name:'Elif',pal:mkPal('#5a3b22','#8e44ad','#2b2b38','#e8b48f'),dir:'left',lines:[
+    ["Lineer Cebir sınavı çok zor olacakmış, herkes öyle diyor.","Ben şimdiden stres oldum."],
+    ["Çay ister misin? Termosta var, hâlâ sıcak."],
+    ["Ne bakıyorsun öyle? Türkçe bilmiyor musun?","Tamam tamam, sonra Almanca anlatırım."]],
+    after:['* You nod seriously. You have no idea what you just agreed to.',()=>teaGift(),'* You smile and say "Ja, genau." They both laugh. You still don\'t know why.']},
+  {id:'lars',map:'cabrec',c:14,r:5,name:'Lars (Töggeli)',pal:mkPal('#e0c068','#27ae60','#2b2b38','#f2c7a5'),dir:'left',lines:[
+    ["Töggeli? I'm undefeated since the Herbstsemester.","...I mostly play alone."],["Rule number one: no spinning the rods.","Spinning is for people who also skip the Übungen."]]},
+  {id:'mert',map:'mensa',c:8,r:2,name:'Mert',pal:mkPal('#2b2b2b','#2980b9','#2b2b38','#c98e62'),dir:'up',lines:[
+    ["Abi, bu kuyruk hiç ilerlemiyor.","Yarım saattir bekliyorum, makarna bitecek."],["Bugün de mi makarna? Her gün makarna!"]],
+    after:['* One word sounded a bit like pasta. Everything else: a mystery.','* "Makarna" again. You are now 60% sure it means pasta.']}
 ];
 const npcAt=(m,c,r)=>NPCS.find(n=>n.map===m&&n.c===c&&n.r===r);
 const tileAt=(m,c,r)=>{const rows=MAPS[m].rows;return r>=0&&r<rows.length&&c>=0&&c<rows[r].length?rows[r][c]:null;};
@@ -134,6 +190,8 @@ const TILE={
       case 'T':plaza();rect(x+4,y+18,24,13,'#9c968c');rect(x+4,y+18,24,3,'#b5afa5');rect(x+14,y+6,4,13,'#5a3e28');circ(x+16,y+3,15,'#3d7a38');circ(x+11,y-2,6,'#4f9447');break;
       case 'l':plaza();rect(x+15,y-14,3,42,'#2b2b30');rect(x+11,y-20,11,8,'#2b2b30');rect(x+13,y-18,7,4,'#ffe9a8');rect(x+12,y+26,9,3,'#2b2b30');break;
       case 'B':plaza();drawBench(x,y);break;
+      case 'o':plaza();rect(x+14,y+8,4,22,'#2f4f4f');rect(x+10,y+28,12,3,'#2b3a3a');rect(x+6,y-3,20,12,'#2e6b5e');rect(x+5,y-1,4,7,'#1d4a40');rect(x+23,y-1,4,7,'#1d4a40');
+        rect(x+8,y,6,4,'#9fd3e6');rect(x+18,y,6,4,'#9fd3e6');rect(x+12,y+10,8,7,'#3c7d6e');rect(x+14,y+12,4,2,'#d4a017');break;
       default:break;}},
   uni(ch,c,r,x,y){
     const pave=()=>{rect(x,y,TS,TS,'#d9d5cc');rect(x,y+15,TS,1,'#c6c1b6');rect(x+(r%2?8:24),y,1,TS,'#c6c1b6');};
@@ -160,7 +218,7 @@ const TILE={
       case 'N':wall();rect(x+2,y+4,28,22,'#7a5232');rect(x+4,y+6,24,18,'#b07b46');rect(x+6,y+8,8,7,'#fff');rect(x+16,y+9,9,10,'#ffe08a');rect(x+8,y+16,7,6,'#f8b4c4');break;
       case 'p':fl();plant(x,y);break;
       case 'B':fl();drawBench(x,y);break;
-      case 'D':if(c===0){wall();rect(x+14,y+2,16,30,'#3a2618');rect(x+16,y+4,12,28,'#b98d55');rect(x+18,y+8,8,10,'#bfe0ef');}else{fl();rect(x+2,y+18,28,12,'#7a2e2e');}break;
+      case 'D':if(c===0||c===19){wall();const dx=c===0?14:2;rect(x+dx,y+2,16,30,'#3a2618');rect(x+dx+2,y+4,12,28,'#b98d55');rect(x+dx+4,y+8,8,10,'#bfe0ef');}else{fl();rect(x+2,y+18,28,12,'#7a2e2e');}break;
       default:fl();}},
   cab(ch,c,r,x,y){
     const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#cfccc4':'#c7c3ba');rect(x,y,TS,1,'#b3afa5');rect(x,y,1,TS,'#b3afa5');};
@@ -179,7 +237,7 @@ const TILE={
       case 't':fl();rect(x,y+6,TS,16,'#f2f2f2');rect(x,y+20,TS,2,'#bdbdbd');rect(x+8,y+8,14,9,'#2c3e50');rect(x+9,y+9,12,6,'#7fdbff');break;
       case 'L':fl();rect(x+2,y+1,28,30,'#5a3b22');for(let i=0;i<3;i++){rect(x+4,y+4+i*9,24,7,'#2e1d10');for(let j=0;j<5;j++)rect(x+5+j*5,y+5+i*9,4,6,['#c0392b','#2980b9','#27ae60','#f1c40f','#8e44ad'][(j+i+c)%5]);}break;
       case 'p':fl();plant(x,y);break;
-      case 'D':fl();rect(x+2,y+18,28,12,'#2c3e50');break;
+      case 'D':if(c===19){wall();rect(x+2,y+2,18,30,'#3b2a1c');rect(x+4,y+4,14,28,'#c0392b');rect(x+6,y+8,10,8,'#bfe3f0');rect(x+15,y+18,2,3,'#e0c068');}else{fl();rect(x+2,y+18,28,12,'#2c3e50');}break;
       default:fl();}},
   f6(ch,c,r,x,y){
     const floor=()=>{rect(x,y,TS,TS,'#6e2f28');rect(x+((c*7+r*3)%18)+3,y+7+((c+r)%3)*6,12,2,'#86413a');};
@@ -196,6 +254,51 @@ const TILE={
       case 'k':rect(x,y,TS,TS,'#8f6a3c');{const yy=y-off;rect(x,yy+2,TS,9,'#e3c58e');rect(x,yy+11,TS,3,'#a37a45');rect(x,yy+16,TS,10,'#d9b47a');rect(x,yy+26,TS,6,'#8f6a3c');
           for(let i=2;i<TS;i+=8)rect(x+i,yy+16,1,10,'#c29e64');}break;
       default:floor();}},
+  f7(ch,c,r,x,y){
+    const floor=()=>{rect(x,y,TS,TS,'#8a5a32');for(let i=0;i<4;i++){rect(x,y+i*8+7,TS,1,'#6f4626');rect(x+((c*13+r*7+i*11)%24)+4,y+i*8,1,7,'#6f4626');}};
+    const wall=()=>{rect(x,y,TS,TS,'#e5dcc5');rect(x,y+TS-8,TS,8,'#6b4428');rect(x,y+TS-9,TS,1,'#4a2f1c');};
+    switch(ch){
+      case '.':floor();break;
+      case 'D':rect(x,y,TS,TS,'#d6ccb4');rect(x+3,y+2,24,30,'#3a2618');rect(x+5,y+4,20,28,'#7a5232');rect(x+8,y+7,14,9,'#bfe0ef');rect(x+21,y+18,2,3,'#e0c068');break;
+      case '#':if(r===0||r===9)wall();else{rect(x,y,TS,TS,'#d6ccb4');rect(x+(c===0?TS-6:0),y,6,TS,'#6b4428');
+          if(c===19&&r>=2&&r<=7){rect(x+8,y+2,20,28,'#4a3a2a');rect(x+10,y+4,16,24,'#bfe0ef');rect(x+17,y+4,2,24,'#4a3a2a');rect(x+10,y+15,16,2,'#4a3a2a');}}break;
+      case 'Q':wall();rect(x,y+2,TS,21,'#2e4a3a');rect(x,y+2,TS,2,'#5a3b22');rect(x,y+23,TS,3,'#5a3b22');rect(x+4+(c%3)*7,y+26,5,2,'#ecebe4');break;
+      case 'w':floor();rect(x,y+4,TS,24,'#5a3b22');rect(x,y+4,TS,4,'#7a5232');rect(x,y+26,TS,2,'#3a2618');if(c===9){rect(x+6,y+8,14,9,'#f4f1e6');rect(x+8,y+10,10,1,'#999');rect(x+8,y+13,8,1,'#999');}break;
+      case 'k':floor();rect(x,y+1,TS,15,'#6b4428');rect(x,y+1,TS,3,'#8a5a32');rect(x,y+14,TS,2,'#4a2f1c');rect(x,y+21,TS,7,'#5a3b22');rect(x,y+21,TS,2,'#7a5232');break;
+      default:floor();}},
+  einstein(ch,c,r,x,y){
+    const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#e6dcc8':'#ddd1ba');rect(x+4,y+4,24,24,(c+r)%2?'#ece3d1':'#e3d8c3');rect(x,y,TS,1,'#c9bb9f');rect(x,y,1,TS,'#c9bb9f');};
+    const wall=()=>{rect(x,y,TS,TS,'#c8b48c');rect(x,y+TS-5,TS,5,'#a8956f');rect(x,y,TS,3,'#d6c4a0');};
+    switch(ch){
+      case '.':fl();break;
+      case '#':wall();if(c===0||c===19)rect(x+12,y,8,TS,'#bda983');break;
+      case 'D':wall();rect(x+14,y+2,16,30,'#3a2618');rect(x+16,y+4,12,28,'#b98d55');rect(x+18,y+8,8,10,'#bfe0ef');break;
+      case 'U':wall();for(const dx of [1,17]){rect(x+dx,y+1,14,31,'#5a3d24');rect(x+dx+1,y+2,12,29,'#86613d');rect(x+dx+3,y+5,8,1,'#5a3b22');rect(x+dx+3,y+8,8,1,'#5a3b22');rect(x+dx+4,y+13,6,3,'#d8c9a0');rect(x+dx+9,y+19,2,3,'#3a2618');}break;
+      case 'Y':wall();rect(x+(c===9?1:0),y,31,32,'#4a2f1c');rect(x+(c===9?4:0),y+3,28,22,'#cfe3ea');rect(x,y+25,TS,7,'#b8902a');break;
+      case 'r':fl();rect(x,y+12,TS,3,'#8e1b2b');if(c===8||c===11){const px=c===8?4:24;rect(x+px,y+4,4,24,'#c9a227');rect(x+px-2,y+26,8,3,'#8a6d1f');rect(x+px-1,y+2,6,3,'#e0c068');}break;
+      case '^':rect(x,y,TS,TS,'#c8b48c');rect(x,y+4,TS,5,'#efe6d2');for(let i=3;i<TS;i+=8)rect(x+i,y+9,4,16,'#d8ceb8');rect(x,y+25,TS,5,'#bfb391');break;
+      case '~':rect(x,y,TS,TS,'#8f846f');rect(x+4,y+4,24,24,(c+r)%2?'#9d917b':'#978b75');break;
+      default:fl();}},
+  cabrec(ch,c,r,x,y){
+    const fl=()=>{rect(x,y,TS,TS,'#b98d55');rect(x,y+15,TS,1,'#a57a46');rect(x+((c*7+r*13)%24)+4,y,1,15,'#a57a46');rect(x+((c*11+r*5)%24)+2,y+16,1,16,'#a57a46');};
+    const wall=()=>{rect(x,y,TS,TS,'#e8e4dc');rect(x,y+TS-6,TS,6,'#8d8a83');rect(x,y+10,TS,3,'#c0392b');};
+    switch(ch){
+      case '.':fl();break;
+      case '#':if(r===0||r===9)wall();else{rect(x,y,TS,TS,'#e1ddd4');rect(x+(c===0?TS-5:0),y,5,TS,'#c0392b');}break;
+      case 'D':rect(x,y,TS,TS,'#e1ddd4');rect(x+12,y+2,18,30,'#3b2a1c');rect(x+14,y+4,14,28,'#c0392b');rect(x+16,y+8,10,8,'#bfe3f0');break;
+      case 'K':{wall();rect(x+2,y+18,28,14,'#8b6a4a');rect(x+2,y+17,28,2,'#a88462');const br=machineBroken();rect(x+8,y+1,16,18,'#2b2b2b');rect(x+9,y+2,14,6,br?'#3a0d0d':'#0d2a12');rect(x+10,y+9,12,2,'#9aa0a6');
+        if(br){if(Math.floor(performance.now()/400)%2)rect(x+11,y+4,10,2,'#ff4d4d');rect(x+20,y+9,10,10,'#fffbe6');rect(x+22,y+12,1,1,'#333');rect(x+27,y+12,1,1,'#333');rect(x+23,y+15,4,1,'#333');rect(x+22,y+16,1,1,'#333');rect(x+27,y+16,1,1,'#333');}
+        else{rect(x+11,y+4,10,2,'#5dff7a');rect(x+13,y+12,6,5,'#f4f4f4');rect(x+14,y+13,4,2,'#6b3e1e');}break;}
+      case 'R':case 'I':wall();break;
+      case 'M':wall();rect(x,y+16,TS,16,'#8b6a4a');rect(x,y+15,TS,2,'#a88462');if(c===13){rect(x+4,y+3,24,14,'#ecf0f1');rect(x+6,y+5,14,10,'#2c3e50');rect(x+22,y+6,4,8,'#95a5a6');}else{rect(x+3,y+10,8,6,'#e67e22');rect(x+13,y+11,8,5,'#3498db');rect(x+23,y+12,6,4,'#27ae60');}break;
+      case 'V':{wall();rect(x+3,y-6,26,38,'#f4f6f7');rect(x+3,y-6,26,2,'#ffffff');rect(x+3,y+8,26,1,'#bdc3c7');rect(x+24,y-2,2,8,'#95a5a6');rect(x+24,y+12,2,10,'#95a5a6');
+        if(dayNo()-G.freeBeerDay<3){rect(x+8,y+15,10,8,'#d4a017');rect(x+10,y+11,6,5,'#7f8c8d');rect(x+11,y+12,4,4,'#f4f6f7');}else rect(x+8,y+14,10,8,'#2ecc71');break;}
+      case 'S':{fl();const top=r===2;rect(x,y+4,TS,24,'#2e7d7a');rect(x,top?y+4:y+21,TS,7,'#25615f');if(c===2)rect(x,y+4,5,24,'#25615f');if(c===4)rect(x+27,y+4,5,24,'#25615f');if(c<4)rect(x+31,top?y+11:y+4,1,17,'#25615f');break;}
+      case 't':fl();rect(x,y+3,TS,26,'#d6c3a5');rect(x,y+3,TS,2,'#e8d8bc');rect(x+6+(c%2)*12,y+9+(r%2)*6,4,6,'#b5462e');rect(x+6+(c%2)*12,y+9+(r%2)*6,4,1,'#e8d8bc');if(c===13&&r===2){rect(x+18,y+6,7,14,'#4a6b8a');rect(x+19,y+4,5,3,'#2c3e50');}break;
+      case 'G':fl();rect(x,y+5,TS,22,'#3b2a1c');rect(x+(c===12?2:0),y+7,TS-2,18,'#2e8b57');rect(x+(c===12?2:0),y+15,TS-2,1,'#e8f5e9');rect(c===12?x+2:x+TS-4,y+12,2,6,'#ecf0f1');
+        for(let i=6;i<TS;i+=8){rect(x+i,y+2,2,28,'#bdc3c7');rect(x+i-1,y+9+((i>>3)%2)*7,4,3,(i+c*TS)%16<8?'#c0392b':'#1f5fa8');}break;
+      case 'p':fl();plant(x,y);break;
+      default:fl();}},
   mensa(ch,c,r,x,y){
     const fl=()=>{rect(x,y,TS,TS,(c+r)%2?'#e3d8c4':'#ddd1bb');rect(x,y,TS,1,'#cdbfa5');};
     switch(ch){
@@ -252,11 +355,31 @@ const PAINT={
     for(let r=3;r<=8;r++)for(let c=2;c<18;c++){if(c===9||c===10||(c*7+r*3)%5!==0)continue;const off=Math.round(Math.pow(c+0.5-10,2)*0.1),x=c*TS,y=y0+r*TS-off;
       rect(x+10,y+4,12,10,['#3b2a1e','#d9b13b','#1c1c1c','#8a5a2b','#c0392b'][(c+r)%5]);rect(x+8,y+12,16,6,['#2e8b57','#1f5fa8','#8e44ad','#e67e22','#34495e'][(c*3+r)%5]);}
     ctx.globalAlpha=0.08;for(let i=0;i<5;i++)rect(40+i*120,y0+32,70,2,'#ffffff');ctx.globalAlpha=1;},
-  hg(){bigWord('SIND SIE VORBEI?',320,HUD+TS+2,4,'#a8322b','#5c1611');bigWord('GOAT',320,HUD+4*TS+4,8,'#d4af37','#8a6d1f');bigWord('IOI',320,HUD+7*TS+4,8,'#2f5aa8','#16305e');
-    MAPS.hg.rows.forEach((row,r)=>[...row].forEach((ch,c)=>{if(ch==='O')hgPillar(c*TS,HUD+r*TS);}));
-    if(Math.floor(performance.now()/180)%9===0)rect(236+((Math.floor(performance.now()/180)*37)%170),HUD+4*TS+10,4,4,'#fff7c2');
-    ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
+  hg(){ctx.globalAlpha=0.1;ctx.fillStyle='#fffbe8';for(const bx of [150,330,500]){ctx.beginPath();ctx.moveTo(bx,HUD+32);ctx.lineTo(bx+40,HUD+32);ctx.lineTo(bx+90,H-40);ctx.lineTo(bx+10,H-40);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;},
   cab(){drawCray(320,HUD+4*TS+6);},
+  f7(){const y0=HUD,ch='rgba(236,240,232,.85)';
+    txt('Ax = λx',5*TS+4,y0+5,{size:16,color:ch});txt('det(A − λI) = 0',8*TS+8,y0+5,{size:16,color:ch});txt('⇒ Eigenwerte',13*TS+14,y0+7,{size:14,color:'rgba(236,240,232,.6)'});
+    const sx=5*TS+3,sy=y0+3*TS+3,sc='rgba(205,170,120,.75)';txt('Sind Sie vorbei?',sx,sy-1,{size:11,color:sc});
+    for(let g=0;g<4;g++){for(let i=0;i<4;i++)rect(sx+g*10+i*2,sy+9,1,4,sc);rect(sx+g*10-1,sy+11,9,1,sc);}for(let i=0;i<3;i++)rect(sx+42+i*2,sy+9,1,4,sc);
+    for(let r=3;r<=8;r++)for(let c=2;c<18;c++){if(c===9||c===10||(c*5+r*7)%6!==0||(r===3&&c>=5&&c<=8))continue;const x=c*TS,y=y0+r*TS;
+      rect(x+10,y+12,12,9,['#3b2a1e','#d9b13b','#1c1c1c','#8a5a2b','#c0392b'][(c+r)%5]);rect(x+8,y+20,16,7,['#2e8b57','#1f5fa8','#8e44ad','#e67e22','#34495e'][(c*3+r)%5]);}
+    },
+  einstein(){const y0=HUD;
+    ctx.globalAlpha=0.16;ctx.fillStyle='#fff2b0';ctx.beginPath();ctx.moveTo(9*TS+12,y0);ctx.lineTo(11*TS-12,y0);ctx.lineTo(11*TS+30,y0+3*TS);ctx.lineTo(9*TS-30,y0+3*TS);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    const gx=9*TS+6,gy=y0+4;rect(gx+3,gy+1,13,16,'#a5865a');rect(gx+5,gy+3,9,12,'#6e5a44');rect(gx+7,gy+5,5,5,'#9c8466');
+    rect(gx+20,gy,14,19,'#f4f1e6');for(let i=0;i<5;i++)rect(gx+22,gy+3+i*3,10,1,'#8a8a8a');
+    rect(gx+38,gy+2,16,15,'#efe9d6');txt('E=mc²',gx+46,gy+4,{size:10,align:'center',color:'#333'});
+    txt('ALBERT EINSTEIN',10*TS,y0+25,{size:10,align:'center',color:'#3a2618'});
+    for(const px of [4,8,11,15]){rect(px*TS+9,y0+7*TS+10,14,14,'#d8cbb0');rect(px*TS+11,y0+7*TS+12,10,10,'#e6dcc6');}
+    rect(16*TS+10,y0+8*TS+8,8,5,'#f4f1ea');rect(16*TS+9,y0+8*TS+7,2,2,'#8c7a5b');
+    for(const [px,py,col] of [[6,8,'#16a085'],[13,7,'#8e44ad'],[3,8,'#34495e']]){circ(px*TS+16,y0+py*TS+16,4,col);circ(px*TS+16,y0+py*TS+14,2,'#3b2a1e');}
+    ctx.globalAlpha=0.25;rect(0,y0+7*TS,W,3*TS,'#000');ctx.globalAlpha=1;},
+  cabrec(){const y0=HUD;
+    const bx=3*TS+3,bw=5*TS-6;rect(bx,y0+1,bw,28,'#7a5232');rect(bx+2,y0+3,bw-4,24,'#c49a6c');rect(bx+6,y0+4,bw-12,22,'#fffbe6');
+    const fit=(s,max)=>{let z=12;while(z>8&&tw(s,z)>max)z--;return z;};
+    txt('2 Kafi ODER 1 Bier pro Tag',bx+bw/2,y0+5,{size:fit('2 Kafi ODER 1 Bier pro Tag',bw-16),align:'center',color:'#333'});txt('Bier: alle 3 Tage!',bx+bw/2,y0+15,{size:fit('Bier: alle 3 Tage!',bw-16),align:'center',color:'#c0392b'});
+    const px=9*TS+3,pw=2*TS-6;rect(px,y0+1,pw,28,'#1f4f8f');rect(px+2,y0+3,pw-4,24,'#e8f0fb');bigWord('IOI',px+pw/2-1,y0+4,2,'#2f5aa8','#9fb6d8');
+    for(let i=0;i<7;i++){rect(px+6+i*7,y0+20,3,3,'#f2c7a5');rect(px+5+i*7,y0+23,5,3,'#2f5aa8');}},
   mensa(){const y0=HUD;rect(32,y0,224,32,'#5b3a26');
     const board=(x,title,price,col)=>{rect(x,y0+3,104,26,'#1d1d1f');rect(x,y0+3,104,10,col);txt(title,x+52,y0+2,{size:12,align:'center'});txt(price,x+52,y0+13,{size:16,align:'center',color:'#ffd166'});};
     board(38,'natürlich vegi','5.40','#3c8d40');board(146,'LOCAL','10.50','#c0392b');
@@ -277,13 +400,13 @@ function drawSign(c,r,s){const w=tw(s,14)+8,cx=clamp(c*TS+16,w/2+2,W-w/2-2),y=HU
 /* ---------------- HUD ---------------- */
 function drawHUD(){rect(0,0,W,HUD,'#0c0a16');rect(0,HUD-2,W,2,'#2a2445');
   let x=10;const item=(s,c,y)=>{txt(s,x,y,{size:18,color:c});x+=tw(s,18)+14;};
-  item(`${semester()} · WEEK ${G.week}/14`,'#ffd166',3);item(`AP ${'●'.repeat(G.ap)}${'○'.repeat(3-G.ap)}`,'#7fdbff',3);item(`LV ${G.level}`,'#fff',3);item(`XP ${G.xp}/${nextXP()}`,'#fff',3);item(`KP ${G.ects}/56`,'#9be564',3);
+  item(`${semester()} · WEEK ${G.week}/14 · ${dayName()}`,'#ffd166',3);item(`AP ${'●'.repeat(G.ap)}${'○'.repeat(3-G.ap)}`,'#7fdbff',3);item(`LV ${G.level}`,'#fff',3);item(`XP ${G.xp}/${nextXP()}`,'#fff',3);item(`KP ${G.ects}/56`,'#9be564',3);
   x=10;item(`SANITY ${G.sanity}`,G.sanity<25?'#ff5d5d':'#fff',20);item(`${chf(G.money)} CHF`,'#fff',20);item(`BEER ${G.beers}`,'#f1c40f',20);if(G.buff)item('(buzzed)','#ff6ad5',20);
   txt(MAPS[G.map].name,W-10,20,{size:18,align:'right',color:'#8f89b0'});}
 
 /* ---------------- overworld scene ---------------- */
 const DIRV={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
-const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,t:0,
+const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,t:0,flashUntil:0,
   update(dt){this.t+=dt;this.banner-=dt;if(lock)return;
     if(back()){flow(menu);return;}
     if(hit('ok')){const v=DIRV[G.dir],c=Math.floor((G.x+v[0]*22)/TS),r=Math.floor((G.y-8+v[1]*24)/TS);
@@ -303,8 +426,10 @@ const OW={get music(){return MAPS[G.map].music;},anim:0,banner:0,moving:false,t:
     m.rows.forEach((row,r)=>{for(let c=0;c<row.length;c++)tp(row[c],c,r,c*TS,HUD+r*TS);});
     PAINT[G.map](this.t);m.signs.forEach(s=>drawSign(...s));
     const side=G.dir==='left'||G.dir==='right',f=this.moving?(side?Math.floor(this.anim)%2:1+Math.floor(this.anim)%2):0;
-    const ents=NPCS.filter(n=>n.map===G.map).map(n=>({y:n.r*TS+30,d:()=>drawChar(n.pal,n.face||n.dir,0,n.c*TS+16,HUD+n.r*TS+30)}));
+    const ents=NPCS.filter(n=>n.map===G.map).map(n=>({y:n.r*TS+30,d:()=>{const x=n.c*TS+16,y=HUD+n.r*TS+30,dir=n.face||n.dir;
+      if(n.goat)return drawGoat(x,y,dir==='right');drawChar(n.pal,dir,0,x,y);if(n.photo)drawPhoto(n,x,y,dir);}}));
     ents.push({y:G.y,d:()=>drawChar(PAL.player,G.dir,f,G.x,HUD+G.y)});ents.sort((a,b)=>a.y-b.y).forEach(e=>e.d());
     drawHUD();
+    if(performance.now()<this.flashUntil){ctx.globalAlpha=0.8;rect(0,0,W,H,'#fff');ctx.globalAlpha=1;}
     if(this.banner>0){ctx.globalAlpha=clamp(this.banner,0,1);const s=m.name,w=tw(s,22)+30;rect(W/2-w/2,52,w,30,'rgba(0,0,0,.75)');txt(s,W/2,56,{size:22,align:'center',color:'#ffd166'});ctx.globalAlpha=1;}}
 };

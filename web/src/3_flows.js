@@ -25,9 +25,25 @@ const beatenOf=l=>l.filter(id=>G.beaten[id]).length;
 const beatenCount=()=>beatenOf(BOSS_ORDER);
 const available=id=>BOSSES[id].sem==='HS'||G.week>=8;
 const mark=id=>G.beaten[id]?'✓':!available(id)?'(FS)':G.level<BOSSES[id].lvl?`(LV ${BOSSES[id].lvl})`:'·';
+// Each action (AP) takes a day: Monday, Wednesday, Friday; with no AP left it is Saturday.
+const DAYN=['Mo','Mi','Fr','Sa'],DAYLONG=['Monday','Wednesday','Friday','Saturday'],DAYOFF=[0,2,4,5];
+const dayIdx=()=>clamp(3-G.ap,0,3),dayName=()=>DAYN[dayIdx()],dayNo=()=>(G.week-1)*7+DAYOFF[dayIdx()];
+const machineBroken=()=>(((dayNo()+3)*2654435761)>>>0)%100<30;
+function freeToday(){const d=dayNo();if(!G.free||G.free.day!==d)G.free={day:d,coffee:0,beer:false};return G.free;}
+function nextBeerLabel(){const need=(G.freeBeerDay??-99)+3;
+  for(let w=G.week;w<=G.week+1;w++)for(let i=0;i<4;i++){const d=(w-1)*7+DAYOFF[i];if(d>=need&&d>dayNo())return (w===G.week?'':'next week, ')+DAYLONG[i];}return 'soon';}
+const COFFEE_MEMES=[
+  ['* The display says: ENTKALKEN.','* It has said ENTKALKEN since 2019. Nobody knows how. Nobody dares.'],
+  ['* The display says: Satzbehälter leeren.','* The grounds container is full. Everyone assumed someone else would empty it. Tragedy of the commons, live.'],
+  ['* The display says: Error 418. I\'m a teapot.','* RFC 2324, the Hyper Text Coffee Pot Control Protocol. It is real. The machine has chosen violence.'],
+  ['* A note is taped to the machine: "DEFEKT. Techniker kommt bald."','* The note is dated last semester.'],
+  ['* The machine makes a noise like a dial-up modem and pours exactly three drops.','* Segmentation fault (coffee dumped).'],
+  ['* The display says: Bitte Bohnen füllen.','* The bean container is empty. Like your motivation in week 9.'],
+  ['* A sticky note: "Exception in thread main: NullPointerException at Kaffee.brew(Kaffee.java:42)"','* Someone from EProg wrote it. It is the most accurate error message in CAB.'],
+  ['* The machine is "heating up".','* It has been heating up for 45 minutes. The queue has formed a Lerngruppe.']];
 async function gainXP(n){const old=G.level,oldHp=hpFor(old);G.xp+=n;G.level=levelFor(G.xp);const lines=[`* +${n} XP.`];
   if(G.level>old){SFX.level();lines.push(`* LEVEL UP! You are now LV ${G.level}.`);if(hpFor(G.level)>oldHp)lines.push(`* Your max HP in fights is now ${hpFor(G.level)}.`);
-    const un=BOSS_ORDER.filter(id=>available(id)&&BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>BOSSES[id].short);if(un.length)lines.push(`* Unlocked in HG F 1 and HG F 6: ${un.join(', ')}.`);}
+    const un=BOSS_ORDER.filter(id=>available(id)&&BOSSES[id].lvl>old&&BOSSES[id].lvl<=G.level).map(id=>BOSSES[id].short);if(un.length)lines.push(`* Unlocked in the HG lecture halls: ${un.join(', ')}.`);}
   await say(lines);}
 async function spendAP(){if(G.ap<=0){SFX.bad();await say(["* You're exhausted. No energy left this week.","* Sit on a bench at the Polyterrasse to go home and sleep."]);return false;}G.ap--;return true;}
 async function afterAction(){
@@ -38,13 +54,17 @@ async function nextWeek(burnout){
   if(G.week>14)return endGame(false);
   const left=15-G.week,lines=[`* ${semester()} · WEEK ${G.week} of 14.`,'* Your parents sent 20.00 CHF. "Eat something proper!"'];
   if(G.week===8)lines.push('* The Herbstsemester is over. Winter break, Raclette, and then the Prüfungssession in February.',
-    '* FRÜHJAHRSSEMESTER! New professors in HG F 1 and HG F 6: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
+    '* FRÜHJAHRSSEMESTER! New professors in the HG lecture halls: Analysis I, Digital Design and Computer Architecture, Algorithmen und Wahrscheinlichkeit, Parallele Programmierung.');
   if(G.week>=11){const miss=[];if(!G.beaten.block1)miss.push('Block 1');if(!G.beaten.block2)miss.push('Block 2');
     if(miss.length)lines.push(`* ${left} week${left>1?'s':''} left. Still to pass: ${miss.join(' and ')} of the Basisprüfung.`);}
   if(G.week===14)lines.push('* FINAL WEEK. Pass both Basisprüfung blocks this week, or repeat the Basisjahr!');
   await say(lines);saveGame();}
 function endGame(passed){return new Promise(r=>fadeTo(()=>{setScene(makeEnding(passed));r();}));}
-async function talkNPC(n){const i=G.talk[n.id]||0;G.talk[n.id]=i+1;n.face={up:'down',down:'up',left:'right',right:'left'}[G.dir];await say(n.lines[i%n.lines.length],n.name);n.face=null;}
+async function talkNPC(n){const i=G.talk[n.id]||0;G.talk[n.id]=i+1;n.face={up:'down',down:'up',left:'right',right:'left'}[G.dir];
+  if(n.goat)n.face=G.x<n.c*TS+16?'left':'right';
+  await say(n.lines[i%n.lines.length],n.name);
+  if(n.after){let a=n.after[i%n.after.length];if(typeof a==='function')a=await a();if(a)await say(Array.isArray(a)?a:[a]);}
+  n.face=null;}
 
 /* ---------------- interactions ---------------- */
 async function interact(ch,c,r){const m=G.map;
@@ -53,7 +73,7 @@ async function interact(ch,c,r){const m=G.map;
     if(ch==='T')return say(['* A tree on the Polyterrasse. It has seen generations of students cry here. It stays calm.']);
     if(ch==='l')return say(['* A lamp post. At night the whole terrace glows. Romantic, unless you are in Lernphase.']);
     if(ch==='h')return say(['* A perfectly trimmed hedge. Swiss precision.']);
-    if(ch==='^'||ch==='~')return say(['* The view: the old town, the Grossmünster towers, the lake, the Alps, the Uetliberg.','* For a moment the Basisprüfung feels very far away.']);
+    if(ch==='^'||ch==='~'||ch==='o')return viewMode();
     if(ch==='F'||ch==='S')return say(['* The Hauptgebäude. Gottfried Semper\'s city-facing facade from 1864; the dark dome was added by Gustav Gull in the 1920s.','* It looks like it is judging your study habits.']);}
   if(m==='uni'){
     if(ch==='Z')return say(['* Tram stop "ETH/Universitätsspital". Tram 10 goes down to the main station and out to the airport.','* You briefly consider the airport. Then you remember the Serie is due on Monday.']);
@@ -77,9 +97,21 @@ async function interact(ch,c,r){const m=G.map;
     if(ch==='L')return say(['* Textbooks. One is open at "Chapter 1: Introduction". The bookmark has not moved since September.']);
     if(ch==='p')return say(['* A plant. The only thing in CAB getting enough light.']);}
   if(m==='f6'){
-    if(ch==='w')return lectureHall('HG F 6');if(ch==='k')return attendLecture();
+    if(ch==='w')return lectureHall('HG F 6');if(ch==='k')return attendLecture('HG F 6');
     if(ch==='Q')return say(['* The long blackboard still shows yesterday\'s proof.','* In the bottom corner, very small, someone wrote: "goat".']);
     if(ch==='X')return say(['* A screen shows the lecture livestream. 37 people are watching it from bed.']);}
+  if(m==='f7'){
+    if(ch==='k'&&r===3&&c>=5&&c<=8)return vorbeiTable();if(ch==='k')return attendLecture('HG F 7');if(ch==='w')return lectureHall('HG F 7');
+    if(ch==='Q')return say(['* The blackboard: "Ax = λx" and "det(A − λI) = 0 ⇒ Eigenwerte".','* Half of yesterday\'s proof was erased. The other half will remain a mystery forever.']);}
+  if(m==='einstein'){
+    if(ch==='Y'||ch==='r')return einsteinLocker();
+    if(ch==='U')return say([pick(['* An old wooden locker with a tiny brass number. Locked.','* A locker from the days when ETH was the Polytechnikum. Probably full of 19th-century Serien.','* Locked. Inside, maybe, someone\'s motivation from 1897.'])]);
+    if(ch==='^'||ch==='~')return say(['* You lean over the railing and look down into the Haupthalle.','* There is a goat down there. Huh.']);}
+  if(m==='cabrec'){
+    if(ch==='K')return coffeeMachine();if(ch==='V')return fridge();if(ch==='R')return loungeRules();if(ch==='I')return ioiPoster();if(ch==='S')return sofa();if(ch==='G')return toeggeli();
+    if(ch==='M')return say(['* The microwave. Six Tupperware boxes are queued in front of it.','* The only perfectly fair FIFO queue at ETH.']);
+    if(ch==='t')return say(['* Small tulip-shaped tea glasses and a big thermos. Someone here has a system.']);
+    if(ch==='p')return say(['* A plant. Someone has been watering it with cold coffee. It seems fine with that.']);}
   if(m==='mensa'){
     if(ch==='M')return mensaFood();if(ch==='J')return jobBoard();
     if(ch==='R')return say(['* Two menu lines today: "natürlich vegi" and "LOCAL".','* The prices are written in a font size designed to cause emotional damage.']);
@@ -150,33 +182,76 @@ async function lectureHall(hall='HG F 1'){G.hall=hall;
   if(G.level<b.lvl)return say([`* ${b.short} looks at you over their glasses.`,`* "Come back at LV ${b.lvl}. The Übungen exist for a reason."`]);
   if(G.beaten[id]){const r=await ask(`* You already passed ${b.course}. Rematch for fun? (1 AP, small XP)`,['Rematch','Leave']);if(r!==0)return;}
   if(!await spendAP())return;await fight(id);}
-async function attendLecture(){
-  const c=await ask('* A seat in HG F 6. Birch wood, fold-down desk, surprisingly comfy. Sit in on a lecture? (1 AP)',['Attend the lecture','Leave']);if(c!==0)return;
+async function attendLecture(hall='HG F 6'){
+  const desc=hall==='HG F 6'?'Birch wood, fold-down desk, surprisingly comfy.':'Old oak, carved by generations of students.';
+  const c=await ask(`* A seat in ${hall}. ${desc} Sit in on a lecture? (1 AP)`,['Attend the lecture','Leave']);if(c!==0)return;
   if(!await spendAP())return;
   if(Math.random()<0.3){G.sanity=Math.min(100,G.sanity+10);await say(['* The room is warm. The voice is calm. You fall asleep in minute 12.','* You wake up refreshed and slightly confused. +10 Sanity.']);await gainXP(5);}
   else{G.sanity=Math.max(0,G.sanity-5);await say(['* You follow the whole lecture. You even understand the last slide.','* (−5 Sanity)']);await gainXP(25);}
   await afterAction();}
-const EGGS=[
-  {map:'hg',x0:224,y0:128,x1:416,y1:192,fn:async()=>{
-    await say(['* Huge golden letters are set into the marble floor of the Haupthalle: G O A T.','* Legend says they appeared overnight after someone passed the Basisprüfung with a 6.0 in every exam.']);
-    if(!G.eggGoat){G.eggGoat=true;G.sanity=Math.min(100,G.sanity+5);SFX.level();await say(['* You stand on them for a moment. You feel like the GOAT. +5 Sanity.']);}}},
-  {map:'hg',x0:248,y0:224,x1:392,y1:288,fn:async()=>{
-    await say(['* Blue letters in the floor: I O I.','* The International Olympiad in Informatics. Some of your classmates were there.','* They solve the Serie in twenty minutes. You try not to think about it.']);
-    if(!G.eggIoi){G.eggIoi=true;SFX.coin();await gainXP(10);}}},
-  {map:'hg',x0:126,y0:32,x1:514,y1:66,fn:async()=>{
-    await say(['* Dark red letters in the floor, right in front of the lecture halls:','* SIND SIE VORBEI?']);
-    const c=await ask('* The floor is asking you. Sind Sie vorbei?',['Ja!','Nein...','Was heisst "vorbei"?']);
-    if(c===0)await say(['* You say "Ja". Like everyone else in the lecture.','* Nobody in the room was vorbei.']);
-    else if(c===1)await say(['* Brave and honest. The lecture moves on anyway.']);
-    else await say(['* Literally: "Are you past it?"','* In a lecture it means: Got it? Can I go on?','* (Prof. Eigenwert asks it about forty times per lecture. The answer is always "Ja".)']);
-    if(!G.eggVorbei){G.eggVorbei=true;SFX.coin();await gainXP(10);}}}
-];
+const EGGS=[];
+async function vorbeiTable(){
+  await say(['* A long oak table in the front row. Scratched into the wood, very small:','* "Sind Sie vorbei?"','* Next to it, tally marks. Twenty-three of them. Someone counted during one single lecture.']);
+  const c=await ask('* Sind Sie vorbei?',['Ja!','Nein...','Was heisst "vorbei"?']);
+  if(c===0)await say(['* You say "Ja" to a table. Like everyone else in the lecture.','* Nobody in the room was vorbei.']);
+  else if(c===1)await say(['* Brave and honest. The lecture moves on anyway.']);
+  else await say(['* Literally: "Are you past it?"','* In a lecture it means: Got it? Can I go on?','* (Prof. Eigenwert asks it about forty times per lecture. The answer is always "Ja".)']);
+  if(!G.eggVorbei){G.eggVorbei=true;SFX.coin();await gainXP(10);}}
+function goatMeet(){
+  if(!G.eggGoat){G.eggGoat=true;G.sanity=Math.min(100,G.sanity+5);SFX.level();
+    return ['* A goat. In the middle of the HG. Nobody knows how it got past Herr Brunner.','* It looks at you with the calm of someone who passed every exam with a 6.0. It is the GOAT.','* You feel strangely inspired. +5 Sanity.'];}
+  return [pick(['* The goat is chewing on an old Serie. It seems to enjoy Exercise 3.','* The goat stares into the distance. It has seen things. It has seen Block 2.','* Mäh. (You are fairly sure it said "Bestanden".)'])];}
+function teaGift(){
+  if(G.teaDay===dayNo())return '* She points at the thermos, then at you, and laughs. (Probably: "you already had one today".)';
+  G.teaDay=dayNo();G.sanity=Math.min(100,G.sanity+5);return '* She pours you a small glass of tea. You did not understand a word, but you understood the tea. +5 Sanity.';}
+async function photoFavor(){
+  const c=await ask('* They hold out a phone.',['Take the photo','Sorry, no time']);if(c!==0)return '* "No problem! Have a nice day!"';
+  OW.flashUntil=performance.now()+160;SFX.confirm();
+  if(G.favorDay===dayNo())return '* *click* "Perfect, thanks again!"';
+  G.favorDay=dayNo();G.sanity=Math.min(100,G.sanity+3);return ['* *click* Four tourists, one locker, nobody blinking. A masterpiece.','* "Thank you so much!" +3 Sanity.'];}
+async function einsteinLocker(){
+  await say(['* Einstein\'s locker. Today it is a tiny exhibition behind glass, maybe the smallest Einstein museum in the world.',
+    '* Albert Einstein studied here from 1896 to 1900, when ETH was still the Polytechnikum. In 1912 he came back as a professor.',
+    '* Fun fact: he often skipped lectures and studied from his friends\' notes before the exams.',
+    '* His grades went from 1 to 6, like yours. He had 4s, 5s and, of course, 6s.']);
+  if(!G.eggEinstein){G.eggEinstein=true;await say(['* You feel a little smarter just standing here. Or that was the flash.']);await gainXP(15);}
+  const c=await ask('* Take a photo too?',['Take a photo','Leave']);
+  if(c===0){OW.flashUntil=performance.now()+160;SFX.confirm();await say(['* *click* Now you are one of them.']);}}
+async function viewMode(){
+  const c=await ask('* A coin binocular at the edge of the Polyterrasse. A sticker says: "FREE for students. Can you find the professor hiding in the city?"',['Look through it','Leave']);if(c!==0)return;
+  await new Promise(res=>fadeTo(()=>setScene(makeView(res))));saveGame();}
+async function coffeeMachine(){const f=freeToday();
+  if(machineBroken()){SFX.bad();await say(COFFEE_MEMES[dayNo()%COFFEE_MEMES.length]);return say(['* No free coffee today. (food&lab next door sells it for 3.00.)']);}
+  if(f.beer)return say(['* You already had today\'s free beer. Coffee OR beer, not both. Rules are rules.']);
+  if(f.coffee>=2)return say(['* Two free coffees today already. The machine beeps judgmentally.','* Come back tomorrow, or buy one at food&lab.']);
+  const c=await ask(`* The Aufenthaltsraum coffee machine. Free for students. (${2-f.coffee} left today)`,['Coffee (+10 Sanity)','Leave']);if(c!==0)return;
+  f.coffee++;G.stats.coffees++;G.sanity=Math.min(100,G.sanity+10);SFX.coin();
+  await say([pick(['* Grrrr... pssshhh. A free coffee. It tastes like free coffee. +10 Sanity.','* The machine grinds the beans with the energy of a Basisprüfung. +10 Sanity.']),f.coffee===2?'* That was your second one. Your hands are vibrating slightly.':'* One more free coffee left today.']);saveGame();}
+async function fridge(){const f=freeToday(),d=dayNo();
+  if(f.coffee>0)return say(['* You already had coffee today. Per day it\'s 2 coffees OR 1 beer.','* The fridge hums disapprovingly.']);
+  if(f.beer)return say(['* You already took today\'s free beer.']);
+  if(d-G.freeBeerDay<3){SFX.bad();return say(['* The fridge is locked. A note: "Free beer: max. one every 3 days."',`* Next free beer: ${nextBeerLabel()}.`]);}
+  const c=await ask('* The Aufenthaltsraum fridge. One free beer, every 3 days.',['Take a beer','Leave']);if(c!==0)return;
+  f.beer=true;G.freeBeerDay=d;G.beers++;SFX.coin();
+  await say(['* Psssht. A cold, free beer. It goes straight into your bag.','* (Drink it from the menu with X: +15 Sanity and +1 HP in your next fight.)']);saveGame();}
+async function loungeRules(){const f=freeToday(),beerOk=dayNo()-G.freeBeerDay>=3;
+  await say(['* AUFENTHALTSRAUM · RULES','* 1. Free for students: per day EITHER 2 coffees OR 1 beer.','* 2. Beer: max. one every 3 days. The fridge knows. The fridge always knows.','* 3. Please empty the Satzbehälter. PLEASE. – die Kafi-Kommission',
+    `* Today is ${DAYLONG[dayIdx()]}. ${f.beer?'You already took your beer.':f.coffee?`Coffees today: ${f.coffee}/2.`:'You have not had anything yet.'} ${beerOk?'Beer is available.':`Next free beer: ${nextBeerLabel()}.`}`]);}
+async function ioiPoster(){
+  await say(['* A framed photo on the wall: a team in matching blue T-shirts. Big letters: IOI.','* The International Olympiad in Informatics. A note below: "Our alumni. Ask them about dynamic programming. Or don\'t."','* Some of your classmates were there. They solve the Serie in twenty minutes. You try not to think about it.']);
+  if(!G.eggIoi){G.eggIoi=true;SFX.coin();await gainXP(10);}}
+async function sofa(){if(G.sofaDay===dayNo())return say(['* The sofa still has your shape in it from earlier. Better not get too comfortable.']);
+  G.sofaDay=dayNo();G.sanity=Math.min(100,G.sanity+5);await say(['* You sink into the sofa. For ten minutes, nothing is due.','* +5 Sanity.']);}
+async function toeggeli(){const c=await ask('* A Töggelikasten (table football). One of the red goalkeepers is missing a leg.',['Play a round','Leave']);if(c!==0)return;
+  if(G.toeggeliDay===dayNo())return say(['* Your wrists still hurt from the last round.']);
+  G.toeggeliDay=dayNo();const w=Math.random()<0.5;G.sanity=Math.min(100,G.sanity+(w?6:3));SFX.coin();
+  await say([w?'* You win 10:8 against a second-year. You will mention this for weeks. +6 Sanity.':'* You lose 4:10 against a second-year who "barely plays". +3 Sanity anyway.']);}
 async function examRoom(){const b1=beatenOf(HS),b2=beatenOf(FS);
   const st=(id,n,sem)=>G.beaten[id]?' ✓':n<4?` (${n}/4 ${sem} profs)`:'';
   const c=await ask('* PRÜFUNGSRAUM. The Basisprüfung comes in two blocks. Three hours each. No cheat sheet.',[`Block 1 · HS courses${st('block1',b1,'HS')}`,`Block 2 · FS courses${st('block2',b2,'FS')}`,'Leave']);
   if(c<0||c>1)return;const id=c===0?'block1':'block2',n=c===0?b1:b2;
   if(G.beaten[id])return say(['* You already passed this block. The exam office sends a polite email: "Please stop."']);
-  if(n<4)return say([`* Sealed. Admission to Block ${c+1} requires defeating all four ${c===0?'HS':'FS'} professors in HG F 1 or HG F 6. (${n}/4)`]);
+  if(n<4)return say([`* Sealed. Admission to Block ${c+1} requires defeating all four ${c===0?'HS':'FS'} professors in the HG lecture halls. (${n}/4)`]);
   if(!await spendAP())return;await fight(id);}
 async function fight(id){const b=BOSSES[id];
   await say(b.intro,b.name);
@@ -206,7 +281,7 @@ async function menu(){
     G.beers--;G.stats.beers++;G.sanity=Math.min(100,G.sanity+15);G.buff=true;SFX.coin();
     return say(['* You drink a beer. +15 Sanity.','* Liquid courage: +1 HP in your next fight. (Side effects may include wobbling.)']);}
   if(c===1){const sn=id=>`${BOSSES[id].short.replace('Prof. ','')} ${mark(id)}`;
-    return say([`* ${semester()} · WEEK ${G.week}/14 · AP ${G.ap}/3 · LV ${G.level} · XP ${G.xp}/${nextXP()} · KP ${G.ects}/56`,
+    return say([`* ${semester()} · WEEK ${G.week}/14 · ${DAYLONG[dayIdx()]} · AP ${G.ap}/3 · LV ${G.level} · XP ${G.xp}/${nextXP()} · KP ${G.ects}/56`,
       `* Sanity ${G.sanity}/100 · ${chf(G.money)} CHF · Beers ${G.beers} · Fight HP ${hpFor(G.level)}${G.buff?' (+1 beer)':''}${G.prep?' (+1 old exams)':''}${G.notes?' · Zusammenfassung ready':''}`,
       '* HS: '+HS.map(sn).join(', '),'* FS: '+FS.map(sn).join(', '),
       `* Basisprüfung: Block 1 ${G.beaten.block1?'✓':'·'} · Block 2 ${G.beaten.block2?'✓':'·'}`]);}
@@ -239,10 +314,10 @@ function makeTitle(){const hasSave=!!loadSave(),opts=hasSave?['Continue','New ga
   return S;}
 async function intro(){await say(['* September. You got into Computer Science at ETH Zürich. Welcome to the Basisjahr.',
   '* Weeks 1–7 are the Herbstsemester (HS), weeks 8–14 the Frühjahrssemester (FS).',
-  '* Beat the four professors of each semester in HG F 1 or HG F 6, then pass Basisprüfung Block 1 and Block 2 in the HG exam room.',
+  '* Beat the four professors of each semester in the HG lecture halls (F 1, F 6, F 7), then pass Basisprüfung Block 1 and Block 2 in the HG exam room.',
   '* Übungen in CAB give XP. Levels unlock professors and give you more HP in fights.',
-  '* You have 3 AP (energy) per week. Sit on a Polyterrasse bench to sleep and start a new week.',
-  '* Also: there is a beer vending machine in CAB. Just saying.']);saveGame();}
+  '* You have 3 AP (energy) per week, one action per day: Monday, Wednesday, Friday. Sit on a Polyterrasse bench to sleep and start a new week.',
+  '* Also: CAB has a beer vending machine and an Aufenthaltsraum with free coffee. Just saying.']);saveGame();}
 function makeEnding(passed){clearSave();const gr=G.stats.grades,avg=gr.length?gr.reduce((a,b)=>a+b,0)/gr.length:0;
   const conf=Array.from({length:60},()=>({x:rnd(0,W),y:rnd(-H,0),v:rnd(30,90),c:pick(['#ffd166','#ff6ad5','#9be564','#7fdbff'])}));
   const S={music:passed?'ending':'title',t:0};

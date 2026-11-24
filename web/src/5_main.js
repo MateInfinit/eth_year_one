@@ -11,7 +11,7 @@ async function boot(){
   try{await Promise.race([Promise.all([document.fonts.load(`20px ${VT}`),document.fonts.load(`16px ${PX}`)]),new Promise(r=>setTimeout(r,1500))]);}catch(e){}
   setScene(makeTitle());requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame);});}
 window.__eth={get G(){return G;},set G(v){G=v;},get scene(){return scene;},get dlg(){return dlg;},get lock(){return lock;},get fade(){return fade;},
-  setScene,makeCombat,makeQuiz,makeBug,makeDodge,OW,BOSSES,flow,fight,nextWeek,newGame};
+  setScene,makeCombat,makeQuiz,makeBug,makeDodge,OW,BOSSES,flow,fight,nextWeek,newGame,NPCS,MAPS,makeView,VIEW_SPOTS,dayNo};
 boot();
 })();
 </script>

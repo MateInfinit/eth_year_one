@@ -94,7 +94,7 @@ function loadSave(){try{const s=localStorage.getItem(SKEY);return s?JSON.parse(s
 function clearSave(){try{localStorage.removeItem(SKEY);}catch(e){}}
 
 /* ---------------- game state ---------------- */
-function newGame(){return{week:1,ap:3,level:1,xp:0,ects:0,sanity:80,money:3000,beers:0,buff:false,beaten:{},passed:false,view:0,
+function newGame(){return{week:1,ap:3,level:1,xp:0,ects:0,sanity:80,money:3000,beers:0,buff:false,beaten:{},passed:false,view:0,free:{day:-1,coffee:0,beer:false},freeBeerDay:-99,lm:{},
   map:'campus',x:9*TS+16,y:5*TS+28,dir:'down',talk:{},stats:{beers:0,coffees:0,ubungen:0,wins:0,losses:0,shifts:0,grades:[]}};}
 let G=newGame(),scene=null,dlg=null,fade=null,lock=false,last=0;
 const XP_T=[60,150,270,420,600,800,1050,1350];
